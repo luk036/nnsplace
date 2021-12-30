@@ -1,0 +1,8 @@
+name: nnsplace
+channels:
+  - conda-forge
+dependencies:
+  - pytest
+  - pytest-benchmark
+  - pytest-cov
+  - networkx
