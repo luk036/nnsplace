@@ -1,6 +1,8 @@
+# Notes
+
 ## View Profile and Call Tree
 
-```
+```bash
 > sudo apt install kcachegrind
 > sudo apt install kcachegrind-converters
 > easy_install pyprof2calltree

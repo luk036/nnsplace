@@ -1,8 +1,9 @@
 from typing import Dict, List, Union
 
-from netlist import Netlist
 from physdes.point import point
-from placement_cfg import fpga_glocal_placement_config
+
+from .netlist import Netlist
+from .placement_cfg import fpga_glocal_placement_config
 
 
 class nnsplace:
