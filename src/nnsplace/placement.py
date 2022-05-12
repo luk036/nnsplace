@@ -8,9 +8,16 @@ import networkx as nx
 
 
 def create_flow_graph(hgr: Netlist):
+    """Create the flow graph
+
+    Args:
+        hgr (Netlist): _description_
+
+    Returns:
+        _type_: _description_
+    """
     gr = nx.DiGraph()
-    for v in hgr:
-        gr.add_node(v)
+    gr.add_nodes_from(v for v in hgr)
     for net in hgr.nets:
         for v1 in hgr.gr[net]:
             for v2 in hgr.gr[net]:
@@ -23,13 +30,24 @@ def create_flow_graph(hgr: Netlist):
 
 class NnsPlacer:
     def __init__(self, hgr: Netlist, cfg: NnsConfig):
+        """_summary_
+
+        Args:
+            hgr (Netlist): _description_
+            cfg (NnsConfig): _description_
+        """
         self.hgr = hgr
         self.cfg = cfg
         self.gr = create_flow_graph(hgr)
-        self.col_count = list(0 for _ in range(cfg.grid_x))
-        self.row_count = list(0 for _ in range(cfg.grid_y))
+        self.col_count = [0] * cfg.grid_x
+        self.row_count = [0] * cfg.grid_y
 
     def init_placement(self, place: Union[List[Tuple[int, int]], Dict]):
+        """_summary_
+
+        Args:
+            place (Union[List[Tuple[int, int]], Dict]): _description_
+        """
         col = 0
         row = 0
         for v in self.hgr:
