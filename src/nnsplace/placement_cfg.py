@@ -1,5 +1,5 @@
-class fpga_glocal_placement_config:
-    def __init__(self, x: int = 20, y: int = 5, delta_x=20, delta_y=20):
+class NnsConfig:
+    def __init__(self, x: int = 32, y: int = 32, delta_x=40, delta_y=40):
         self.grid_x = x
         self.grid_y = y
         self.delta_x = delta_x

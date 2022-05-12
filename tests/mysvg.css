@@ -1,0 +1,23 @@
+polygon {
+  fill: #0062FF;
+  stroke: black;
+}
+
+circle {
+  fill: #0062FF;
+}
+
+rect.net {
+  fill: none;
+  stroke: #00321C;
+  stroke-width: 20;
+  stroke-opacity: 0.05;
+}
+
+/* PRESENTATIONAL STYLES */
+body {
+  align-items: center;
+  display: flex;
+  height: 100vh;
+  justify-content: center;
+}
