@@ -54,12 +54,12 @@ def test_json2():
 
 
 def test_readjson():
-    H = read_json("testcases/p1.json")
+    hgr = read_json("testcases/p1.json")
     count_2 = 0
     count_3 = 0
     count_rest = 0
-    for net in H.nets:
-        deg = H.G.degree(net)
+    for net in hgr.nets:
+        deg = hgr.gr.degree(net)
         if deg == 2:
             count_2 += 1
         elif deg == 3:

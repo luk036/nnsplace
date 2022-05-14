@@ -4,19 +4,7 @@ from physdes.point import Point
 # from physdes.recti import Rect
 # from physdes.interval import Interval
 
-from nnsplace.netlist import create_drawf, read_json
-
-
-def test_drawf():
-    H = create_drawf()
-    placer = NnsPlacer(H, NnsConfig(10, 10, 40, 40))
-    place = dict()
-    placer.init_placement(place)
-    for v in H:
-        col, row = place[v]
-        print("<rect x=\"{}\" y=\"{}\" width=\"40\" height=\"35\" />"
-              .format(col * 40, row * 40))
-    assert place["a1"] == [1, 0]
+from nnsplace.netlist import read_json
 
 
 def test_readjson():
@@ -45,11 +33,10 @@ def test_readjson():
     assert placer.count[1][27] == 0
     assert placer.count[0][0] == 27
     assert placer.count[0][1] == 26
-    placer.run(place)
-    for v in H:
-        p = place[v]
-        print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
-              .format(p[0] * 40, p[1] * 40))
+    # for v in H:
+    #     p = place[v]
+    #     print("<use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
+    #           .format(p.x, p.y))
     # for net in H.nets:
     #     adjs = iter(H.gr[net])
     #     col, row = place[next(adjs)]
@@ -62,4 +49,8 @@ def test_readjson():
     #     print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"/>"
     #           .format(bbox.x.lb+10, bbox.y.lb+10, bbox.width(), bbox.height()))
 
-    assert(place[1][0] < 0)
+    placer.run(place)
+
+
+if __name__ == "__main__":
+    test_readjson()

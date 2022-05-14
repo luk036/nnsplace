@@ -2,15 +2,16 @@
 from __future__ import print_function
 
 import networkx as nx
+from math import floor
 
 from .parametric import max_parametric
 
 
-def set_default(G: nx.Graph, weight, value):
+def set_default(G: nx.DiGraph, weight, value):
     """[summary]
 
     Arguments:
-        G (nx.Graph): directed graph
+        G (nx.DiGraph): directed graph
         weight ([type]): [description]
         value ([type]): [description]
     """
@@ -19,7 +20,7 @@ def set_default(G: nx.Graph, weight, value):
             G[u][v][weight] = value
 
 
-def min_cycle_ratio(G: nx.Graph, dist):
+def min_cycle_ratio(G: nx.DiGraph, dist, constraints_ok):
     """[summary] todo: parameterize cost and time
 
     Arguments:
@@ -28,11 +29,11 @@ def min_cycle_ratio(G: nx.Graph, dist):
     Returns:
         [type]: [description]
     """
-    mu = 'cost'
-    sigma = 'time'
-    set_default(G, mu, 1)
-    set_default(G, sigma, 1)
-    T = type(dist[next(iter(G))])
+    # mu = 'cost'
+    # sigma = 'time'
+    # set_default(G, mu, 1)
+    # set_default(G, sigma, 1)
+    # T = type(dist[next(iter(G))])
 
     def calc_weight(r, e):
         """[summary]
@@ -45,7 +46,7 @@ def min_cycle_ratio(G: nx.Graph, dist):
             [type]: [description]
         """
         u, v = e
-        return G[u][v]['cost'] - r * G[u][v]['time']
+        return floor(G[u][v]['cost'] - r * G[u][v]['time'])
 
     def calc_ratio(C):
         """Calculate the ratio of the cycle
@@ -58,8 +59,9 @@ def min_cycle_ratio(G: nx.Graph, dist):
         """
         total_cost = sum(G[u][v]['cost'] for (u, v) in C)
         total_time = sum(G[u][v]['time'] for (u, v) in C)
-        return T(total_cost) / total_time
+        return floor(total_cost / total_time)
 
-    C0 = nx.find_cycle(G)
-    r0 = calc_ratio(C0)
-    return max_parametric(G, r0, C0, calc_weight, calc_ratio, dist)
+    # C0 = nx.find_cycle(G)
+    # r0 = calc_ratio(C0)
+    return max_parametric(G, 0, calc_weight, calc_ratio,
+                          dist, constraints_ok)

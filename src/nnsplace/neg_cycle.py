@@ -36,7 +36,7 @@ class negCycleFinder:
                         yield u
                     break
 
-    def relax(self, dist, get_weight):
+    def relax(self, dist, get_weight, constraints_ok):
         """Perform a updating of dist and pred
 
         Arguments:
@@ -52,12 +52,14 @@ class negCycleFinder:
             u, v = e
             d = dist[u] + wt
             if dist[v] > d:
-                dist[v] = d
-                self.pred[v] = u
-                changed = True
+                # TODO additional constraint checks
+                if constraints_ok(dist[v], d):
+                    dist[v] = d
+                    self.pred[v] = u
+                    changed = True
         return changed
 
-    def find_neg_cycle(self, dist, get_weight):
+    def find_neg_cycle(self, dist, get_weight, constraints_ok):
         """Perform a updating of dist and pred
 
         Arguments:
@@ -70,7 +72,7 @@ class negCycleFinder:
         # self.dist = list(0 for _ in self.G)
         self.pred = {}
         found = False
-        while not found and self.relax(dist, get_weight):
+        while not found and self.relax(dist, get_weight, constraints_ok):
             # v = self.find_cycle()
             for v in self.find_cycle():
                 # Will zero cycle be found???
