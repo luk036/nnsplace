@@ -7,7 +7,7 @@ from physdes.point import Point
 from nnsplace.netlist import read_json
 
 
-def test_readjson():
+def test_placement():
     H = read_json("testcases/p1.json")
     # count_2 = 0
     # count_3 = 0
@@ -49,8 +49,9 @@ def test_readjson():
     #     print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"/>"
     #           .format(bbox.x.lb+10, bbox.y.lb+10, bbox.width(), bbox.height()))
 
-    placer.run(place)
+    placer.apply_howard(place, 0)
+    placer.legalize(place, 1)
 
 
 if __name__ == "__main__":
-    test_readjson()
+    test_placement()

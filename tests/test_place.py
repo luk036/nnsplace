@@ -19,7 +19,7 @@ def test_drawf():
     assert place["a1"] == [1, 0]
 
 
-def test_readjson():
+def test_placement():
     H = read_json("testcases/p1.json")
     # count_2 = 0
     # count_3 = 0
@@ -37,7 +37,7 @@ def test_readjson():
     # 00321C
     # EC0000
     placer = NnsPlacer(H, NnsConfig(32, 30, 40, 40))
-    place = [Point(0, 0)] * H.number_of_modules()
+    place = [[0, 0] for _ in range(H.number_of_modules())]
     placer.init_placement(place)
     assert place[1] == [1, 0]
     assert placer.count[1][0] == 32
@@ -45,11 +45,16 @@ def test_readjson():
     assert placer.count[1][27] == 0
     assert placer.count[0][0] == 27
     assert placer.count[0][1] == 26
+    print("Total HPWL before = {}".format(
+              placer.calc_total_hpwl(place)))
+    print("Worst wirelenght before = {}".format(
+              placer.calc_worst_wirelenght(place)))
     placer.run(place)
-    for v in H:
-        p = place[v]
-        print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
-              .format(p[0] * 40, p[1] * 40))
+
+    # for v in H:
+    #     p = place[v]
+    #     print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
+    #           .format(p[0] * 40, p[1] * 40))
     # for net in H.nets:
     #     adjs = iter(H.gr[net])
     #     col, row = place[next(adjs)]
@@ -61,5 +66,9 @@ def test_readjson():
     #         bbox = bbox.hull_with(q)
     #     print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"/>"
     #           .format(bbox.x.lb+10, bbox.y.lb+10, bbox.width(), bbox.height()))
+    print("Total HPWL after = {}".format(
+              placer.calc_total_hpwl(place)))
+    print("Worst wirelenght after = {}".format(
+              placer.calc_worst_wirelenght(place)))
 
     assert(place[1][0] < 0)

@@ -3,7 +3,7 @@ from .neg_cycle import negCycleFinder
 
 
 def max_parametric(gr, r, d, zero_cancel, dist,
-                   constraints_ok, pick_one_only=False):
+                   update_ok, pick_one_only=False):
     """maximum parametric problem:
 
         max  r
@@ -30,7 +30,7 @@ def max_parametric(gr, r, d, zero_cancel, dist,
     C = None
 
     while True:
-        for Ci in S.find_neg_cycle(dist, get_weight, constraints_ok):
+        for Ci in S.find_neg_cycle(dist, get_weight, update_ok):
             ri = zero_cancel(Ci)
             if r_min > ri:
                 r_min = ri
