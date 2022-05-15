@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import networkx as nx
 from math import floor
+
+import networkx as nx
 
 from .parametric import max_parametric
 

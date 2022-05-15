@@ -1,10 +1,12 @@
+from physdes.point import Point
+
+from nnsplace.netlist import create_drawf, read_json
 from nnsplace.placement import NnsPlacer
 from nnsplace.placement_cfg import NnsConfig
-from physdes.point import Point
+
 # from physdes.recti import Rect
 # from physdes.interval import Interval
 
-from nnsplace.netlist import create_drawf, read_json
 
 
 def test_drawf():

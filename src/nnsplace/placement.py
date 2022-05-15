@@ -1,12 +1,14 @@
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Tuple, Union
+
+import networkx as nx
+from networkx.algorithms import bipartite
+from physdes.interval import Interval
+from physdes.point import Point
+from physdes.recti import Rect
+
 from .min_cycle_ratio import min_cycle_ratio
 from .netlist import Netlist
 from .placement_cfg import NnsConfig
-import networkx as nx
-from physdes.point import Point
-from physdes.recti import Rect
-from physdes.interval import Interval
-from networkx.algorithms import bipartite
 
 
 def create_flow_graph(hgr: Netlist):

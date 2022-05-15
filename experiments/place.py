@@ -1,10 +1,12 @@
+from physdes.point import Point
+
+from nnsplace.netlist import read_json
 from nnsplace.placement import NnsPlacer
 from nnsplace.placement_cfg import NnsConfig
-from physdes.point import Point
+
 # from physdes.recti import Rect
 # from physdes.interval import Interval
 
-from nnsplace.netlist import read_json
 
 
 def test_placement():

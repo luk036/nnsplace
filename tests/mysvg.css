@@ -1,15 +1,15 @@
 polygon {
-  fill: #0062FF;
+  fill: #0062ff;
   stroke: black;
 }
 
 circle {
-  fill: #0062FF;
+  fill: #0062ff;
 }
 
 rect.net {
   fill: none;
-  stroke: #00321C;
+  stroke: #00321c;
   stroke-width: 20;
   stroke-opacity: 0.05;
 }
