@@ -52,7 +52,8 @@ class negCycleFinder:
             u, v = e
             d = dist[u] + wt
             if dist[v] > d:
-                # TODO additional constraint checks
+                if d < 0:  # trick
+                    d = 0
                 if update_ok(dist[v], d):
                     dist[v] = d
                     self.pred[v] = u

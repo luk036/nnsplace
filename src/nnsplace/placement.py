@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Union
+from typing import List
 
 import networkx as nx
 from networkx.algorithms import bipartite
@@ -48,7 +48,7 @@ class NnsPlacer:
         # self.count[0] = [0] * cfg.grid_x
         # self.count[1] = [0] * cfg.grid_y
 
-    def init_placement(self, place: Union[List[Tuple[int, int]], Dict]):
+    def init_placement(self, place: List[List[int]]):
         """_summary_
 
         Args:
@@ -57,7 +57,8 @@ class NnsPlacer:
         col = 0
         row = 0
         for v in self.hgr:
-            place[v] = [col, row]
+            place[0][v] = col
+            place[1][v] = row
             self.count[0][col] += 1
             self.count[1][row] += 1
             col += 1
@@ -65,39 +66,38 @@ class NnsPlacer:
                 col = 0
                 row += 1
 
-    def calc_worst_wirelenght(self, place: Union[List[Tuple[int, int]], Dict]):
+    def calc_worst_wirelenght(self, place: List[List[int]]):
         worst_wire = 0
         for u, v in self.gr.edges():
             if u > v:  # only need to calculate one of the two edges
                 continue
-            gruv = abs(place[v][0] - place[u][0]) * self.cfg.delta[0] \
-                + abs(place[v][1] - place[u][1]) * self.cfg.delta[1]
+            gruv = abs(place[0][v] - place[0][u]) * self.cfg.delta[0] \
+                + abs(place[1][v] - place[1][u]) * self.cfg.delta[1]
             if worst_wire < gruv:
                 worst_wire = gruv
         return worst_wire
 
-    def calc_total_hpwl(self, place: Union[List[Tuple[int, int]], Dict]):
+    def calc_total_hpwl(self, place: List[List[int]]):
         total_hpwl = 0
         for net in self.hgr.nets:
             adjs = iter(self.hgr.gr[net])
-            col, row = place[next(adjs)]
-            p = Point(col, row)
+            v = next(adjs)
+            p = Point(place[0][v], place[1][v])
             bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
             for v in adjs:
-                col, row = place[v]
-                q = Point(col, row)
+                q = Point(place[0][v], place[1][v])
                 bbox = bbox.hull_with(q)
             total_hpwl += self.cfg.delta[0] * bbox.width() \
                 + self.cfg.delta[1] * bbox.height()
         return total_hpwl
 
-    def apply_howard(self, place: List[Tuple[int, int]], dir):
+    def apply_howard(self, place: List[List[int]], dir):
         ops = dir ^ 1
         grid_dir = self.cfg.grid[dir]
         grid_ops = self.cfg.grid[ops]
 
         def update_ok(p, d):
-            if d < 0 or d >= grid_dir:
+            if d >= grid_dir:
                 return False
             if self.count[dir][d] >= grid_ops:
                 return False
@@ -105,27 +105,25 @@ class NnsPlacer:
             self.count[dir][p] -= 1
             return True
 
-        dist = [place[v][dir] for v in self.gr]
         # set_default(self.gr, 'time', 1.0 / self.cfg.delta[dir])
         time = 1.0 / self.cfg.delta[dir]
         factor = self.cfg.delta[ops] / self.cfg.delta[dir]
         for u, v in self.gr.edges():
             # TODO: Find out how to formulate?
-            gruv = abs(place[v][ops] - place[u][ops])
+            gruv = abs(place[ops][v] - place[ops][u])
             self.gr[u][v]['cost'] = -gruv * factor
             # self.gr[u][v]['cost'] = 0
             self.gr[u][v]['time'] = time
-        res, _ = min_cycle_ratio(self.gr, dist, update_ok)
-        for v in self.gr:
-            place[v][dir] = dist[v]
+        res, _ = min_cycle_ratio(self.gr, place[dir], update_ok)
 
         return res
 
-    def legalize(self, place: Union[List[Tuple[int, int]], Dict], dir):
+    def legalize(self, place: List[List[int]], dir):
         ops = dir ^ 1
         bucket = [list() for _ in range(self.cfg.grid[ops])]
         for v in self.hgr:
-            bucket[place[v][ops]].append(v)
+            bucket[place[ops][v]].append(v)
+
         for lst in bucket:
             if not lst:
                 continue
@@ -135,7 +133,7 @@ class NnsPlacer:
             B.add_nodes_from(lst, bipartite=0)
             for v in lst:
                 # construct bipartite graph
-                p = place[v][dir]
+                p = place[dir][v]
                 q = p + self.hgr.number_of_modules()  # avoid same name
                 B.add_node(q, bipartite=1)
                 B.add_edge(v, q, weight=0)
@@ -152,20 +150,22 @@ class NnsPlacer:
             # reassign the results
             for v in lst:
                 q = matches[v] - self.hgr.number_of_modules()
-                if place[v][dir] == q:
+                if place[dir][v] == q:
                     continue
                 # Update position and self.count
-                self.count[dir][place[v][dir]] -= 1
+                self.count[dir][place[dir][v]] -= 1
                 self.count[dir][q] += 1
-                place[v][dir] = q
+                place[dir][v] = q
         return
 
-    def run(self, place: Union[List[Tuple[int, int]], Dict]):
+    def run(self, place: List[List[int]]):
         dir = 0
         ops = 1
         for _ in range(20):
             _ = self.apply_howard(place, dir)
             self.legalize(place, ops)
+            hpwl = self.calc_total_hpwl(place)
+            worst = self.calc_worst_wirelenght(place)
             dir, ops = ops, dir
         # TODO: when to stop
         return

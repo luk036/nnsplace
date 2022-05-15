@@ -8,51 +8,54 @@ from nnsplace.placement_cfg import NnsConfig
 # from physdes.interval import Interval
 
 
-
 def test_placement():
     H = read_json("testcases/p1.json")
-    # count_2 = 0
-    # count_3 = 0
-    # count_rest = 0
-    # for net in H.nets:
-    #     deg = H.G.degree(net)
-    #     if deg == 2:
-    #         count_2 += 1
-    #     elif deg == 3:
-    #         count_3 += 1
-    #     else:
-    #         count_rest += 1
-    # print(count_2, count_3, count_rest)
-    # assert count_2 == 494
-    # 00321C
-    # EC0000
     placer = NnsPlacer(H, NnsConfig(32, 30, 40, 40))
-    place = [Point(0, 0)] * H.number_of_modules()
+    place = [[], []]
+    place[0] = [0 for _ in range(H.number_of_modules())]  # x-direction
+    place[1] = [0 for _ in range(H.number_of_modules())]  # y-direction
     placer.init_placement(place)
-    assert place[1] == [1, 0]
+    assert place[0][1] == 1
+    assert place[1][1] == 0
     assert placer.count[1][0] == 32
     assert placer.count[1][26] == 1
     assert placer.count[1][27] == 0
     assert placer.count[0][0] == 27
     assert placer.count[0][1] == 26
+    print("Total HPWL before = {}".format(
+              placer.calc_total_hpwl(place)))
+    print("Worst wirelenght before = {}".format(
+              placer.calc_worst_wirelenght(place)))
+    # placer.run(place)
+
     # for v in H:
-    #     p = place[v]
-    #     print("<use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
-    #           .format(p.x, p.y))
-    # for net in H.nets:
-    #     adjs = iter(H.gr[net])
-    #     col, row = place[next(adjs)]
-    #     p = Point(40 * col, 40 * row)
-    #     bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
-    #     for v in adjs:
-    #         col, row = place[v]
-    #         q = Point(40 * col, 40 * row)
-    #         bbox = bbox.hull_with(q)
-    #     print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"/>"
-    #           .format(bbox.x.lb+10, bbox.y.lb+10, bbox.width(), bbox.height()))
+    #     print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
+    #           .format(place[0][v] * 40, place[1][v] * 40))
+
+#     for net in H.nets:
+#         adjs = iter(H.gr[net])
+#         v = next(adjs)
+#         p = Point(place[0][v], place[1][v])
+#         bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
+#         for v in adjs:
+#             q = Point(place[0][v], place[1][v])
+#             bbox = bbox.hull_with(q)
+#         x = bbox.x.lb * 40 + 10
+#         y = bbox.y.lb * 40 + 10
+#         width = bbox.width() * 40
+#         height = bbox.height() * 40
+#         print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" \
+# height=\"{}\"/>".format(x, y, width, height))
+
+    print("Total HPWL after = {}".format(
+              placer.calc_total_hpwl(place)))
+    print("Worst wirelenght after = {}".format(
+              placer.calc_worst_wirelenght(place)))
 
     placer.apply_howard(place, 0)
     placer.legalize(place, 1)
+    placer.apply_howard(place, 1)
+    placer.legalize(place, 0)
 
 
 if __name__ == "__main__":

@@ -31,9 +31,12 @@ ________________________________ test_placement ________________________________
         # 00321C
         # EC0000
         placer = NnsPlacer(H, NnsConfig(32, 30, 40, 40))
-        place = [[0, 0] for _ in range(H.number_of_modules())]
+        place = [[], []]
+        place[0] = [0 for _ in range(H.number_of_modules())]  # x-direction
+        place[1] = [0 for _ in range(H.number_of_modules())]  # y-direction
         placer.init_placement(place)
-        assert place[1] == [1, 0]
+        assert place[0][1] == 1
+        assert place[1][1] == 0
         assert placer.count[1][0] == 32
         assert placer.count[1][26] == 1
         assert placer.count[1][27] == 0
@@ -46,33 +49,36 @@ ________________________________ test_placement ________________________________
         placer.run(place)
     
         # for v in H:
-        #     p = place[v]
         #     print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
-        #           .format(p[0] * 40, p[1] * 40))
-        # for net in H.nets:
-        #     adjs = iter(H.gr[net])
-        #     col, row = place[next(adjs)]
-        #     p = Point(40 * col, 40 * row)
-        #     bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
-        #     for v in adjs:
-        #         col, row = place[v]
-        #         q = Point(40 * col, 40 * row)
-        #         bbox = bbox.hull_with(q)
-        #     print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"/>"
-        #           .format(bbox.x.lb+10, bbox.y.lb+10, bbox.width(), bbox.height()))
+        #           .format(place[0][v] * 40, place[1][v] * 40))
+    #     for net in H.nets:
+    #         adjs = iter(H.gr[net])
+    #         v = next(adjs)
+    #         p = Point(place[0][v], place[1][v])
+    #         bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
+    #         for v in adjs:
+    #             q = Point(place[0][v], place[1][v])
+    #             bbox = bbox.hull_with(q)
+    #         x = bbox.x.lb * 40 + 10
+    #         y = bbox.y.lb * 40 + 10
+    #         width = bbox.width() * 40
+    #         height = bbox.height() * 40
+    #         print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" \
+    # height=\"{}\"/>".format(x, y, width, height))
+    
         print("Total HPWL after = {}".format(
                   placer.calc_total_hpwl(place)))
         print("Worst wirelenght after = {}".format(
                   placer.calc_worst_wirelenght(place)))
     
->       assert(place[1][0] < 0)
+>       assert(place[0][1] < 0)
 E       assert 1 < 0
 
-tests/test_place.py:74: AssertionError
+tests/test_place.py:81: AssertionError
 ----------------------------- Captured stdout call -----------------------------
 Total HPWL before = 547280
 Worst wirelenght before = 2200
-Total HPWL after = 800320
+Total HPWL after = 786760
 Worst wirelenght after = 2200
 
 ---------- coverage: platform linux, python 3.9.12-final-0 -----------
@@ -82,15 +88,15 @@ src/nnsplace/__init__.py              6      0      0      0   100%
 src/nnsplace/array_like.py           23      9      0      0    61%   26, 34, 42, 54, 57-58, 66, 77, 86
 src/nnsplace/bpqueue.py              89     89     28      0     0%   2-289
 src/nnsplace/dllist.py               63     63      2      0     0%   1-330
-src/nnsplace/min_cycle_ratio.py      17      3      8      0    72%   18-20
-src/nnsplace/neg_cycle.py            57      2     25      2    95%   35->37, 121-122
+src/nnsplace/min_cycle_ratio.py      16      3      8      0    71%   14-16
+src/nnsplace/neg_cycle.py            59      2     27      2    95%   35->37, 122-123
 src/nnsplace/netlist.py             116     44     14      0    57%   28, 87, 95, 103, 111, 122, 145, 234-260, 275-280, 295, 313-319, 323-338
 src/nnsplace/parametric.py           19      1      8      1    93%   39
-src/nnsplace/placement.py           122      1     58      1    99%   129
+src/nnsplace/placement.py           119      2     54      2    98%   101, 129
 src/nnsplace/placement_cfg.py         4      0      0      0   100%
 -----------------------------------------------------------------------------
-TOTAL                               516    212    143      4    60%
+TOTAL                               514    213    141      5    60%
 
 =========================== short test summary info ============================
 FAILED tests/test_place.py::test_placement - assert 1 < 0
-========================= 1 failed, 1 passed in 12.57s =========================
+========================= 1 failed, 1 passed in 12.55s =========================
