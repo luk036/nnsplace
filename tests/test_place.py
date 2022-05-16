@@ -2,9 +2,9 @@ from nnsplace.netlist import create_drawf, read_json
 from nnsplace.placement import NnsPlacer
 from nnsplace.placement_cfg import NnsConfig
 
-# from physdes.point import Point
-# from physdes.recti import Rect
-# from physdes.interval import Interval
+from physdes.point import Point
+from physdes.recti import Rect
+from physdes.interval import Interval
 
 
 def test_drawf():
@@ -49,15 +49,25 @@ def test_placement():
     assert placer.count[1][27] == 0
     assert placer.count[0][0] == 27
     assert placer.count[0][1] == 26
-    print("Total HPWL before = {}".format(
-              placer.calc_total_hpwl(place)))
+    hpwl_x, hpwl_y = placer.calc_total_hpwl(place)
+    print("Total HPWL before = {} + {} = {}".format(
+              hpwl_x, hpwl_y, hpwl_x + hpwl_y))
     print("Worst wirelenght before = {}".format(
               placer.calc_worst_wirelenght(place)))
-    placer.run(place)
 
-    # for v in H:
-    #     print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
-    #           .format(place[0][v] * 40, place[1][v] * 40))
+    niter, worst = placer.run(place)
+    # placer.apply_howard(place, 0)
+    # placer.legalize(place, 1)
+
+    print("Number of iterations = {}".format(niter))
+    hpwl_x, hpwl_y = placer.calc_total_hpwl(place)
+    print("Total HPWL after = {} + {} = {}".format(
+              hpwl_x, hpwl_y, hpwl_x + hpwl_y))
+    print("Worst wirelenght after = {}".format(worst))
+
+    for v in H:
+        print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
+              .format(place[0][v] * 40, place[1][v] * 40))
 #     for net in H.nets:
 #         adjs = iter(H.gr[net])
 #         v = next(adjs)
@@ -72,10 +82,5 @@ def test_placement():
 #         height = bbox.height() * 40
 #         print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" \
 # height=\"{}\"/>".format(x, y, width, height))
-
-    print("Total HPWL after = {}".format(
-              placer.calc_total_hpwl(place)))
-    print("Worst wirelenght after = {}".format(
-              placer.calc_worst_wirelenght(place)))
 
     assert(place[0][1] < 0)

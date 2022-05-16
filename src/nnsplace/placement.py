@@ -77,8 +77,19 @@ class NnsPlacer:
                 worst_wire = gruv
         return worst_wire
 
+    def calc_worst_wirelenght_axis(self, place: List[List[int]], dir):
+        worst_wire = 0
+        for u, v in self.gr.edges():
+            if u > v:  # only need to calculate one of the two edges
+                continue
+            gruv = abs(place[dir][v] - place[dir][u]) * self.cfg.delta[dir]
+            if worst_wire < gruv:
+                worst_wire = gruv
+        return worst_wire
+
     def calc_total_hpwl(self, place: List[List[int]]):
-        total_hpwl = 0
+        total_hpwl_x = 0
+        total_hpwl_y = 0
         for net in self.hgr.nets:
             adjs = iter(self.hgr.gr[net])
             v = next(adjs)
@@ -87,9 +98,9 @@ class NnsPlacer:
             for v in adjs:
                 q = Point(place[0][v], place[1][v])
                 bbox = bbox.hull_with(q)
-            total_hpwl += self.cfg.delta[0] * bbox.width() \
-                + self.cfg.delta[1] * bbox.height()
-        return total_hpwl
+            total_hpwl_x += self.cfg.delta[0] * bbox.width()
+            total_hpwl_y += self.cfg.delta[1] * bbox.height()
+        return total_hpwl_x, total_hpwl_y
 
     def apply_howard(self, place: List[List[int]], dir):
         ops = dir ^ 1
@@ -97,7 +108,7 @@ class NnsPlacer:
         grid_ops = self.cfg.grid[ops]
 
         def update_ok(p, d):
-            if d >= grid_dir:
+            if d < 0 or d >= grid_dir:
                 return False
             if self.count[dir][d] >= grid_ops:
                 return False
@@ -114,9 +125,10 @@ class NnsPlacer:
             self.gr[u][v]['cost'] = -gruv * factor
             # self.gr[u][v]['cost'] = 0
             self.gr[u][v]['time'] = time
-        res, _ = min_cycle_ratio(self.gr, place[dir], update_ok)
+        r0 = -self.calc_worst_wirelenght_axis(place, dir)
+        res, _ = min_cycle_ratio(self.gr, place[dir], update_ok, r0)
 
-        return res
+        return -res
 
     def legalize(self, place: List[List[int]], dir):
         ops = dir ^ 1
@@ -137,7 +149,7 @@ class NnsPlacer:
                 q = p + self.hgr.number_of_modules()  # avoid same name
                 B.add_node(q, bipartite=1)
                 B.add_edge(v, q, weight=0)
-                m = 12
+                m = 10
                 for i in range(1, m):  # TODO: increase m if no sol'n
                     if p - i >= 0:
                         B.add_node(q - i, bipartite=1)
@@ -161,11 +173,15 @@ class NnsPlacer:
     def run(self, place: List[List[int]]):
         dir = 0
         ops = 1
-        for _ in range(20):
+        worst0 = self.calc_worst_wirelenght(place)
+        max_iter = 2000
+        for niter in range(1, max_iter):
             _ = self.apply_howard(place, dir)
             self.legalize(place, ops)
-            hpwl = self.calc_total_hpwl(place)
-            worst = self.calc_worst_wirelenght(place)
+            worst1 = self.calc_worst_wirelenght(place)
+            # TODO: when to stop
+            if worst1 > worst0:
+                return niter, worst1
+            worst0 = worst1
             dir, ops = ops, dir
-        # TODO: when to stop
-        return
+        return niter, worst1

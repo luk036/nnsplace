@@ -28,9 +28,15 @@ def max_parametric(gr, r, d, zero_cancel, dist,
     S = negCycleFinder(gr)
     r_min = r
     C = None
+    reverse = True
 
     while True:
-        for Ci in S.find_neg_cycle(dist, get_weight, update_ok):
+        if reverse:
+            cycles = S.find_neg_cycle_succ(dist, get_weight, update_ok)
+        else:
+            cycles = S.find_neg_cycle_pred(dist, get_weight, update_ok)
+
+        for Ci in cycles:
             ri = zero_cancel(Ci)
             if r_min > ri:
                 r_min = ri
@@ -42,6 +48,7 @@ def max_parametric(gr, r, d, zero_cancel, dist,
 
         C = C_min
         r = r_min
+        reverse = not reverse
     return r, C
 
 # if __name__ == "__main__":

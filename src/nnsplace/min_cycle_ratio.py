@@ -1,5 +1,7 @@
 from math import floor
+
 import networkx as nx
+
 from .parametric import max_parametric
 
 
@@ -16,7 +18,7 @@ def set_default(G: nx.DiGraph, weight, value):
             G[u][v][weight] = value
 
 
-def min_cycle_ratio(G: nx.DiGraph, dist, update_ok):
+def min_cycle_ratio(G: nx.DiGraph, dist, update_ok, r0):
     """[summary] todo: parameterize cost and time
 
     Arguments:
@@ -59,5 +61,5 @@ def min_cycle_ratio(G: nx.DiGraph, dist, update_ok):
 
     # C0 = nx.find_cycle(G)
     # r0 = calc_ratio(C0)
-    return max_parametric(G, 0, calc_weight, calc_ratio,
+    return max_parametric(G, r0, calc_weight, calc_ratio,
                           dist, update_ok)

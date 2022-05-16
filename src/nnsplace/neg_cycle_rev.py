@@ -6,8 +6,7 @@ Negative cycle detection for weighed graphs.
 from typing import Dict
 
 
-class negCycleFinder:
-    pred: Dict = {}
+class negCycleFinderRev:
     succ: Dict = {}
 
     def __init__(self, G):
@@ -18,7 +17,7 @@ class negCycleFinder:
         """
         self.G = G
 
-    def find_cycle(self, point_to):
+    def find_cycle(self):
         """Find a cycle on the policy graph
 
         Yields:
@@ -29,16 +28,16 @@ class negCycleFinder:
             u = v
             while True:
                 visited[u] = v
-                if u not in point_to:
+                if u not in self.succ:
                     break
-                u = point_to[u]
+                u = self.succ[u]
                 if u in visited:
                     if visited[u] == v:
                         yield u
                     break
 
-    def relax_pred(self, dist, get_weight, update_ok):
-        """Perform a updating of dist and pred
+    def relax(self, dist, get_weight, update_ok):
+        """Perform a updating of dist and succ
 
         Arguments:
             dist (Union[List, Dict]): [description]
@@ -51,29 +50,7 @@ class negCycleFinder:
         for e in self.G.edges():
             wt = get_weight(e)
             u, v = e
-            d = dist[u] + wt
-            if dist[v] > d:
-                if update_ok(dist[v], d):
-                    dist[v] = d
-                    self.pred[v] = u
-                    changed = True
-        return changed
-
-    def relax_succ(self, dist, get_weight, update_ok):
-        """Perform a updating of dist and pred
-
-        Arguments:
-            dist (Union[List, Dict]): [description]
-            get_weight (Callable): [description]
-
-        Returns:
-            [type]: [description]
-        """
-        changed = False
-        for e in self.G.edges():
-            wt = get_weight(e)
-            u, v = e
-            d = dist[u] - wt
+            d = (dist[u] - wt) if wt < 0 else dist[u]
             if dist[v] < d:
                 if update_ok(dist[v], d):
                     dist[v] = d
@@ -81,28 +58,7 @@ class negCycleFinder:
                     changed = True
         return changed
 
-    def find_neg_cycle_pred(self, dist, get_weight, update_ok):
-        """Perform a updating of dist and pred
-
-        Arguments:
-            dist (Union[List, Dict]): [description]
-            get_weight (Callable): [description]
-
-        Yields:
-            list of edges: cycle list
-        """
-        # self.dist = list(0 for _ in self.G)
-        self.pred = {}
-        found = False
-        while not found and self.relax_pred(dist, get_weight, update_ok):
-            # v = self.find_cycle()
-            for v in self.find_cycle(self.pred):
-                # Will zero cycle be found???
-                # assert self.is_negative(v, dist, get_weight)
-                found = True
-                yield self.cycle_list(v, self.pred)
-
-    def find_neg_cycle_succ(self, dist, get_weight, update_ok):
+    def find_neg_cycle(self, dist, get_weight, update_ok):
         """Perform a updating of dist and succ
 
         Arguments:
@@ -115,15 +71,15 @@ class negCycleFinder:
         # self.dist = list(0 for _ in self.G)
         self.succ = {}
         found = False
-        while not found and self.relax_succ(dist, get_weight, update_ok):
+        while not found and self.relax(dist, get_weight, update_ok):
             # v = self.find_cycle()
-            for v in self.find_cycle(self.succ):
+            for v in self.find_cycle():
                 # Will zero cycle be found???
-                # assert self.is_negative(v, dist, get_weight)
+                assert self.is_negative(v, dist, get_weight)
                 found = True
-                yield self.cycle_list(v, self.succ)
+                yield self.cycle_list(v)
 
-    def cycle_list(self, handle, point_to):
+    def cycle_list(self, handle):
         """Cycle list started from handle
 
         Arguments:
@@ -135,7 +91,7 @@ class negCycleFinder:
         v = handle
         cycle = list()
         while True:
-            u = point_to[v]
+            u = self.succ[v]
             cycle += [(u, v)]
             v = u
             if v == handle:
@@ -155,7 +111,7 @@ class negCycleFinder:
         v = handle
         # do while loop in C++
         while True:
-            u = self.pred[v]
+            u = self.succ[v]
             wt = get_weight((u, v))
             if dist[v] > dist[u] + wt:
                 return True
