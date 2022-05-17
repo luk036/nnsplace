@@ -73,11 +73,11 @@ class negCycleFinder:
         for e in self.G.edges():
             wt = get_weight(e)
             u, v = e
-            d = dist[u] - wt
-            if dist[v] < d:
-                if update_ok(dist[v], d):
-                    dist[v] = d
-                    self.succ[v] = u
+            d = dist[v] - wt
+            if dist[u] < d:
+                if update_ok(dist[u], d):
+                    dist[u] = d
+                    self.succ[u] = v
                     changed = True
         return changed
 

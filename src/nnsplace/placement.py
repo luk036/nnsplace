@@ -67,6 +67,14 @@ class NnsPlacer:
                 row += 1
 
     def calc_worst_wirelenght(self, place: List[List[int]]):
+        """_summary_
+
+        Args:
+            place (List[List[int]]): _description_
+
+        Returns:
+            _type_: _description_
+        """
         worst_wire = 0
         for u, v in self.gr.edges():
             if u > v:  # only need to calculate one of the two edges
@@ -78,6 +86,15 @@ class NnsPlacer:
         return worst_wire
 
     def calc_worst_wirelenght_axis(self, place: List[List[int]], dir):
+        """_summary_
+
+        Args:
+            place (List[List[int]]): _description_
+            dir (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         worst_wire = 0
         for u, v in self.gr.edges():
             if u > v:  # only need to calculate one of the two edges
@@ -88,6 +105,14 @@ class NnsPlacer:
         return worst_wire
 
     def calc_total_hpwl(self, place: List[List[int]]):
+        """_summary_
+
+        Args:
+            place (List[List[int]]): _description_
+
+        Returns:
+            _type_: _description_
+        """
         total_hpwl_x = 0
         total_hpwl_y = 0
         for net in self.hgr.nets:
@@ -103,6 +128,15 @@ class NnsPlacer:
         return total_hpwl_x, total_hpwl_y
 
     def apply_howard(self, place: List[List[int]], dir):
+        """_summary_
+
+        Args:
+            place (List[List[int]]): _description_
+            dir (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         ops = dir ^ 1
         grid_dir = self.cfg.grid[dir]
         grid_ops = self.cfg.grid[ops]
@@ -125,12 +159,18 @@ class NnsPlacer:
             self.gr[u][v]['cost'] = -gruv * factor
             # self.gr[u][v]['cost'] = 0
             self.gr[u][v]['time'] = time
-        r0 = -self.calc_worst_wirelenght_axis(place, dir)
-        res, _ = min_cycle_ratio(self.gr, place[dir], update_ok, r0)
+        # r0 = -self.calc_worst_wirelenght_axis(place, ops)
+        res, _ = min_cycle_ratio(self.gr, place[dir], update_ok, -1)
 
         return -res
 
     def legalize(self, place: List[List[int]], dir):
+        """_summary_
+
+        Args:
+            place (List[List[int]]): _description_
+            dir (_type_): _description_
+        """
         ops = dir ^ 1
         bucket = [list() for _ in range(self.cfg.grid[ops])]
         for v in self.hgr:
@@ -149,7 +189,7 @@ class NnsPlacer:
                 q = p + self.hgr.number_of_modules()  # avoid same name
                 B.add_node(q, bipartite=1)
                 B.add_edge(v, q, weight=0)
-                m = 10
+                m = 35
                 for i in range(1, m):  # TODO: increase m if no sol'n
                     if p - i >= 0:
                         B.add_node(q - i, bipartite=1)
@@ -171,6 +211,14 @@ class NnsPlacer:
         return
 
     def run(self, place: List[List[int]]):
+        """_summary_
+
+        Args:
+            place (List[List[int]]): _description_
+
+        Returns:
+            _type_: _description_
+        """
         dir = 0
         ops = 1
         worst0 = self.calc_worst_wirelenght(place)

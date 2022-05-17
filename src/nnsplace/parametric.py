@@ -28,7 +28,7 @@ def max_parametric(gr, r, d, zero_cancel, dist,
     S = negCycleFinder(gr)
     r_min = r
     C = None
-    reverse = True
+    reverse = False
 
     while True:
         if reverse:
