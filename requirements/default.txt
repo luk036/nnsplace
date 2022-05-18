@@ -1,2 +1,4 @@
 decorator>=4.1.0
 networkx>=2.1
+scipy>=1.8
+# Note: networkx.bipartite.minimum_weight_full_matching() requires scipy

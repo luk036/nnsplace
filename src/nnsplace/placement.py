@@ -183,13 +183,14 @@ class NnsPlacer:
             B = nx.Graph()
             # Add nodes with the node attribute "bipartite"
             B.add_nodes_from(lst, bipartite=0)
+
+            m = 30
             for v in lst:
                 # construct bipartite graph
                 p = place[dir][v]
                 q = p + self.hgr.number_of_modules()  # avoid same name
                 B.add_node(q, bipartite=1)
                 B.add_edge(v, q, weight=0)
-                m = 35
                 for i in range(1, m):  # TODO: increase m if no sol'n
                     if p - i >= 0:
                         B.add_node(q - i, bipartite=1)
@@ -197,8 +198,35 @@ class NnsPlacer:
                     if p + i < self.cfg.grid[dir]:
                         B.add_node(q + i, bipartite=1)
                         B.add_edge(v, q + i, weight=i)
+
             # solve the matching problem
-            matches = bipartite.minimum_weight_full_matching(B)
+            i = m
+            matched = False
+            while not matched:
+                try:
+                    matches = bipartite.minimum_weight_full_matching(B)
+                    for v in lst:
+                        _ = matches[v]
+                    matched = True
+                    break
+                except ValueError:
+                    pass
+                except KeyError:
+                    pass
+
+                # increase the number of edges if no sol'n
+                for v in lst:
+                    # construct bipartite graph
+                    p = place[dir][v]
+                    q = p + self.hgr.number_of_modules()  # avoid same name
+                    if p - i >= 0:
+                        B.add_node(q - i, bipartite=1)
+                        B.add_edge(v, q - i, weight=i)
+                    if p + i < self.cfg.grid[dir]:
+                        B.add_node(q + i, bipartite=1)
+                        B.add_edge(v, q + i, weight=i)
+                i += 1
+
             # reassign the results
             for v in lst:
                 q = matches[v] - self.hgr.number_of_modules()
