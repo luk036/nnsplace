@@ -85,12 +85,29 @@ class NnsPlacer:
                 worst_wire = gruv
         return worst_wire
 
-    def calc_worst_wirelenght_axis(self, place: List[List[int]], dir):
+    def calc_worst_wirelenght_v(self, v, place: List[List[int]]):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
-            dir (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        worst_wire = 0
+        for u in self.gr.neighbors(v):
+            gruv = abs(place[0][v] - place[0][u]) * self.cfg.delta[0] \
+                + abs(place[1][v] - place[1][u]) * self.cfg.delta[1]
+            if worst_wire < gruv:
+                worst_wire = gruv
+        return worst_wire
+
+    def calc_worst_wirelenght_axis(self, place: List[List[int]], axis):
+        """_summary_
+
+        Args:
+            place (List[List[int]]): _description_
+            axis (_type_): _description_
 
         Returns:
             _type_: _description_
@@ -99,7 +116,7 @@ class NnsPlacer:
         for u, v in self.gr.edges():
             if u > v:  # only need to calculate one of the two edges
                 continue
-            gruv = abs(place[dir][v] - place[dir][u]) * self.cfg.delta[dir]
+            gruv = abs(place[axis][v] - place[axis][u]) * self.cfg.delta[axis]
             if worst_wire < gruv:
                 worst_wire = gruv
         return worst_wire
@@ -127,58 +144,83 @@ class NnsPlacer:
             total_hpwl_y += self.cfg.delta[1] * bbox.height()
         return total_hpwl_x, total_hpwl_y
 
-    def apply_howard(self, place: List[List[int]], dir):
+    def apply_howard(self, place: List[List[int]], axis):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
-            dir (_type_): _description_
+            axis (_type_): _description_
 
         Returns:
             _type_: _description_
         """
-        ops = dir ^ 1
-        grid_dir = self.cfg.grid[dir]
-        grid_ops = self.cfg.grid[ops]
+        oppo = axis ^ 1
+        grid_axis = self.cfg.grid[axis]
+        grid_oppo = self.cfg.grid[oppo]
+        count = self.count[axis]
 
         def update_ok(p, d):
-            if d < 0 or d >= grid_dir:
+            if d < 0 or d >= grid_axis:
                 return False
-            if self.count[dir][d] >= grid_ops:
+            if self.count[axis][d] >= grid_oppo:
                 return False
-            self.count[dir][d] += 1
-            self.count[dir][p] -= 1
+            count[d] += 1
+            count[p] -= 1
             return True
 
         # set_default(self.gr, 'time', 1.0 / self.cfg.delta[dir])
-        time = 1.0 / self.cfg.delta[dir]
-        factor = self.cfg.delta[ops] / self.cfg.delta[dir]
+        time = 1.0 / self.cfg.delta[axis]
+        factor = self.cfg.delta[oppo] / self.cfg.delta[axis]
+        dist = place[oppo]
+        worst = 0
         for u, v in self.gr.edges():
             # TODO: Find out how to formulate?
-            gruv = abs(place[ops][v] - place[ops][u])
+            gruv = abs(dist[v] - dist[u])
             self.gr[u][v]['cost'] = -gruv * factor
             # self.gr[u][v]['cost'] = 0
             self.gr[u][v]['time'] = time
-        # r0 = -self.calc_worst_wirelenght_axis(place, ops)
-        res, _ = min_cycle_ratio(self.gr, place[dir], update_ok, -1)
+            if worst < gruv:
+                worst = gruv
+        # r0 = -self.calc_worst_wirelenght_axis(place, oppo)
+        res, C = min_cycle_ratio(self.gr, place[axis], update_ok, 0)
+        return -res, C
 
-        return -res
+    def add_bipartite_edge(self, lst, B, place, i, grid, axis):
+        # increase the number of edges if no sol'n
+        for v in lst:
+            # construct bipartite graph
+            p = place[axis][v]
+            q = p + self.hgr.number_of_modules()  # avoid same name
+            weight0 = self.calc_worst_wirelenght_v(v, place)
+            if p - i >= 0:
+                place[axis][v] -= i  # temporily set the position
+                weight1 = self.calc_worst_wirelenght_v(v, place)
+                place[axis][v] += i  # reset the position
+                B.add_node(q - i, bipartite=1)
+                B.add_edge(v, q - i, weight=weight1 - weight0)
+            if p + i < grid:
+                place[axis][v] += i  # temporily set the position
+                weight1 = self.calc_worst_wirelenght_v(v, place)
+                place[axis][v] -= i  # reset the position
+                B.add_node(q + i, bipartite=1)
+                B.add_edge(v, q + i, weight=weight1 - weight0)
 
-    def legalize(self, place: List[List[int]], dir):
+    def legalize(self, place: List[List[int]], axis):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
-            dir (_type_): _description_
+            axis (_type_): _description_
         """
-        ops = dir ^ 1
-        bucket = [list() for _ in range(self.cfg.grid[ops])]
+        bucket = [list() for _ in range(self.cfg.grid[axis ^ 1])]
+        dist = place[axis ^ 1]
         for v in self.hgr:
-            bucket[place[ops][v]].append(v)
+            bucket[dist[v]].append(v)
 
-        for lst in bucket:
-            if not lst:
-                continue
+        dist = place[axis]
+        count = self.count[axis]
+        grid = self.cfg.grid[axis]
+        for lst in filter(lambda lst: lst, bucket):
             # construct bipartite graph
             B = nx.Graph()
             # Add nodes with the node attribute "bipartite"
@@ -187,17 +229,11 @@ class NnsPlacer:
             m = 30
             for v in lst:
                 # construct bipartite graph
-                p = place[dir][v]
-                q = p + self.hgr.number_of_modules()  # avoid same name
+                q = dist[v] + self.hgr.number_of_modules()  # avoid same name
                 B.add_node(q, bipartite=1)
                 B.add_edge(v, q, weight=0)
-                for i in range(1, m):  # TODO: increase m if no sol'n
-                    if p - i >= 0:
-                        B.add_node(q - i, bipartite=1)
-                        B.add_edge(v, q - i, weight=i)
-                    if p + i < self.cfg.grid[dir]:
-                        B.add_node(q + i, bipartite=1)
-                        B.add_edge(v, q + i, weight=i)
+            for i in range(1, m):
+                self.add_bipartite_edge(lst, B, place, i, grid, axis)
 
             # solve the matching problem
             i = m
@@ -208,37 +244,24 @@ class NnsPlacer:
                     for v in lst:
                         _ = matches[v]
                     matched = True
-                    break
                 except ValueError:
-                    pass
+                    self.add_bipartite_edge(lst, B, place, i, grid, axis)
                 except KeyError:
-                    pass
-
-                # increase the number of edges if no sol'n
-                for v in lst:
-                    # construct bipartite graph
-                    p = place[dir][v]
-                    q = p + self.hgr.number_of_modules()  # avoid same name
-                    if p - i >= 0:
-                        B.add_node(q - i, bipartite=1)
-                        B.add_edge(v, q - i, weight=i)
-                    if p + i < self.cfg.grid[dir]:
-                        B.add_node(q + i, bipartite=1)
-                        B.add_edge(v, q + i, weight=i)
+                    self.add_bipartite_edge(lst, B, place, i, grid, axis)
                 i += 1
 
             # reassign the results
             for v in lst:
                 q = matches[v] - self.hgr.number_of_modules()
-                if place[dir][v] == q:
+                if dist[v] == q:
                     continue
                 # Update position and self.count
-                self.count[dir][place[dir][v]] -= 1
-                self.count[dir][q] += 1
-                place[dir][v] = q
+                count[dist[v]] -= 1
+                count[q] += 1
+                dist[v] = q
         return
 
-    def run(self, place: List[List[int]]):
+    def run(self, place: List[List[int]], max_iter=2000):
         """_summary_
 
         Args:
@@ -247,17 +270,18 @@ class NnsPlacer:
         Returns:
             _type_: _description_
         """
-        dir = 0
-        ops = 1
         worst0 = self.calc_worst_wirelenght(place)
-        max_iter = 2000
+        place0 = [place[0].copy(), place[1].copy()]
         for niter in range(1, max_iter):
-            _ = self.apply_howard(place, dir)
-            self.legalize(place, ops)
+            r1, C1 = self.apply_howard(place, 0)
+            self.legalize(place, 1)
+            r2, C2 = self.apply_howard(place, 1)
+            self.legalize(place, 0)
             worst1 = self.calc_worst_wirelenght(place)
             # TODO: when to stop
             if worst1 > worst0:
+                place = place0
                 return niter, worst1
             worst0 = worst1
-            dir, ops = ops, dir
+            place0 = [place[0].copy(), place[1].copy()]
         return niter, worst1

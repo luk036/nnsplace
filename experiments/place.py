@@ -27,12 +27,12 @@ def test_placement():
     print("Worst wirelenght before = {}".format(
               placer.calc_worst_wirelenght(place)))
 
-    # niter, worst = placer.run(place)
-    placer.apply_howard(place, 0)
-    placer.legalize(place, 1)
-    placer.apply_howard(place, 1)
-    placer.legalize(place, 0)
-    worst = placer.calc_worst_wirelenght(place)
+    niter, worst = placer.run(place)
+    # placer.apply_howard(place, 0)
+    # placer.legalize(place, 1)
+    # placer.apply_howard(place, 1)
+    # placer.legalize(place, 0)
+    # worst = placer.calc_worst_wirelenght(place)
 
     # print("Number of iterations = {}".format(niter))
     hpwl_x, hpwl_y = placer.calc_total_hpwl(place)

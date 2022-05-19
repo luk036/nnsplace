@@ -2,9 +2,9 @@ from nnsplace.netlist import create_drawf, read_json
 from nnsplace.placement import NnsPlacer
 from nnsplace.placement_cfg import NnsConfig
 
-# from physdes.point import Point
-# from physdes.recti import Rect
-# from physdes.interval import Interval
+from physdes.point import Point
+from physdes.recti import Rect
+from physdes.interval import Interval
 
 
 def test_drawf():
@@ -37,7 +37,7 @@ def test_placement():
     # assert count_2 == 494
     # 00321C
     # EC0000
-    placer = NnsPlacer(H, NnsConfig(50, 50, 40, 40))
+    placer = NnsPlacer(H, NnsConfig(55, 55, 40, 40))
     place = [[], []]
     place[0] = [0 for _ in range(H.number_of_modules())]  # x-direction
     place[1] = [0 for _ in range(H.number_of_modules())]  # y-direction
