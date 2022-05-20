@@ -19,7 +19,7 @@ def set_default(G: nx.DiGraph, weight, value):
 
 
 def min_cycle_ratio(G: nx.DiGraph, dist, update_ok, r0):
-    """[summary] todo: parameterize cost and time
+    """[summary]
 
     Arguments:
         G ([type]): [description]
@@ -27,6 +27,8 @@ def min_cycle_ratio(G: nx.DiGraph, dist, update_ok, r0):
     Returns:
         [type]: [description]
     """
+    # TODO: change to max_cycle_ratio
+
     # mu = 'cost'
     # sigma = 'time'
     # set_default(G, mu, 1)

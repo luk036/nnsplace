@@ -71,6 +71,9 @@ class negCycleFinder:
         """
         changed = False
         for e in self.G.edges():
+            # TODO: sort the edges according to the criticality.
+            # Use BPQueue and Dllist
+
             wt = get_weight(e)
             u, v = e
             d = dist[v] - wt

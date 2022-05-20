@@ -22,6 +22,8 @@ def max_parametric(gr, r, d, zero_cancel, dist,
         C: Most critial cycle
         dist: optimal sol'n
     """
+    # TODO: change to min_parametric
+
     def get_weight(e):
         return d(r, e)
 

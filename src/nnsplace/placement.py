@@ -33,6 +33,8 @@ def create_flow_graph(hgr: Netlist):
 
 
 class NnsPlacer:
+    # TODO: handle I/O pad
+
     def __init__(self, hgr: Netlist, cfg: NnsConfig):
         """_summary_
 
@@ -49,10 +51,10 @@ class NnsPlacer:
         # self.count[1] = [0] * cfg.grid_y
 
     def init_placement(self, place: List[List[int]]):
-        """_summary_
+        """initial placement: just place one by one
 
         Args:
-            place (Union[List[Tuple[int, int]], Dict]): _description_
+            place (List[List[int]): placement sol'n
         """
         col = 0
         row = 0
@@ -63,11 +65,12 @@ class NnsPlacer:
             self.count[1][row] += 1
             col += 1
             if col == self.cfg.grid[0]:
+                # re-begin from the next row
                 col = 0
                 row += 1
 
     def calc_worst_wirelenght(self, place: List[List[int]]):
-        """_summary_
+        """Calculate the worst wirelenght
 
         Args:
             place (List[List[int]]): _description_
@@ -86,7 +89,7 @@ class NnsPlacer:
         return worst_wire
 
     def calc_worst_wirelenght_v(self, v, place: List[List[int]]):
-        """_summary_
+        """Calculate the worst wirelenght w.r.t Module v
 
         Args:
             place (List[List[int]]): _description_
@@ -103,7 +106,7 @@ class NnsPlacer:
         return worst_wire
 
     def calc_worst_wirelenght_axis(self, place: List[List[int]], axis):
-        """_summary_
+        """Calculate the worst wirelenght w.r.t one axis
 
         Args:
             place (List[List[int]]): _description_
@@ -140,38 +143,74 @@ class NnsPlacer:
             for v in adjs:
                 q = Point(place[0][v], place[1][v])
                 bbox = bbox.hull_with(q)
-            total_hpwl_x += self.cfg.delta[0] * bbox.width()
-            total_hpwl_y += self.cfg.delta[1] * bbox.height()
-        return total_hpwl_x, total_hpwl_y
+            total_hpwl_x += bbox.width()
+            total_hpwl_y += bbox.height()
+        return total_hpwl_x * self.cfg.delta[0], \
+            total_hpwl_y * self.cfg.delta[1]
 
-    def apply_howard(self, place: List[List[int]], axis):
+    def calc_total_hull_lenght(self, dist: List[int], axis) -> int:
+        """Calculate the total hull w.r.t one axis
+
+        Args:
+            dist (List[int]): _description_
+            axis (int): _description_
+
+        Returns:
+            int: _description_
+        """
+        total_hull_lenght = 0
+        for net in self.hgr.nets:
+            adjs = iter(self.hgr.gr[net])
+            v = next(adjs)
+            p = dist[v]
+            hull = Interval(p, p)
+            for v in adjs:
+                hull = hull.hull_with(dist[v])
+            total_hull_lenght += hull.len()
+        return total_hull_lenght * self.cfg.delta[axis]
+
+    def calc_total_HPWL(self, place: List[List[int]]):
+        """Calculate total HPWL
+
+        Args:
+            place (List[List[int]]): _description_
+
+        Returns:
+            int: _description_
+        """
+        return self.total_hull_lenght(place[0], 0) \
+            + self.total_hull_lenght(place[1], 1)
+
+    def apply_howard(self, place: List[List[int]], axis1: int):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
-            axis (_type_): _description_
+            axis1 (int): _description_
 
         Returns:
             _type_: _description_
         """
-        oppo = axis ^ 1
-        grid_axis = self.cfg.grid[axis]
-        grid_oppo = self.cfg.grid[oppo]
-        count = self.count[axis]
+        # TODO: sort the criticality
+
+        axis2 = axis1 ^ 1
+        grid_axis1 = self.cfg.grid[axis1]
+        grid_axis2 = self.cfg.grid[axis2]
+        count = self.count[axis1]
 
         def update_ok(p, d):
-            if d < 0 or d >= grid_axis:
+            if d < 0 or d >= grid_axis1:
                 return False
-            if self.count[axis][d] >= grid_oppo:
+            if self.count[axis1][d] >= grid_axis2:
                 return False
             count[d] += 1
             count[p] -= 1
             return True
 
         # set_default(self.gr, 'time', 1.0 / self.cfg.delta[dir])
-        time = 1.0 / self.cfg.delta[axis]
-        factor = self.cfg.delta[oppo] / self.cfg.delta[axis]
-        dist = place[oppo]
+        time = 1.0 / self.cfg.delta[axis1]
+        factor = self.cfg.delta[axis2] / self.cfg.delta[axis1]
+        dist = place[axis2]
         worst = 0
         for u, v in self.gr.edges():
             # TODO: Find out how to formulate?
@@ -182,7 +221,7 @@ class NnsPlacer:
             if worst < gruv:
                 worst = gruv
         # r0 = -self.calc_worst_wirelenght_axis(place, oppo)
-        res, C = min_cycle_ratio(self.gr, place[axis], update_ok, 0)
+        res, C = min_cycle_ratio(self.gr, place[axis1], update_ok, 0)
         return -res, C
 
     def add_bipartite_edge(self, lst, B, place, i, grid, axis):
