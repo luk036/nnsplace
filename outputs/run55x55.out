@@ -42,8 +42,7 @@ ________________________________ test_placement ________________________________
         # assert placer.count[1][27] == 0
         # assert placer.count[0][0] == 27
         # assert placer.count[0][1] == 26
-        hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-        hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
+        hpwl_x, hpwl_y = placer.calc_total_hpwl(place)
         print("Total HPWL before = {} + {} = {}".format(
                   hpwl_x, hpwl_y, hpwl_x + hpwl_y))
         print("Worst wirelenght before = {}".format(
@@ -55,8 +54,7 @@ ________________________________ test_placement ________________________________
         # worst = placer.calc_worst_wirelenght(place)
     
         print("Number of iterations = {}".format(niter))
-        hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-        hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
+        hpwl_x, hpwl_y = placer.calc_total_hpwl(place)
         print("Total HPWL after = {} + {} = {}".format(
                   hpwl_x, hpwl_y, hpwl_x + hpwl_y))
         print("Worst wirelenght after = {}".format(worst))
@@ -82,7 +80,7 @@ ________________________________ test_placement ________________________________
 >       assert(place[0][1] < 0)
 E       assert 3 < 0
 
-tests/test_place.py:85: AssertionError
+tests/test_place.py:87: AssertionError
 ----------------------------- Captured stdout call -----------------------------
 Total HPWL before = 681440 + 64560 = 746000
 Worst wirelenght before = 2400
@@ -936,19 +934,16 @@ src/nnsplace/__init__.py              6      0      0      0   100%
 src/nnsplace/array_like.py           23      9      0      0    61%   26, 34, 42, 54, 57-58, 66, 77, 86
 src/nnsplace/bpqueue.py              89     89     28      0     0%   2-289
 src/nnsplace/dllist.py               63     63      2      0     0%   1-330
-src/nnsplace/max_cycle_ratio.py      16     16      8      0     0%   1-64
-src/nnsplace/max_mean_cycle.py       15      3      6      0    67%   16-18
-src/nnsplace/max_parametric.py       24     24     10      0     0%   2-54
-src/nnsplace/min_cycle_ratio.py      16     16      8      0     0%   1-66
-src/nnsplace/min_parametric.py       24      1     10      1    94%   44
-src/nnsplace/neg_cycle.py            76      9     35      1    87%   36->38, 158-168
+src/nnsplace/min_cycle_ratio.py      16      3      8      0    71%   16-18
+src/nnsplace/neg_cycle.py            76      9     35      1    87%   36->38, 155-165
 src/nnsplace/neg_cycle_rev.py        57     57     25      0     0%   2-121
 src/nnsplace/netlist.py             116     44     14      0    57%   28, 87, 95, 103, 111, 122, 145, 234-260, 275-280, 295, 313-319, 323-338
-src/nnsplace/placement.py           167     10     75      1    93%   119-126, 182, 326
+src/nnsplace/parametric.py           24      1     10      1    94%   45
+src/nnsplace/placement.py           173      9     75      1    94%   115-122, 287
 src/nnsplace/placement_cfg.py         4      0      0      0   100%
 -----------------------------------------------------------------------------
-TOTAL                               696    341    221      3    51%
+TOTAL                               647    284    197      3    56%
 
 =========================== short test summary info ============================
 FAILED tests/test_place.py::test_placement - assert 3 < 0
-=================== 1 failed, 1 passed, 1 warning in 18.16s ====================
+=================== 1 failed, 1 passed, 1 warning in 19.03s ====================

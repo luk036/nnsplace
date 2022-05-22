@@ -3,10 +3,11 @@ from typing import List
 import networkx as nx
 from networkx.algorithms import bipartite
 from physdes.interval import Interval
-from physdes.point import Point
-from physdes.recti import Rect
+# from physdes.point import Point
+# from physdes.recti import Rect
 
-from .min_cycle_ratio import min_cycle_ratio
+# from .max_cycle_ratio import max_cycle_ratio
+from .max_mean_cycle import max_mean_cycle
 from .netlist import Netlist
 from .placement_cfg import NnsConfig
 
@@ -119,34 +120,34 @@ class NnsPlacer:
         for u, v in self.gr.edges():
             if u > v:  # only need to calculate one of the two edges
                 continue
-            gruv = abs(place[axis][v] - place[axis][u]) * self.cfg.delta[axis]
+            gruv = abs(place[axis][v] - place[axis][u])
             if worst_wire < gruv:
                 worst_wire = gruv
-        return worst_wire
+        return worst_wire * self.cfg.delta[axis]
 
-    def calc_total_hpwl(self, place: List[List[int]]):
-        """_summary_
-
-        Args:
-            place (List[List[int]]): _description_
-
-        Returns:
-            _type_: _description_
-        """
-        total_hpwl_x = 0
-        total_hpwl_y = 0
-        for net in self.hgr.nets:
-            adjs = iter(self.hgr.gr[net])
-            v = next(adjs)
-            p = Point(place[0][v], place[1][v])
-            bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
-            for v in adjs:
-                q = Point(place[0][v], place[1][v])
-                bbox = bbox.hull_with(q)
-            total_hpwl_x += bbox.width()
-            total_hpwl_y += bbox.height()
-        return total_hpwl_x * self.cfg.delta[0], \
-            total_hpwl_y * self.cfg.delta[1]
+    # def calc_total_hpwl(self, place: List[List[int]]):
+    #     """_summary_
+    #
+    #     Args:
+    #         place (List[List[int]]): _description_
+    #
+    #     Returns:
+    #         _type_: _description_
+    #     """
+    #     total_hpwl_x = 0
+    #     total_hpwl_y = 0
+    #     for net in self.hgr.nets:
+    #         adjs = iter(self.hgr.gr[net])
+    #         v = next(adjs)
+    #         p = Point(place[0][v], place[1][v])
+    #         bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
+    #         for v in adjs:
+    #             q = Point(place[0][v], place[1][v])
+    #             bbox = bbox.hull_with(q)
+    #         total_hpwl_x += bbox.width()
+    #         total_hpwl_y += bbox.height()
+    #     return total_hpwl_x * self.cfg.delta[0], \
+    #         total_hpwl_y * self.cfg.delta[1]
 
     def calc_total_hull_lenght(self, dist: List[int], axis) -> int:
         """Calculate the total hull w.r.t one axis
@@ -208,21 +209,20 @@ class NnsPlacer:
             return True
 
         # set_default(self.gr, 'time', 1.0 / self.cfg.delta[dir])
-        time = 1.0 / self.cfg.delta[axis1]
+        # time = 1.0 / self.cfg.delta[axis1]
         factor = self.cfg.delta[axis2] / self.cfg.delta[axis1]
         dist = place[axis2]
         worst = 0
         for u, v in self.gr.edges():
             # TODO: Find out how to formulate?
             gruv = abs(dist[v] - dist[u])
-            self.gr[u][v]['cost'] = -gruv * factor
+            self.gr[u][v]['cost'] = gruv * factor
             # self.gr[u][v]['cost'] = 0
-            self.gr[u][v]['time'] = time
+            # self.gr[u][v]['time'] = time
             if worst < gruv:
                 worst = gruv
-        # r0 = -self.calc_worst_wirelenght_axis(place, oppo)
-        res, C = min_cycle_ratio(self.gr, place[axis1], update_ok, 0)
-        return -res, C
+        # r0 = self.calc_worst_wirelenght_axis(place, oppo)
+        return max_mean_cycle(self.gr, place[axis1], update_ok, 0)
 
     def add_bipartite_edge(self, lst, B, place, i, grid, axis):
         # increase the number of edges if no sol'n
