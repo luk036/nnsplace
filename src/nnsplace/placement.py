@@ -1,5 +1,6 @@
 from typing import List
 
+from random import shuffle
 import networkx as nx
 from networkx.algorithms import bipartite
 from physdes.interval import Interval
@@ -59,7 +60,9 @@ class NnsPlacer:
         """
         col = 0
         row = 0
-        for v in self.hgr:
+        lst = [v for v in self.hgr]
+        shuffle(lst)
+        for v in lst:
             place[0][v] = col
             place[1][v] = row
             self.count[0][col] += 1
@@ -216,6 +219,7 @@ class NnsPlacer:
         for u, v in self.gr.edges():
             # TODO: Find out how to formulate?
             gruv = abs(dist[v] - dist[u])
+            self.gr[u][v]['weight'] = gruv
             self.gr[u][v]['cost'] = gruv * factor
             # self.gr[u][v]['cost'] = 0
             # self.gr[u][v]['time'] = time

@@ -4,6 +4,8 @@ Negative cycle detection for weighed graphs.
 1. Support Lazy evalution
 """
 from typing import Dict
+from .bpqueue import BPQueue
+from .dllist import Dllink
 
 
 class negCycleFinder:
@@ -17,6 +19,13 @@ class negCycleFinder:
             G: Graph
         """
         self.G = G
+        max_weight = 0
+        for (u, v, weight) in G.edges.data('weight'):
+            if max_weight < weight:
+                max_weight = weight
+        self.bpq = BPQueue(0, max_weight)
+        for (u, v, weight) in G.edges.data('weight'):
+            self.bpq.append(Dllink([0, (u, v)]), weight)
 
     def find_cycle(self, point_to):
         """Find a cycle on the policy graph
@@ -48,7 +57,9 @@ class negCycleFinder:
             [type]: [description]
         """
         changed = False
-        for e in self.G.edges():
+        # for e in self.G.edges():
+        for vlink in self.bpq:
+            e = vlink.data[1]
             wt = get_weight(e)
             u, v = e
             d = dist[u] + wt
@@ -70,10 +81,9 @@ class negCycleFinder:
             [type]: [description]
         """
         changed = False
-        for e in self.G.edges():
-            # TODO: sort the edges according to the criticality.
-            # Use BPQueue and Dllist
-
+        # for e in self.G.edges():
+        for vlink in self.bpq:
+            e = vlink.data[1]
             wt = get_weight(e)
             u, v = e
             d = dist[v] - wt
