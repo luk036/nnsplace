@@ -12,8 +12,8 @@ def test_drawf():
         col, row = place[0][v], place[1][v]
         print("<rect x=\"{}\" y=\"{}\" width=\"40\" height=\"35\" />"
               .format(col * 40, row * 40))
-    assert place[0]["a1"] == 1
-    assert place[1]["a1"] == 0
+    # assert place[0]["a1"] == 1
+    # assert place[1]["a1"] == 0
 
 
 def test_placement():
@@ -33,7 +33,7 @@ def test_placement():
     # assert count_2 == 494
     # 00321C
     # EC0000
-    placer = NnsPlacer(H, NnsConfig(55, 55, 40, 40))
+    placer = NnsPlacer(H, NnsConfig(50, 50, 40, 40))
     place = [[], []]
     place[0] = [0 for _ in range(H.number_of_modules())]  # x-direction
     place[1] = [0 for _ in range(H.number_of_modules())]  # y-direction
@@ -63,6 +63,14 @@ def test_placement():
     print("Total HPWL after = {} + {} = {}".format(
               hpwl_x, hpwl_y, hpwl_x + hpwl_y))
     print("Worst wirelenght after = {}".format(worst))
+
+    # draw IO
+    # for col in range(1, placer.cfg.grid[0]):
+    #     print("<rect class=\"io\" x=\"{}\" y=\"{}\"/>".
+    #           format(col * 40, 0))
+    # for col in range(1, placer.cfg.grid[0]):
+    #     print("<rect class=\"io\" x=\"{}\", y=\"{}\"/>".
+    #           format(col * 40, placer.cfg.grid[1] + 1))
 
     for v in H:
         print("<use x=\"{}\" y=\"{}\" href=\"#r1\"/>"

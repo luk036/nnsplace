@@ -46,8 +46,9 @@ class NnsPlacer:
         """
         self.hgr = hgr
         self.cfg = cfg
-        self.count = ([0 for _ in range(cfg.grid[0])],
-                      [0 for _ in range(cfg.grid[1])])  # two lists
+        self.count = ([0 for _ in range(cfg.grid[0]+2)],
+                      [0 for _ in range(cfg.grid[1]+2)])  # two lists
+        # plus 2 I/O
         self.gr = create_flow_graph(hgr)
         # self.count[0] = [0] * cfg.grid_x
         # self.count[1] = [0] * cfg.grid_y
@@ -58,8 +59,8 @@ class NnsPlacer:
         Args:
             place (List[List[int]): placement sol'n
         """
-        col = 0
-        row = 0
+        col = 1
+        row = 1
         lst = [v for v in self.hgr]
         shuffle(lst)
         for v in lst:
@@ -67,11 +68,12 @@ class NnsPlacer:
             place[1][v] = row
             self.count[0][col] += 1
             self.count[1][row] += 1
-            col += 1
             if col == self.cfg.grid[0]:
                 # re-begin from the next row
-                col = 0
+                col = 1
                 row += 1
+            else:
+                col += 1
 
     def calc_worst_wirelenght(self, place: List[List[int]]):
         """Calculate the worst wirelenght
@@ -203,7 +205,7 @@ class NnsPlacer:
         count = self.count[axis1]
 
         def update_ok(p, d):
-            if d < 0 or d >= grid_axis1:
+            if d <= 0 or d > grid_axis1:
                 return False
             if self.count[axis1][d] >= grid_axis2:
                 return False
@@ -235,13 +237,13 @@ class NnsPlacer:
             p = place[axis][v]
             q = p + self.hgr.number_of_modules()  # avoid same name
             weight0 = self.calc_worst_wirelenght_v(v, place)
-            if p - i >= 0:
+            if p - i > 0:
                 place[axis][v] -= i  # temporily set the position
                 weight1 = self.calc_worst_wirelenght_v(v, place)
                 place[axis][v] += i  # reset the position
                 B.add_node(q - i, bipartite=1)
                 B.add_edge(v, q - i, weight=weight1 - weight0)
-            if p + i < grid:
+            if p + i <= grid:
                 place[axis][v] += i  # temporily set the position
                 weight1 = self.calc_worst_wirelenght_v(v, place)
                 place[axis][v] -= i  # reset the position
@@ -255,7 +257,7 @@ class NnsPlacer:
             place (List[List[int]]): _description_
             axis (_type_): _description_
         """
-        bucket = [list() for _ in range(self.cfg.grid[axis ^ 1])]
+        bucket = [list() for _ in range(self.cfg.grid[axis ^ 1] + 2)]
         dist = place[axis ^ 1]
         for v in self.hgr:
             bucket[dist[v]].append(v)
@@ -303,6 +305,11 @@ class NnsPlacer:
                 count[q] += 1
                 dist[v] = q
         return
+
+    def io_assign(self, place: List[List[int]], axis):
+        # TODO 1: choose the nearest I/O
+        # TODO 2: legalize
+        pass
 
     def run(self, place: List[List[int]], max_iter=2000):
         """_summary_

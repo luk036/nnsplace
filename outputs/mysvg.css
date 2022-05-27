@@ -3,8 +3,12 @@ polygon {
   stroke: black;
 }
 
-circle {
+circle.cell {
   fill: #0062ff;
+}
+
+circle.iopad {
+  fill: #ec0000;
 }
 
 rect.net {
