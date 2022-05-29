@@ -50,6 +50,9 @@ class NnsPlacer:
                       [0 for _ in range(cfg.grid[1]+2)])  # two lists
         # plus 2 I/O
         self.gr = create_flow_graph(hgr)
+        self.bucket = [[], []]
+        self.bucket[0] = [list() for _ in range(self.cfg.grid[1] + 2)]
+        self.bucket[1] = [list() for _ in range(self.cfg.grid[0] + 2)]
         # self.count[0] = [0] * cfg.grid_x
         # self.count[1] = [0] * cfg.grid_y
 
@@ -250,68 +253,143 @@ class NnsPlacer:
                 B.add_node(q + i, bipartite=1)
                 B.add_edge(v, q + i, weight=weight1 - weight0)
 
-    def legalize(self, place: List[List[int]], axis):
+    def legalize(self, lst, place: List[List[int]], axis, io=False):
+        dist = place[axis]
+        # count = self.count[axis]
+        grid = self.cfg.grid[axis]
+
+        # construct bipartite graph
+        B = nx.Graph()
+        # Add nodes with the node attribute "bipartite"
+        B.add_nodes_from(lst, bipartite=0)
+
+        m = 30
+        for v in lst:
+            # construct bipartite graph
+            q = dist[v] + self.hgr.number_of_modules()  # avoid same name
+            B.add_node(q, bipartite=1)
+            B.add_edge(v, q, weight=0)
+        for i in range(1, m):
+            self.add_bipartite_edge(lst, B, place, i, grid, axis)
+
+        # solve the matching problem
+        i = m
+        matched = False
+        while not matched:
+            try:
+                matches = bipartite.minimum_weight_full_matching(B)
+                for v in lst:
+                    _ = matches[v]
+                matched = True
+            except ValueError:
+                self.add_bipartite_edge(lst, B, place, i, grid, axis)
+            except KeyError:
+                self.add_bipartite_edge(lst, B, place, i, grid, axis)
+            i += 1
+
+        # reassign the results
+        for v in lst:
+            q = matches[v] - self.hgr.number_of_modules()
+            if dist[v] == q:
+                continue
+            # Update position and self.count
+            if not io:
+                self.count[axis][dist[v]] -= 1
+                self.count[axis][q] += 1
+            dist[v] = q
+
+    def legalize_modules(self, place: List[List[int]], axis):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
             axis (_type_): _description_
         """
-        bucket = [list() for _ in range(self.cfg.grid[axis ^ 1] + 2)]
+        # bucket = [list() for _ in range(self.cfg.grid[axis ^ 1] + 2)]
+        bucket = self.bucket[axis]
+        for lst in bucket:
+            lst.clear()
         dist = place[axis ^ 1]
         for v in self.hgr:
             bucket[dist[v]].append(v)
-
-        dist = place[axis]
-        count = self.count[axis]
-        grid = self.cfg.grid[axis]
         for lst in filter(lambda lst: lst, bucket):
-            # construct bipartite graph
-            B = nx.Graph()
-            # Add nodes with the node attribute "bipartite"
-            B.add_nodes_from(lst, bipartite=0)
+            self.legalize(lst, place, axis)
 
-            m = 30
-            for v in lst:
-                # construct bipartite graph
-                q = dist[v] + self.hgr.number_of_modules()  # avoid same name
-                B.add_node(q, bipartite=1)
-                B.add_edge(v, q, weight=0)
-            for i in range(1, m):
-                self.add_bipartite_edge(lst, B, place, i, grid, axis)
+    def choose_nearest_iopad(self, place: List[List[int]]):
+        # choose the nearest I/O
+        n = self.hgr.number_of_modules()
+        grid_x = self.cfg.grid[0]
+        half_x = grid_x // 2
+        grid_y = self.cfg.grid[1]
+        half_y = grid_y // 2
+        which_x = None
+        which_y = None
+        len_x = grid_x
+        len_y = grid_y
+        for i in range(n - self.hgr.num_pads, n):
+            v = self.hgr.modules[i]
+            if place[0][v] <= half_x and self.count[0][0] < grid_y:
+                which_x = 0  # left
+                len_x = place[0][v]
+            elif self.count[0][grid_x + 1] < grid_y:
+                which_x = 1  # right
+                len_x = grid_x - place[0][v]
 
-            # solve the matching problem
-            i = m
-            matched = False
-            while not matched:
-                try:
-                    matches = bipartite.minimum_weight_full_matching(B)
-                    for v in lst:
-                        _ = matches[v]
-                    matched = True
-                except ValueError:
-                    self.add_bipartite_edge(lst, B, place, i, grid, axis)
-                except KeyError:
-                    self.add_bipartite_edge(lst, B, place, i, grid, axis)
-                i += 1
+            if place[1][v] <= half_y and self.count[1][0] < grid_x:
+                which_y = 0  # top
+                len_y = place[1][v]
+            elif self.count[1][grid_y + 1] < grid_x:
+                which_y = 1  # bottom
+                len_y = grid_y - place[1][v]
 
-            # reassign the results
-            for v in lst:
-                q = matches[v] - self.hgr.number_of_modules()
-                if dist[v] == q:
-                    continue
-                # Update position and self.count
-                count[dist[v]] -= 1
-                count[q] += 1
-                dist[v] = q
-        return
+            self.count[0][place[0][v]] -= 1
+            self.count[1][place[1][v]] -= 1
+            if len_x * self.cfg.delta[0] < len_y * self.cfg.delta[1]:
+                if which_x == 0:
+                    place[0][v] = 0
+                else:
+                    place[0][v] = grid_x + 1
+                self.count[0][place[0][v]] += 1
+            else:
+                if which_y == 0:
+                    place[1][v] = 0
+                else:
+                    place[1][v] = grid_y + 1
+                self.count[1][place[1][v]] += 1
 
-    def io_assign(self, place: List[List[int]], axis):
-        # TODO 1: choose the nearest I/O
-        # TODO 2: legalize
-        pass
+    def legalize_iopad(self, place: List[List[int]]):
+        """_summary_
 
-    def run(self, place: List[List[int]], max_iter=2000):
+        Args:
+            place (List[List[int]]): _description_
+            axis (_type_): _description_
+        """
+        bucket = [list() for _ in range(4)]
+        n = self.hgr.number_of_modules()
+        for i in range(n - self.hgr.num_pads, n):
+            v = self.hgr.modules[i]
+            if place[0][v] == 0:
+                bucket[0].append(v)
+            elif place[0][v] == self.cfg.grid[0] + 1:
+                bucket[1].append(v)
+            elif place[1][v] == 0:
+                bucket[2].append(v)
+            elif place[1][v] == self.cfg.grid[1] + 1:
+                bucket[3].append(v)
+        if bucket[0]:
+            self.legalize(bucket[0], place, 1, True)
+        if bucket[1]:
+            self.legalize(bucket[1], place, 1, True)
+        if bucket[2]:
+            self.legalize(bucket[2], place, 0, True)
+        if bucket[3]:
+            self.legalize(bucket[3], place, 0, True)
+
+    def io_assign(self, place: List[List[int]]):
+        self.choose_nearest_iopad(place)
+        self.legalize_iopad(place)
+
+    def phase1(self, place: List[List[int]], max_iter):
         """_summary_
 
         Args:
@@ -324,9 +402,9 @@ class NnsPlacer:
         place0 = [place[0].copy(), place[1].copy()]
         for niter in range(1, max_iter):
             r1, C1 = self.apply_howard(place, 0)
-            self.legalize(place, 1)
+            self.legalize_modules(place, 1)
             r2, C2 = self.apply_howard(place, 1)
-            self.legalize(place, 0)
+            self.legalize_modules(place, 0)
             worst1 = self.calc_worst_wirelenght(place)
             # TODO: when to stop
             if worst1 > worst0:
@@ -335,3 +413,8 @@ class NnsPlacer:
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
         return niter, worst1
+
+    def run(self, place: List[List[int]], max_iter=2000):
+        niter, worst = self.phase1(place, max_iter)
+        self.io_assign(place)
+        return niter, worst
