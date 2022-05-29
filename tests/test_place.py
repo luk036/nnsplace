@@ -33,10 +33,11 @@ def test_placement():
     # assert count_2 == 494
     # 00321C
     # EC0000
+    n = H.number_of_modules()
     placer = NnsPlacer(H, NnsConfig(50, 50, 40, 40))
     place = [[], []]
-    place[0] = [0 for _ in range(H.number_of_modules())]  # x-direction
-    place[1] = [0 for _ in range(H.number_of_modules())]  # y-direction
+    place[0] = [0 for _ in range(n)]  # x-direction
+    place[1] = [0 for _ in range(n)]  # y-direction
     placer.init_placement(place)
     # assert place[0][1] == 1
     # assert place[1][1] == 0
@@ -71,9 +72,13 @@ def test_placement():
     # for col in range(1, placer.cfg.grid[0]):
     #     print("<rect class=\"io\" x=\"{}\", y=\"{}\"/>".
     #           format(col * 40, placer.cfg.grid[1] + 1))
-
-    for v in H:
+    for i in range(0, n - H.num_pads):
+        v = H.modules[i]
         print("<use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
+              .format(place[0][v] * 40, place[1][v] * 40))
+    for i in range(n - H.num_pads, n):
+        v = H.modules[i]
+        print("<use x=\"{}\" y=\"{}\" href=\"#io\"/>"
               .format(place[0][v] * 40, place[1][v] * 40))
 #     for net in H.nets:
 #         adjs = iter(H.gr[net])
