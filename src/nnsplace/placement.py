@@ -35,7 +35,7 @@ def create_flow_graph(hgr: Netlist):
 
 
 class NnsPlacer:
-    # TODO: handle I/O pad
+    # TODO: handle optimization aware of I/O pad
 
     def __init__(self, hgr: Netlist, cfg: NnsConfig):
         """_summary_
@@ -233,7 +233,19 @@ class NnsPlacer:
         # r0 = self.calc_worst_wirelenght_axis(place, oppo)
         return max_mean_cycle(self.gr, place[axis1], update_ok, 0)
 
-    def add_bipartite_edge(self, lst, B, place, i, grid, axis):
+    def add_bipartite_edge(self, lst: List[int], B: nx.Graph,
+                           place: List[List[int]], i: int,
+                           grid: int, axis: int):
+        """_summary_
+
+        Args:
+            lst (List[int]): _description_
+            B (nx.Graph): _description_
+            place (List[List[int]]): _description_
+            i (int): _description_
+            grid (int): _description_
+            axis (int): _description_
+        """
         # increase the number of edges if no sol'n
         for v in lst:
             # construct bipartite graph
@@ -253,7 +265,16 @@ class NnsPlacer:
                 B.add_node(q + i, bipartite=1)
                 B.add_edge(v, q + i, weight=weight1 - weight0)
 
-    def legalize(self, lst, place: List[List[int]], axis, io=False):
+    def legalize(self, lst: List[int], place: List[List[int]],
+                 axis: int, io=False):
+        """_summary_
+
+        Args:
+            lst (List[int]): _description_
+            place (List[List[int]]): _description_
+            axis (int): _description_
+            io (bool, optional): _description_. Defaults to False.
+        """
         dist = place[axis]
         # count = self.count[axis]
         grid = self.cfg.grid[axis]
@@ -298,12 +319,12 @@ class NnsPlacer:
                 self.count[axis][q] += 1
             dist[v] = q
 
-    def legalize_modules(self, place: List[List[int]], axis):
+    def legalize_modules(self, place: List[List[int]], axis: int):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
-            axis (_type_): _description_
+            axis (int): _description_
         """
         # bucket = [list() for _ in range(self.cfg.grid[axis ^ 1] + 2)]
         bucket = self.bucket[axis]
@@ -316,6 +337,11 @@ class NnsPlacer:
             self.legalize(lst, place, axis)
 
     def choose_nearest_iopad(self, place: List[List[int]]):
+        """_summary_
+
+        Args:
+            place (List[List[int]]): _description_
+        """
         # choose the nearest I/O
         n = self.hgr.number_of_modules()
         grid_x = self.cfg.grid[0]
@@ -362,7 +388,6 @@ class NnsPlacer:
 
         Args:
             place (List[List[int]]): _description_
-            axis (_type_): _description_
         """
         bucket = [list() for _ in range(4)]
         n = self.hgr.number_of_modules()
@@ -386,14 +411,20 @@ class NnsPlacer:
             self.legalize(bucket[3], place, 0, True)
 
     def io_assign(self, place: List[List[int]]):
-        self.choose_nearest_iopad(place)
-        self.legalize_iopad(place)
-
-    def phase1(self, place: List[List[int]], max_iter):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
+        """
+        self.choose_nearest_iopad(place)
+        self.legalize_iopad(place)
+
+    def phase1(self, place: List[List[int]], max_iter: int):
+        """_summary_
+
+        Args:
+            place (List[List[int]]): _description_
+            max_iter (int): _description_
 
         Returns:
             _type_: _description_
@@ -415,6 +446,15 @@ class NnsPlacer:
         return niter, worst1
 
     def run(self, place: List[List[int]], max_iter=2000):
+        """_summary_
+
+        Args:
+            place (List[List[int]]): _description_
+            max_iter (int, optional): _description_. Defaults to 2000.
+
+        Returns:
+            _type_: _description_
+        """
         niter, worst = self.phase1(place, max_iter)
         self.io_assign(place)
         return niter, worst
