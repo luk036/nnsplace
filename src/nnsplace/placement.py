@@ -22,7 +22,7 @@ def create_flow_graph(hgr: Netlist):
     Returns:
         _type_: _description_
     """
-    gr = nx.DiGraph()
+    gr = nx.DiGraph(num_modules=hgr.num_modules, num_pads=hgr.num_pads)
     gr.add_nodes_from(v for v in hgr)
     for net in hgr.nets:
         for v1 in hgr.gr[net]:
@@ -190,7 +190,7 @@ class NnsPlacer:
         return self.total_hull_lenght(place[0], 0) \
             + self.total_hull_lenght(place[1], 1)
 
-    def apply_howard(self, place: List[List[int]], axis1: int):
+    def apply_howard(self, place: List[List[int]], axis1: int, care_io=False):
         """_summary_
 
         Args:
@@ -231,7 +231,8 @@ class NnsPlacer:
             if worst < gruv:
                 worst = gruv
         # r0 = self.calc_worst_wirelenght_axis(place, oppo)
-        return max_mean_cycle(self.gr, place[axis1], update_ok, 0)
+        return max_mean_cycle(self.gr, place[axis1], update_ok,
+                              0, care_io=care_io)
 
     def add_bipartite_edge(self, lst: List[int], B: nx.Graph,
                            place: List[List[int]], i: int,
@@ -309,17 +310,24 @@ class NnsPlacer:
             i += 1
 
         # reassign the results
-        for v in lst:
-            q = matches[v] - self.hgr.number_of_modules()
-            if dist[v] == q:
-                continue
-            # Update position and self.count
-            if not io:
+        if io:
+            for v in lst:
+                q = matches[v] - self.hgr.number_of_modules()
+                if dist[v] == q:
+                    continue
+                # Update position and self.count
+                dist[v] = q
+        else:
+            for v in lst:
+                q = matches[v] - self.hgr.number_of_modules()
+                if dist[v] == q:
+                    continue
+                # Update position and self.count
                 self.count[axis][dist[v]] -= 1
                 self.count[axis][q] += 1
-            dist[v] = q
+                dist[v] = q
 
-    def legalize_modules(self, place: List[List[int]], axis: int):
+    def legalize_modules(self, place: List[List[int]], axis: int, care_io=False):
         """_summary_
 
         Args:
@@ -331,8 +339,13 @@ class NnsPlacer:
         for lst in bucket:
             lst.clear()
         dist = place[axis ^ 1]
-        for v in self.hgr:
-            bucket[dist[v]].append(v)
+        if care_io:
+            for v in self.hgr:
+                if v < self.hgr.num_modules - self.hgr.num_pads:
+                    bucket[dist[v]].append(v)
+        else:
+            for v in self.hgr:
+                bucket[dist[v]].append(v)
         for lst in filter(lambda lst: lst, bucket):
             self.legalize(lst, place, axis)
 
@@ -419,7 +432,7 @@ class NnsPlacer:
         self.choose_nearest_iopad(place)
         self.legalize_iopad(place)
 
-    def phase1(self, place: List[List[int]], max_iter: int):
+    def optimize(self, place: List[List[int]], max_iter: int, care_io=False):
         """_summary_
 
         Args:
@@ -432,15 +445,15 @@ class NnsPlacer:
         worst0 = self.calc_worst_wirelenght(place)
         place0 = [place[0].copy(), place[1].copy()]
         for niter in range(1, max_iter):
-            r1, C1 = self.apply_howard(place, 0)
-            self.legalize_modules(place, 1)
-            r2, C2 = self.apply_howard(place, 1)
-            self.legalize_modules(place, 0)
+            r1, C1 = self.apply_howard(place, 0, care_io=care_io)
+            self.legalize_modules(place, 1, care_io=care_io)
+            r2, C2 = self.apply_howard(place, 1, care_io=care_io)
+            self.legalize_modules(place, 0, care_io=care_io)
             worst1 = self.calc_worst_wirelenght(place)
             # TODO: when to stop
             if worst1 > worst0:
                 place = place0
-                return niter, worst1
+                return niter, worst0
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
         return niter, worst1
@@ -455,6 +468,7 @@ class NnsPlacer:
         Returns:
             _type_: _description_
         """
-        niter, worst = self.phase1(place, max_iter)
+        niter, worst = self.optimize(place, max_iter, care_io=False)
         self.io_assign(place)
+        niter, worst = self.optimize(place, max_iter, care_io=True)
         return niter, worst

@@ -2,7 +2,7 @@ from .neg_cycle import negCycleFinder
 
 
 def min_parametric(gr, r, d, zero_cancel, dist,
-                   update_ok, pick_one_only=False):
+                   update_ok, pick_one_only=False, io=False):
     """minimum parametric problem:
 
         min  r
@@ -24,7 +24,7 @@ def min_parametric(gr, r, d, zero_cancel, dist,
     def get_weight(e):
         return d(r, e)
 
-    S = negCycleFinder(gr)
+    S = negCycleFinder(gr, io)
     r_max = r
     C = None
     reverse = False

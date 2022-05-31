@@ -18,7 +18,7 @@ def set_default(G: nx.DiGraph, weight, value):
             G[u][v][weight] = value
 
 
-def max_cycle_ratio(G: nx.DiGraph, dist, update_ok, r0):
+def max_cycle_ratio(G: nx.DiGraph, dist, update_ok, r0, care_io=False):
     """[summary]
 
     Arguments:
@@ -61,4 +61,5 @@ def max_cycle_ratio(G: nx.DiGraph, dist, update_ok, r0):
 
     # C0 = nx.find_cycle(G)
     # r0 = calc_ratio(C0)
-    return min_parametric(G, r0, calc_weight, calc_ratio, dist, update_ok)
+    return min_parametric(G, r0, calc_weight, calc_ratio, dist,
+                          update_ok, io=care_io)
