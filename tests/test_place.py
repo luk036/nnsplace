@@ -53,17 +53,16 @@ def test_placement():
     print("Worst wirelenght before = {}".format(
               placer.calc_worst_wirelenght(place)))
 
-    niter, worst = placer.run(place)
-    # placer.apply_howard(place, 0)
-    # placer.legalize(place, 1)
-    # worst = placer.calc_worst_wirelenght(place)
+    # placer.io_assign(place)
+    placer.choose_nearest_iopad(place)
 
-    print("Number of iterations = {}".format(niter))
-    hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-    hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
-    print("Total HPWL after = {} + {} = {}".format(
-              hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-    print("Worst wirelenght after = {}".format(worst))
+    # niter, worst = placer.run(place)
+    # print("Number of iterations = {}".format(niter))
+    # hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
+    # hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
+    # print("Total HPWL after = {} + {} = {}".format(
+    #           hpwl_x, hpwl_y, hpwl_x + hpwl_y))
+    # print("Worst wirelenght after = {}".format(worst))
 
     # draw IO
     # for col in range(1, placer.cfg.grid[0]):
@@ -77,9 +76,17 @@ def test_placement():
         print("<use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
               .format(place[0][v] * 40, place[1][v] * 40))
     for i in range(n - H.num_pads, n):
-        v = H.modules[i]
+        vp = H.modules[i]
         print("<use x=\"{}\" y=\"{}\" href=\"#io\"/>"
-              .format(place[0][v] * 40, place[1][v] * 40))
+              .format(place[0][vp] * 40, place[1][vp] * 40))
+    for i in range(n - H.num_pads, n):
+        vp = H.modules[i]
+        nbrs = list(placer.gr.neighbors(vp))
+        v = nbrs[0]
+        print("<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\"/>".format(
+              place[0][vp] * 40 + 20, place[1][vp] * 40 + 20,
+              place[0][v] * 40 + 20, place[1][v] * 40 + 20))
+
 #     for net in H.nets:
 #         adjs = iter(H.gr[net])
 #         v = next(adjs)

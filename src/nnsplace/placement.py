@@ -53,8 +53,6 @@ class NnsPlacer:
         self.bucket = [[], []]
         self.bucket[0] = [list() for _ in range(self.cfg.grid[1] + 2)]
         self.bucket[1] = [list() for _ in range(self.cfg.grid[0] + 2)]
-        # self.count[0] = [0] * cfg.grid_x
-        # self.count[1] = [0] * cfg.grid_y
 
     def init_placement(self, place: List[List[int]]):
         """initial placement: just place one by one
@@ -316,6 +314,8 @@ class NnsPlacer:
                 if dist[v] == q:
                     continue
                 # Update position and self.count
+                self.count[axis][dist[v]] -= 1
+                self.count[axis][q] += 1
                 dist[v] = q
         else:
             for v in lst:
@@ -327,7 +327,8 @@ class NnsPlacer:
                 self.count[axis][q] += 1
                 dist[v] = q
 
-    def legalize_modules(self, place: List[List[int]], axis: int, care_io=False):
+    def legalize_modules(self, place: List[List[int]], axis: int,
+                         care_io=False):
         """_summary_
 
         Args:
@@ -350,13 +351,12 @@ class NnsPlacer:
             self.legalize(lst, place, axis)
 
     def choose_nearest_iopad(self, place: List[List[int]]):
-        """_summary_
+        """Choose the nearest iopad in phase 2
 
         Args:
             place (List[List[int]]): _description_
         """
         # choose the nearest I/O
-        n = self.hgr.number_of_modules()
         grid_x = self.cfg.grid[0]
         half_x = grid_x // 2
         grid_y = self.cfg.grid[1]
@@ -365,8 +365,12 @@ class NnsPlacer:
         which_y = None
         len_x = grid_x
         len_y = grid_y
+        n = self.hgr.number_of_modules()
         for i in range(n - self.hgr.num_pads, n):
-            v = self.hgr.modules[i]
+            vp = self.hgr.modules[i]
+            nbrs = list(self.gr.neighbors(vp))
+            # TODO: pad attached to more than one node
+            v = nbrs[0]  # workaround: take the first one only
             if place[0][v] <= half_x and self.count[0][0] < grid_y:
                 which_x = 0  # left
                 len_x = place[0][v]
@@ -381,20 +385,71 @@ class NnsPlacer:
                 which_y = 1  # bottom
                 len_y = grid_y - place[1][v]
 
-            self.count[0][place[0][v]] -= 1
-            self.count[1][place[1][v]] -= 1
+            self.count[0][place[0][vp]] -= 1  # ???
+            self.count[1][place[1][vp]] -= 1  # ???
             if len_x * self.cfg.delta[0] < len_y * self.cfg.delta[1]:
                 if which_x == 0:
-                    place[0][v] = 0
+                    place[0][vp] = 0
                 else:
-                    place[0][v] = grid_x + 1
-                self.count[0][place[0][v]] += 1
+                    place[0][vp] = grid_x + 1
+                place[1][vp] = place[1][v]
+                self.count[0][place[0][vp]] += 1
+                self.count[1][place[1][vp]] += 1
             else:
                 if which_y == 0:
-                    place[1][v] = 0
+                    place[1][vp] = 0
                 else:
-                    place[1][v] = grid_y + 1
-                self.count[1][place[1][v]] += 1
+                    place[1][vp] = grid_y + 1
+                place[0][vp] = place[0][v]
+                self.count[1][place[1][vp]] += 1
+                self.count[0][place[0][vp]] += 1
+
+    # def choose_nearest_iopad(self, place: List[List[int]]):
+    #     """_summary_
+    #
+    #     Args:
+    #         place (List[List[int]]): _description_
+    #     """
+    #     # choose the nearest I/O
+    #     n = self.hgr.number_of_modules()
+    #     grid_x = self.cfg.grid[0]
+    #     half_x = grid_x // 2
+    #     grid_y = self.cfg.grid[1]
+    #     half_y = grid_y // 2
+    #     which_x = None
+    #     which_y = None
+    #     len_x = grid_x
+    #     len_y = grid_y
+    #     for i in range(n - self.hgr.num_pads, n):
+    #         v = self.hgr.modules[i]
+    #         if place[0][v] <= half_x and self.count[0][0] < grid_y:
+    #             which_x = 0  # left
+    #             len_x = place[0][v]
+    #         elif self.count[0][grid_x + 1] < grid_y:
+    #             which_x = 1  # right
+    #             len_x = grid_x - place[0][v]
+    #
+    #         if place[1][v] <= half_y and self.count[1][0] < grid_x:
+    #             which_y = 0  # top
+    #             len_y = place[1][v]
+    #         elif self.count[1][grid_y + 1] < grid_x:
+    #             which_y = 1  # bottom
+    #             len_y = grid_y - place[1][v]
+    #
+    #         self.count[0][place[0][v]] -= 1
+    #         self.count[1][place[1][v]] -= 1
+    #         if len_x * self.cfg.delta[0] < len_y * self.cfg.delta[1]:
+    #             if which_x == 0:
+    #                 place[0][v] = 0
+    #             else:
+    #                 place[0][v] = grid_x + 1
+    #             self.count[0][place[0][v]] += 1
+    #         else:
+    #             if which_y == 0:
+    #                 place[1][v] = 0
+    #             else:
+    #                 place[1][v] = grid_y + 1
+    #             self.count[1][place[1][v]] += 1
 
     def legalize_iopad(self, place: List[List[int]]):
         """_summary_
@@ -432,6 +487,15 @@ class NnsPlacer:
         self.choose_nearest_iopad(place)
         self.legalize_iopad(place)
 
+    # def io_reassign(self, place: List[List[int]]):
+    #     """_summary_
+    #
+    #     Args:
+    #         place (List[List[int]]): _description_
+    #     """
+    #     self.choose_nearest_iopad(place)
+    #     self.legalize_iopad(place)
+
     def optimize(self, place: List[List[int]], max_iter: int, care_io=False):
         """_summary_
 
@@ -456,7 +520,7 @@ class NnsPlacer:
                 return niter, worst0
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
-        return niter, worst1
+        return max_iter, worst1
 
     def run(self, place: List[List[int]], max_iter=2000):
         """_summary_
@@ -468,7 +532,17 @@ class NnsPlacer:
         Returns:
             _type_: _description_
         """
-        niter, worst = self.optimize(place, max_iter, care_io=False)
+        # niter, worst = self.optimize(place, max_iter, care_io=False)
+        # self.init_placement(place)
         self.io_assign(place)
-        niter, worst = self.optimize(place, max_iter, care_io=True)
-        return niter, worst
+        worst0 = self.calc_worst_wirelenght(place)
+        place0 = [place[0].copy(), place[1].copy()]
+        for niter in range(1, max_iter):
+            ni, worst1 = self.optimize(place, max_iter, care_io=True)
+            self.io_assign(place)
+            if worst1 > worst0:
+                place = place0
+                return niter, worst0
+            worst0 = worst1
+            place0 = [place[0].copy(), place[1].copy()]
+        return max_iter, worst1
