@@ -34,7 +34,7 @@ def test_placement():
     # 00321C
     # EC0000
     n = H.number_of_modules()
-    placer = NnsPlacer(H, NnsConfig(50, 50, 40, 40))
+    placer = NnsPlacer(H, NnsConfig(42, 45, 40, 40))
     place = [[], []]
     place[0] = [0 for _ in range(n)]  # x-direction
     place[1] = [0 for _ in range(n)]  # y-direction
@@ -54,23 +54,16 @@ def test_placement():
               placer.calc_worst_wirelenght(place)))
 
     # placer.io_assign(place)
-    placer.choose_nearest_iopad(place)
+    # placer.choose_nearest_iopad(place)
 
-    # niter, worst = placer.run(place)
-    # print("Number of iterations = {}".format(niter))
-    # hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-    # hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
-    # print("Total HPWL after = {} + {} = {}".format(
-    #           hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-    # print("Worst wirelenght after = {}".format(worst))
+    niter, worst = placer.run(place, 20)
+    print("Number of iterations = {}".format(niter))
+    hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
+    hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
+    print("Total HPWL after = {} + {} = {}".format(
+              hpwl_x, hpwl_y, hpwl_x + hpwl_y))
+    print("Worst wirelenght after = {}".format(worst))
 
-    # draw IO
-    # for col in range(1, placer.cfg.grid[0]):
-    #     print("<rect class=\"io\" x=\"{}\" y=\"{}\"/>".
-    #           format(col * 40, 0))
-    # for col in range(1, placer.cfg.grid[0]):
-    #     print("<rect class=\"io\" x=\"{}\", y=\"{}\"/>".
-    #           format(col * 40, placer.cfg.grid[1] + 1))
     for i in range(0, n - H.num_pads):
         v = H.modules[i]
         print("<use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
