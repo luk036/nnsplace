@@ -11,6 +11,7 @@ from physdes.interval import Interval
 from .max_mean_cycle import max_mean_cycle
 from .netlist import Netlist
 from .placement_cfg import NnsConfig
+from .lict import TinyDiGraph
 
 
 def create_flow_graph(hgr: Netlist):
@@ -22,8 +23,9 @@ def create_flow_graph(hgr: Netlist):
     Returns:
         _type_: _description_
     """
-    gr = nx.DiGraph(num_modules=hgr.num_modules, num_pads=hgr.num_pads)
-    gr.add_nodes_from(v for v in hgr)
+    gr = TinyDiGraph(num_modules=hgr.num_modules, num_pads=hgr.num_pads)
+    gr.init_nodes(hgr.num_modules)
+    # gr.add_nodes_from(v for v in hgr)
     for net in hgr.nets:
         for v1 in hgr.gr[net]:
             for v2 in hgr.gr[net]:

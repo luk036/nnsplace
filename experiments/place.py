@@ -24,9 +24,9 @@ def test_placement():
     hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
     hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
     print("Total HPWL before = {} + {} = {}".format(
-              hpwl_x, hpwl_y, hpwl_x + hpwl_y))
+        hpwl_x, hpwl_y, hpwl_x + hpwl_y))
     print("Worst wirelenght before = {}".format(
-              placer.calc_worst_wirelenght(place)))
+        placer.calc_worst_wirelenght(place)))
 
     niter, worst = placer.run(place)
     # placer.apply_howard(place, 0)
@@ -39,7 +39,7 @@ def test_placement():
     hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
     hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
     print("Total HPWL after = {} + {} = {}".format(
-              hpwl_x, hpwl_y, hpwl_x + hpwl_y))
+        hpwl_x, hpwl_y, hpwl_x + hpwl_y))
     print("Worst wirelenght after = {}".format(worst))
 
     # for v in H:

@@ -160,7 +160,8 @@ def read_json(filename):
     num_modules = gr.graph["num_modules"]
     num_nets = gr.graph["num_nets"]
     num_pads = gr.graph["num_pads"]
-    hgr = Netlist(gr, range(num_modules), range(num_modules, num_modules + num_nets))
+    hgr = Netlist(gr, range(num_modules), range(
+        num_modules, num_modules + num_nets))
     hgr.num_pads = num_pads
     hgr.module_weight = repeat_array(1, num_modules)
     hgr.net_weight = repeat_array(1, num_nets)
@@ -200,7 +201,8 @@ def create_drawf():
     modules = ["a0", "a1", "a2", "a3", "p1", "p2", "p3"]
     # module_map = {v: i_v for i_v, v in enumerate(modules)}
     # module_weight = [1, 3, 4, 2, 0, 0, 0]
-    module_weight = {"a0": 1, "a1": 3, "a2": 4, "a3": 2, "p1": 0, "p2": 0, "p3": 0}
+    module_weight = {"a0": 1, "a1": 3, "a2": 4,
+                     "a3": 2, "p1": 0, "p2": 0, "p3": 0}
 
     gr.add_edges_from(
         [
