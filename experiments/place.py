@@ -9,7 +9,7 @@ from nnsplace.placement_cfg import NnsConfig
 
 def test_placement():
     H = read_json("testcases/p1.json")
-    placer = NnsPlacer(H, NnsConfig(50, 50, 40, 40))
+    placer = NnsPlacer(H, NnsConfig(100, 100, 40, 40))
     place = [[], []]
     place[0] = [0 for _ in range(H.number_of_modules())]  # x-direction
     place[1] = [0 for _ in range(H.number_of_modules())]  # y-direction
@@ -42,9 +42,9 @@ def test_placement():
         hpwl_x, hpwl_y, hpwl_x + hpwl_y))
     print("Worst wirelenght after = {}".format(worst))
 
-    # for v in H:
-    #     print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
-    #           .format(place[0][v] * 40, place[1][v] * 40))
+    for v in H:
+        print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
+              .format(place[0][v] * 40, place[1][v] * 40))
 
 #     for net in H.nets:
 #         adjs = iter(H.gr[net])

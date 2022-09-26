@@ -17,6 +17,8 @@ from .lict import TinyDiGraph
 def create_flow_graph(hgr: Netlist):
     """Create the flow graph
 
+    TODO: Utilize pin directions of a net (in-to-out)
+
     Args:
         hgr (Netlist): _description_
 
@@ -27,7 +29,7 @@ def create_flow_graph(hgr: Netlist):
     gr.init_nodes(hgr.num_modules)
     # gr.add_nodes_from(v for v in hgr)
     for net in hgr.nets:
-        for v1 in hgr.gr[net]:
+        for v1 in hgr.gr[net]: # assume return an integer
             for v2 in hgr.gr[net]:
                 if v1 == v2:
                     continue
@@ -37,7 +39,8 @@ def create_flow_graph(hgr: Netlist):
 
 
 class NnsPlacer:
-    # TODO: handle optimization aware of I/O pad
+    # TODO: handle optimization aware of I/O pad, DSP, SRAM
+    # TODO: handle ASIC placement
 
     def __init__(self, hgr: Netlist, cfg: NnsConfig):
         """_summary_
@@ -52,12 +55,12 @@ class NnsPlacer:
                       [0 for _ in range(cfg.grid[1]+2)])  # two lists
         # plus 2 I/O
         self.gr = create_flow_graph(hgr)
-        self.bucket = [[], []]
+        self.bucket: List[List] = [[], []]
         self.bucket[0] = [list() for _ in range(self.cfg.grid[1] + 2)]
         self.bucket[1] = [list() for _ in range(self.cfg.grid[0] + 2)]
 
     def init_placement(self, place: List[List[int]]):
-        """initial placement: just place one by one
+        """initial placement: just place one by one including I/O pad
 
         Args:
             place (List[List[int]): placement sol'n
@@ -114,24 +117,24 @@ class NnsPlacer:
                 worst_wire = gruv
         return worst_wire
 
-    def calc_worst_wirelenght_axis(self, place: List[List[int]], axis):
-        """Calculate the worst wirelenght w.r.t one axis
+    # def calc_worst_wirelenght_axis(self, place: List[List[int]], axis):
+    #     """Calculate the worst wirelenght w.r.t one axis
 
-        Args:
-            place (List[List[int]]): _description_
-            axis (_type_): _description_
+    #     Args:
+    #         place (List[List[int]]): _description_
+    #         axis (_type_): _description_
 
-        Returns:
-            _type_: _description_
-        """
-        worst_wire = 0
-        for u, v in self.gr.edges():
-            if u > v:  # only need to calculate one of the two edges
-                continue
-            gruv = abs(place[axis][v] - place[axis][u])
-            if worst_wire < gruv:
-                worst_wire = gruv
-        return worst_wire * self.cfg.delta[axis]
+    #     Returns:
+    #         _type_: _description_
+    #     """
+    #     worst_wire = 0
+    #     for u, v in self.gr.edges():
+    #         if u > v:  # only need to calculate one of the two edges
+    #             continue
+    #         gruv = abs(place[axis][v] - place[axis][u])
+    #         if worst_wire < gruv:
+    #             worst_wire = gruv
+    #     return worst_wire * self.cfg.delta[axis]
 
     # def calc_total_hpwl(self, place: List[List[int]]):
     #     """_summary_
@@ -187,8 +190,8 @@ class NnsPlacer:
         Returns:
             int: _description_
         """
-        return self.total_hull_lenght(place[0], 0) \
-            + self.total_hull_lenght(place[1], 1)
+        return self.calc_total_hull_lenght(place[0], 0) \
+            + self.calc_total_hull_lenght(place[1], 1)
 
     def apply_howard(self, place: List[List[int]], axis1: int, care_io=False):
         """_summary_
@@ -200,17 +203,15 @@ class NnsPlacer:
         Returns:
             _type_: _description_
         """
-        # TODO: sort the criticality
-
         axis2 = axis1 ^ 1
         grid_axis1 = self.cfg.grid[axis1]
         grid_axis2 = self.cfg.grid[axis2]
         count = self.count[axis1]
 
         def update_ok(p, d):
-            if d <= 0 or d > grid_axis1:
+            if d <= 0 or d > grid_axis1: # don't outside the place area
                 return False
-            if self.count[axis1][d] >= grid_axis2:
+            if self.count[axis1][d] >= grid_axis2: # don't over-crowd in one line
                 return False
             count[d] += 1
             count[p] -= 1
@@ -218,7 +219,9 @@ class NnsPlacer:
 
         # set_default(self.gr, 'time', 1.0 / self.cfg.delta[dir])
         # time = 1.0 / self.cfg.delta[axis1]
-        factor = self.cfg.delta[axis2] / self.cfg.delta[axis1]
+        # TODO: should provide an API for calling back the (monotone) wire-model
+        # TODO: should use `Fraction` to avoid floating point arithmetic
+        factor = self.cfg.delta[axis2] / self.cfg.delta[axis1] # floating point arithmetic???
         dist = place[axis2]
         worst = 0
         for u, v in self.gr.edges():
@@ -268,7 +271,7 @@ class NnsPlacer:
 
     def legalize(self, lst: List[int], place: List[List[int]],
                  axis: int, io=False):
-        """_summary_
+        """Legalization by solving the bipartite matching problem
 
         Args:
             lst (List[int]): _description_
@@ -285,7 +288,7 @@ class NnsPlacer:
         # Add nodes with the node attribute "bipartite"
         B.add_nodes_from(lst, bipartite=0)
 
-        m = 30
+        m = 15  # magic number for defining the neigborhood
         for v in lst:
             # construct bipartite graph
             q = dist[v] + self.hgr.number_of_modules()  # avoid same name
@@ -307,7 +310,7 @@ class NnsPlacer:
                 self.add_bipartite_edge(lst, B, place, i, grid, axis)
             except KeyError:
                 self.add_bipartite_edge(lst, B, place, i, grid, axis)
-            i += 1
+            i += 1 # if no match, increase the neigborhood
 
         # reassign the results
         if io:
@@ -354,6 +357,10 @@ class NnsPlacer:
 
     def choose_nearest_iopad(self, place: List[List[int]]):
         """Choose the nearest iopad in phase 2
+
+           TODO: should apply Howard algorithm because one pad can
+           connect to multiple modules and one modules can connect
+           to multiple pad.
 
         Args:
             place (List[List[int]]): _description_
@@ -459,7 +466,7 @@ class NnsPlacer:
         Args:
             place (List[List[int]]): _description_
         """
-        bucket = [list() for _ in range(4)]
+        bucket: List[List] = [list() for _ in range(4)]
         n = self.hgr.number_of_modules()
         for i in range(n - self.hgr.num_pads, n):
             v = self.hgr.modules[i]
@@ -515,6 +522,7 @@ class NnsPlacer:
             self.legalize_modules(place, 1, care_io=care_io)
             r2, C2 = self.apply_howard(place, 1, care_io=care_io)
             self.legalize_modules(place, 0, care_io=care_io)
+            # TODO: How to utilize r1, C1, ...
             worst1 = self.calc_worst_wirelenght(place)
             # TODO: when to stop
             if worst1 > worst0:
@@ -540,7 +548,7 @@ class NnsPlacer:
         worst0 = self.calc_worst_wirelenght(place)
         place0 = [place[0].copy(), place[1].copy()]
         for niter in range(1, max_iter):
-            ni, worst1 = self.optimize(place, max_iter, care_io=True)
+            _, worst1 = self.optimize(place, max_iter, care_io=True)
             self.io_assign(place)
             if worst1 > worst0:
                 place = place0

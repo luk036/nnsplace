@@ -1,4 +1,4 @@
-from .neg_cycle import negCycleFinder
+from .neg_cycle import NegCycleFinder
 
 
 def min_parametric(gr, r, d, zero_cancel, dist,
@@ -24,7 +24,7 @@ def min_parametric(gr, r, d, zero_cancel, dist,
     def get_weight(e):
         return d(r, e)
 
-    S = negCycleFinder(gr, io)
+    S = NegCycleFinder(gr, io)
     r_max = r
     C = None
     reverse = False

@@ -8,7 +8,7 @@ from .bpqueue import BPQueue
 from .dllist import Dllink
 
 
-class negCycleFinder:
+class NegCycleFinder:
     pred: Dict = {}
     succ: Dict = {}
 

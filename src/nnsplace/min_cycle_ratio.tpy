@@ -2,7 +2,7 @@ from math import floor
 
 import networkx as nx
 
-from .parametric import max_parametric
+from .max_parametric import max_parametric
 
 
 def set_default(G: nx.DiGraph, weight, value):

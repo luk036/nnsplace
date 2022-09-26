@@ -24,10 +24,20 @@
 - Network-flow like algorithms
 - Legalization-assisted optimization
 
+# Dependency
+
+- Networkx
+  from networkx.algorithms import bipartite
+  matches = bipartite.minimum_weight_full_matching(B)
 
 # TODO: 
 
 - More experiments
+- seed API (default the same seed)
+- Utilize pin directions of a net (in-to-out)
+- Better iterative flow
+- concave wire cost
+- Fine-tune the magic number
 - ASIC placement
 - C++ porting
 
