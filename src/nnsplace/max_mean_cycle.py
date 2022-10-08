@@ -44,7 +44,7 @@ def max_mean_cycle(G: nx.DiGraph, dist, update_ok, r0, care_io=False):
             [type]: [description]
         """
         u, v = e
-        return floor(r - G[u][v]['cost'])
+        return floor(r - G[u][v]['cost'])  # floor???
 
     def calc_ratio(C):
         """Calculate the ratio of the cycle
@@ -56,7 +56,7 @@ def max_mean_cycle(G: nx.DiGraph, dist, update_ok, r0, care_io=False):
             cycle ratio
         """
         total_cost = sum(G[u][v]['cost'] for (u, v) in C)
-        return floor(total_cost / len(C))
+        return floor(total_cost / len(C))  # floor???
 
     # C0 = nx.find_cycle(G)
     # r0 = calc_ratio(C0)

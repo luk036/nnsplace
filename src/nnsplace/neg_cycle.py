@@ -25,7 +25,7 @@ class NegCycleFinder:
                 max_weight = weight
         self.bpq_pred = BPQueue(0, max_weight)
         self.bpq_succ = BPQueue(0, max_weight)
-        if io: # don't process I/O pad
+        if io:  # don't process I/O pad
             for (u, v, weight) in G.edges.data('weight'):
                 if v < G.graph['num_modules'] - G.graph['num_pads']:
                     self.bpq_pred.append(Dllink([0, (u, v)]), weight)

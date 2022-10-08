@@ -35,7 +35,7 @@ def test_placement():
     # 00321C
     # EC0000
     n = H.number_of_modules()
-    placer = NnsPlacer(H, NnsConfig(32, 32, 40, 40))
+    placer = NnsPlacer(H, NnsConfig(100, 100, 40, 40))
     place = [[], []]
     place[0] = [0 for _ in range(n)]  # x-direction
     place[1] = [0 for _ in range(n)]  # y-direction

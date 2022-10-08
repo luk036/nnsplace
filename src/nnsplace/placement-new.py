@@ -29,7 +29,7 @@ def create_flow_graph(hgr: Netlist):
     gr.init_nodes(hgr.num_modules)
     # gr.add_nodes_from(v for v in hgr)
     for net in hgr.nets:
-        for v1 in hgr.gr[net]:  # assume return an integer
+        for v1 in hgr.gr[net]: # assume return an integer
             for v2 in hgr.gr[net]:
                 if v1 == v2:
                     continue
@@ -209,11 +209,9 @@ class NnsPlacer:
         count = self.count[axis1]
 
         def update_ok(p, d):
-            if d <= 0 or d > grid_axis1:
-                # don't outside the place area
+            if d <= 0 or d > grid_axis1: # don't outside the place area
                 return False
-            if self.count[axis1][d] >= grid_axis2:
-                # don't over-crowd in one line
+            if self.count[axis1][d] >= grid_axis2: # don't over-crowd in one line
                 return False
             count[d] += 1
             count[p] -= 1
@@ -221,17 +219,16 @@ class NnsPlacer:
 
         # set_default(self.gr, 'time', 1.0 / self.cfg.delta[dir])
         # time = 1.0 / self.cfg.delta[axis1]
-        # TODO: should provide an API for calling the (monotone) wire-model
+        # TODO: should provide an API for calling back the (monotone) wire-model
         # TODO: should use `Fraction` to avoid floating point arithmetic
-        # floating point arithmetic???
-        factor = self.cfg.delta[axis2] / self.cfg.delta[axis1]
+        factor = self.cfg.delta[axis2] / self.cfg.delta[axis1] # floating point arithmetic???
         dist = place[axis2]
         worst = 0
         for u, v in self.gr.edges():
             # TODO: Find out how to formulate?
             gruv = abs(dist[v] - dist[u])
-            # self.gr[u][v]['weight'] = gruv  # ???
-            self.gr[u][v]['cost'] = gruv * factor  # ???
+            self.gr[u][v]['weight'] = gruv
+            self.gr[u][v]['cost'] = gruv * factor
             # self.gr[u][v]['cost'] = 0
             # self.gr[u][v]['time'] = time
             if worst < gruv:
@@ -273,13 +270,14 @@ class NnsPlacer:
                 B.add_edge(v, q + i, weight=weight1 - weight0)
 
     def legalize(self, lst: List[int], place: List[List[int]],
-                 axis: int, io=False):
+                 axis: int, neighborhood = 15, io=False):
         """Legalization by solving the bipartite matching problem
 
         Args:
             lst (List[int]): _description_
             place (List[List[int]]): _description_
             axis (int): _description_
+            neighborhood (int): magic number for defining the neigborhood. (Defaults to 15)
             io (bool, optional): _description_. Defaults to False.
         """
         dist = place[axis]
@@ -291,17 +289,16 @@ class NnsPlacer:
         # Add nodes with the node attribute "bipartite"
         B.add_nodes_from(lst, bipartite=0)
 
-        m = 15  # magic number for defining the neigborhood
         for v in lst:
             # construct bipartite graph
             q = dist[v] + self.hgr.number_of_modules()  # avoid same name
             B.add_node(q, bipartite=1)
             B.add_edge(v, q, weight=0)
-        for i in range(1, m):
+        for i in range(1, neighborhood):
             self.add_bipartite_edge(lst, B, place, i, grid, axis)
 
         # solve the matching problem
-        i = m
+        i = neighborhood
         matched = False
         while not matched:
             try:
@@ -313,7 +310,7 @@ class NnsPlacer:
                 self.add_bipartite_edge(lst, B, place, i, grid, axis)
             except KeyError:
                 self.add_bipartite_edge(lst, B, place, i, grid, axis)
-            i += 1  # if no match, increase the neigborhood
+            i += 1 # if no match, increase the neigborhood
 
         # reassign the results
         if io:
@@ -380,23 +377,32 @@ class NnsPlacer:
         n = self.hgr.number_of_modules()
         for i in range(n - self.hgr.num_pads, n):
             vp = self.hgr.modules[i]
+
+            # Take the average of all neighbors
+            # place0 = 0
+            # place1 = 0
+            # countw = 0
+            # for w in self.gr.neighbors(vp):
+            #     place0 += place[0][w]
+            #     place1 += place[1][w]
+            #     countw += 1
+            # place0 //= countw
+            # place1 //= countw
+
             nbrs = list(self.gr.neighbors(vp))
             # TODO: pad attached to more than one node
             v = nbrs[0]  # workaround: take the first one only
-
             if place[0][v] <= half_x and self.count[0][0] < grid_y:
                 which_x = 0  # left
                 len_x = place[0][v]
-            else:  # if self.count[0][grid_x + 1] < grid_y:
-                # assume enough empty IOs
+            elif self.count[0][grid_x + 1] < grid_y:
                 which_x = 1  # right
                 len_x = grid_x - place[0][v]
 
             if place[1][v] <= half_y and self.count[1][0] < grid_x:
                 which_y = 0  # top
                 len_y = place[1][v]
-            else:  # if self.count[1][grid_y + 1] < grid_x:
-                # assume enough empty IOs
+            elif self.count[1][grid_y + 1] < grid_x:
                 which_y = 1  # bottom
                 len_y = grid_y - place[1][v]
 
@@ -408,15 +414,16 @@ class NnsPlacer:
                 else:
                     place[0][vp] = grid_x + 1
                 place[1][vp] = place[1][v]
+                self.count[0][place[0][vp]] += 1
+                self.count[1][place[1][vp]] += 1
             else:
                 if which_y == 0:
                     place[1][vp] = 0
                 else:
                     place[1][vp] = grid_y + 1
                 place[0][vp] = place[0][v]
-
-            self.count[1][place[1][vp]] += 1
-            self.count[0][place[0][vp]] += 1
+                self.count[1][place[1][vp]] += 1
+                self.count[0][place[0][vp]] += 1
 
     # def choose_nearest_iopad(self, place: List[List[int]]):
     #     """_summary_
@@ -484,13 +491,13 @@ class NnsPlacer:
             elif place[1][v] == self.cfg.grid[1] + 1:
                 bucket[3].append(v)
         if bucket[0]:
-            self.legalize(bucket[0], place, 1, True)
+            self.legalize(bucket[0], place, 1, 30, True)
         if bucket[1]:
-            self.legalize(bucket[1], place, 1, True)
+            self.legalize(bucket[1], place, 1, 30, True)
         if bucket[2]:
-            self.legalize(bucket[2], place, 0, True)
+            self.legalize(bucket[2], place, 0, 30, True)
         if bucket[3]:
-            self.legalize(bucket[3], place, 0, True)
+            self.legalize(bucket[3], place, 0, 30, True)
 
     def io_assign(self, place: List[List[int]]):
         """_summary_
@@ -535,10 +542,13 @@ class NnsPlacer:
                 return niter, worst0
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
-        return max_iter, worst1
+        place = place0
+        return max_iter, worst0
 
     def run(self, place: List[List[int]], max_iter=2000):
         """_summary_
+
+        io_assign -> placementn
 
         Args:
             place (List[List[int]]): _description_
@@ -550,15 +560,16 @@ class NnsPlacer:
         # niter, worst = self.optimize(place, max_iter, care_io=False)
         # self.init_placement(place)
         self.io_assign(place)
-        # _, worst0 = self.optimize(place, max_iter, care_io=True)
-        worst0 = self.calc_worst_wirelenght(place)
+        _, worst0 = self.optimize(place, max_iter, care_io=True)
+        # worst0 = self.calc_worst_wirelenght(place)
         place0 = [place[0].copy(), place[1].copy()]
         for niter in range(1, max_iter):
-            _, worst1 = self.optimize(place, max_iter, care_io=True)
             self.io_assign(place)
+            _, worst1 = self.optimize(place, max_iter, care_io=True)
             if worst1 > worst0:
                 place = place0
                 return niter, worst0
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
-        return max_iter, worst1
+        place = place0
+        return max_iter, worst0

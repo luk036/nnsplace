@@ -1,0 +1,41 @@
+============================= test session starts ==============================
+platform linux -- Python 3.9.12, pytest-7.1.2, pluggy-1.0.0 -- /media/lubuntu/USBDISK/miniconda3/bin/python
+cachedir: .pytest_cache
+hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('/media/lubuntu/USBDISK/github/luk036/py/nnsplace/.hypothesis/examples')
+benchmark: 3.4.1 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /media/lubuntu/USBDISK/github/luk036/py/nnsplace, configfile: setup.cfg
+plugins: hypothesis-6.46.1, cov-3.0.0, benchmark-3.4.1
+collecting ... collected 1 item
+
+tests/test_place.py::test_placement 
+
+=============================== warnings summary ===============================
+tests/test_place.py::test_placement
+  /media/lubuntu/USBDISK/miniconda3/lib/python3.9/site-packages/networkx/algorithms/bipartite/matching.py:569: FutureWarning: biadjacency_matrix will return a scipy.sparse array instead of a matrix in NetworkX 3.0
+    weights_sparse = biadjacency_matrix(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.9.12-final-0 -----------
+Name                              Stmts   Miss Branch BrPart  Cover   Missing
+-----------------------------------------------------------------------------
+src/nnsplace/__init__.py              6      0      0      0   100%
+src/nnsplace/array_like.py           23      9      0      0    61%   26, 34, 42, 54, 57-58, 66, 77, 86
+src/nnsplace/bpqueue.py              89     68     28      0    18%   43-48, 61, 74, 85-87, 96, 105-106, 122-126, 134-140, 156-159, 173-182, 196-203, 216-221, 230-232, 252, 269-271, 282-289
+src/nnsplace/dllist.py               63     38      2      0    38%   41, 52, 65-68, 81-84, 100-103, 119-122, 133-137, 179, 192, 203, 218, 233, 249, 265, 284, 304-305, 325-330
+src/nnsplace/lict.py                 32      4      4      0    89%   16, 19, 25, 28
+src/nnsplace/max_cycle_ratio.py      16     16      8      0     0%   1-64
+src/nnsplace/max_mean_cycle.py       15     10      6      0    24%   16-18, 36-63
+src/nnsplace/min_parametric.py       24     22     10      0     6%   24-51
+src/nnsplace/neg_cycle.py            96     81     51      0    10%   21-39, 47-58, 70-82, 94-106, 119-127, 140-148, 159-167, 179-189
+src/nnsplace/neg_cycle_rev.py        57     57     25      0     0%   2-121
+src/nnsplace/netlist.py             116     60     14      0    45%   18, 28, 87, 95, 103, 111, 122, 145, 153, 174-232, 236-262, 277-282, 297, 315-321, 325-340
+src/nnsplace/placement.py           268     74    127      8    70%   194, 207-238, 311, 327-334, 345-357, 396->400, 403->407, 489->481, 491->493, 493->495, 497-498, 528-573
+src/nnsplace/placement_cfg.py         4      0      0      0   100%
+-----------------------------------------------------------------------------
+TOTAL                               809    439    275      8    42%
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/media/lubuntu/USBDISK/miniconda3/lib/python3.9/site-packages/networkx/algorithms/bipartite/matrix.py:101: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+======================== 1 warning in 770.26s (0:12:50) ========================
