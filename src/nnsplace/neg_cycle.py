@@ -12,7 +12,7 @@ class NegCycleFinder:
     pred: Dict = {}
     succ: Dict = {}
 
-    def __init__(self, G, io=False):
+    def __init__(self, G, care_io=True):
         """[summary]
 
         Arguments:
@@ -25,11 +25,10 @@ class NegCycleFinder:
                 max_weight = weight
         self.bpq_pred = BPQueue(0, max_weight)
         self.bpq_succ = BPQueue(0, max_weight)
-        if io:  # don't process I/O pad
+        if care_io:  # don't process I/O pad
             for (u, v, weight) in G.edges.data('weight'):
                 if v < G.graph['num_modules'] - G.graph['num_pads']:
                     self.bpq_pred.append(Dllink([0, (u, v)]), weight)
-            for (u, v, weight) in G.edges.data('weight'):
                 if u < G.graph['num_modules'] - G.graph['num_pads']:
                     self.bpq_succ.append(Dllink([0, (u, v)]), weight)
         else:

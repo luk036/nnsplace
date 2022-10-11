@@ -1,20 +1,18 @@
 from typing import List
+from math import floor
 
-from random import shuffle
 import networkx as nx
+from random import shuffle
 from networkx.algorithms import bipartite
 from physdes.interval import Interval
-# from physdes.point import Point
-# from physdes.recti import Rect
 
-# from .max_cycle_ratio import max_cycle_ratio
-from .max_mean_cycle import max_mean_cycle
+from .min_parametric import min_parametric
 from .netlist import Netlist
 from .placement_cfg import NnsConfig
 from .lict import TinyDiGraph
 
 
-def create_flow_graph(hgr: Netlist):
+def create_flow_graph(hgr: Netlist) -> TinyDiGraph:
     """Create the flow graph
 
     TODO: Utilize pin directions of a net (in-to-out)
@@ -23,9 +21,10 @@ def create_flow_graph(hgr: Netlist):
         hgr (Netlist): _description_
 
     Returns:
-        _type_: _description_
+        TinyDiGraph: _description_
     """
     gr = TinyDiGraph(num_modules=hgr.num_modules, num_pads=hgr.num_pads)
+    # gr = TinyDiGraph()
     gr.init_nodes(hgr.num_modules)
     # gr.add_nodes_from(v for v in hgr)
     for net in hgr.nets:
@@ -45,6 +44,12 @@ class NnsPlacer:
     def __init__(self, hgr: Netlist, cfg: NnsConfig):
         """_summary_
 
+        Notes:
+            0 - x-axis
+            1 - y-axis
+            count[0] - how many cells on each row, including 2 I/O rows
+            count[1] - how many cells on each column, including 2 I/O columns
+
         Args:
             hgr (Netlist): _description_
             cfg (NnsConfig): _description_
@@ -55,9 +60,9 @@ class NnsPlacer:
                       [0 for _ in range(cfg.grid[1]+2)])  # two lists
         # plus 2 I/O
         self.gr = create_flow_graph(hgr)
-        self.bucket: List[List] = [[], []]
-        self.bucket[0] = [list() for _ in range(self.cfg.grid[1] + 2)]
-        self.bucket[1] = [list() for _ in range(self.cfg.grid[0] + 2)]
+        # self.bucket: List[List] = [[], []]
+        # self.bucket[0] = [list() for _ in range(cfg.grid[1] + 2)]
+        # self.bucket[1] = [list() for _ in range(cfg.grid[0] + 2)]
 
     def init_placement(self, place: List[List[int]]):
         """initial placement: just place one by one including I/O pad
@@ -193,7 +198,7 @@ class NnsPlacer:
         return self.calc_total_hull_lenght(place[0], 0) \
             + self.calc_total_hull_lenght(place[1], 1)
 
-    def apply_howard(self, place: List[List[int]], axis1: int, care_io=False):
+    def apply_howard(self, place: List[List[int]], axis1: int, care_io=True):
         """_summary_
 
         Args:
@@ -204,41 +209,58 @@ class NnsPlacer:
             _type_: _description_
         """
         axis2 = axis1 ^ 1
-        grid_axis1 = self.cfg.grid[axis1]
-        grid_axis2 = self.cfg.grid[axis2]
-        count = self.count[axis1]
 
         def update_ok(p, d):
-            if d <= 0 or d > grid_axis1:
+            if d <= 0 or d > self.cfg.grid[axis1]:
                 # don't outside the place area
                 return False
-            if self.count[axis1][d] >= grid_axis2:
+            if self.count[axis1][d] >= self.cfg.grid[axis2]:
                 # don't over-crowd in one line
                 return False
-            count[d] += 1
-            count[p] -= 1
+            self.count[axis1][d] += 1
+            self.count[axis1][p] -= 1
             return True
 
-        # set_default(self.gr, 'time', 1.0 / self.cfg.delta[dir])
-        # time = 1.0 / self.cfg.delta[axis1]
+        def calc_weight(r, e):
+            """[summary]
+
+            Arguments:
+                r ([type]): [description]
+                e ([type]): [description]
+
+            Returns:
+                [type]: [description]
+            """
+            u, v = e
+            return floor((r - self.gr[u][v]['cost']) / self.cfg.delta[axis1])
+
+        def zero_cancel(C):
+            """Calculate the zero cancelation of the cycle
+
+            Arguments:
+                C {list}: cycle list
+
+            Returns:
+                cycle ratio
+            """
+            total_cost = sum(self.gr[u][v]['cost'] for (u, v) in C)
+            return total_cost / len(C)
+
         # TODO: should provide an API for calling the (monotone) wire-model
         # TODO: should use `Fraction` to avoid floating point arithmetic
         # floating point arithmetic???
-        factor = self.cfg.delta[axis2] / self.cfg.delta[axis1]
-        dist = place[axis2]
+
+        # dt[0] * abs(p[0][i] - p[0][j]) + dt[1] * abs(p[1][i] - p[1][j]) < r
         worst = 0
         for u, v in self.gr.edges():
             # TODO: Find out how to formulate?
-            gruv = abs(dist[v] - dist[u])
-            # self.gr[u][v]['weight'] = gruv  # ???
-            self.gr[u][v]['cost'] = gruv * factor  # ???
-            # self.gr[u][v]['cost'] = 0
-            # self.gr[u][v]['time'] = time
+            gruv = abs(place[axis2][v] - place[axis2][u])
+            self.gr[u][v]['weight'] = gruv  # for bpqueue in NegCycleFinder ???
+            self.gr[u][v]['cost'] = gruv * self.cfg.delta[axis2]
             if worst < gruv:
                 worst = gruv
-        # r0 = self.calc_worst_wirelenght_axis(place, oppo)
-        return max_mean_cycle(self.gr, place[axis1], update_ok,
-                              0, care_io=care_io)
+        return min_parametric(self.gr, worst / 2, calc_weight, zero_cancel,
+                              place[axis1], update_ok, care_io=care_io)
 
     def add_bipartite_edge(self, lst: List[int], B: nx.Graph,
                            place: List[List[int]], i: int,
@@ -258,22 +280,23 @@ class NnsPlacer:
             # construct bipartite graph
             p = place[axis][v]
             q = p + self.hgr.number_of_modules()  # avoid same name
-            weight0 = self.calc_worst_wirelenght_v(v, place)
+            # weight0 = self.calc_worst_wirelenght_v(v, place)
             if p - i > 0:
-                place[axis][v] -= i  # temporily set the position
-                weight1 = self.calc_worst_wirelenght_v(v, place)
-                place[axis][v] += i  # reset the position
+                # place[axis][v] -= i  # temporily set the position
+                # weight1 = self.calc_worst_wirelenght_v(v, place)
+                # place[axis][v] += i  # reset the position
                 B.add_node(q - i, bipartite=1)
-                B.add_edge(v, q - i, weight=weight1 - weight0)
+                B.add_edge(v, q - i, weight=i)
+                # B.add_edge(v, q - i, weight=weight1 - weight0)
             if p + i <= grid:
-                place[axis][v] += i  # temporily set the position
-                weight1 = self.calc_worst_wirelenght_v(v, place)
-                place[axis][v] -= i  # reset the position
+                # place[axis][v] += i  # temporily set the position
+                # weight1 = self.calc_worst_wirelenght_v(v, place)
+                # place[axis][v] -= i  # reset the position
                 B.add_node(q + i, bipartite=1)
-                B.add_edge(v, q + i, weight=weight1 - weight0)
+                B.add_edge(v, q + i, weight=i)
+                # B.add_edge(v, q + i, weight=weight1 - weight0)
 
-    def legalize(self, lst: List[int], place: List[List[int]],
-                 axis: int, io=False):
+    def legalize(self, lst: List[int], place: List[List[int]], axis: int):
         """Legalization by solving the bipartite matching problem
 
         Args:
@@ -291,17 +314,17 @@ class NnsPlacer:
         # Add nodes with the node attribute "bipartite"
         B.add_nodes_from(lst, bipartite=0)
 
-        m = 15  # magic number for defining the neigborhood
+        neighborhood = 15  # magic number for defining the neigborhood
         for v in lst:
             # construct bipartite graph
             q = dist[v] + self.hgr.number_of_modules()  # avoid same name
             B.add_node(q, bipartite=1)
-            B.add_edge(v, q, weight=0)
-        for i in range(1, m):
+            B.add_edge(v, q, weight=0)  # closest position
+        for i in range(1, neighborhood):
             self.add_bipartite_edge(lst, B, place, i, grid, axis)
 
         # solve the matching problem
-        i = m
+        i = neighborhood
         matched = False
         while not matched:
             try:
@@ -313,38 +336,30 @@ class NnsPlacer:
                 self.add_bipartite_edge(lst, B, place, i, grid, axis)
             except KeyError:
                 self.add_bipartite_edge(lst, B, place, i, grid, axis)
+            except nx.exception.AmbiguousSolution:
+                self.add_bipartite_edge(lst, B, place, i, grid, axis)
             i += 1  # if no match, increase the neigborhood
 
         # reassign the results
-        if io:
-            for v in lst:
-                q = matches[v] - self.hgr.number_of_modules()
-                if dist[v] == q:
-                    continue
-                # Update position and self.count
-                self.count[axis][dist[v]] -= 1
-                self.count[axis][q] += 1
-                dist[v] = q
-        else:
-            for v in lst:
-                q = matches[v] - self.hgr.number_of_modules()
-                if dist[v] == q:
-                    continue
-                # Update position and self.count
-                self.count[axis][dist[v]] -= 1
-                self.count[axis][q] += 1
-                dist[v] = q
+        for v in lst:
+            q = matches[v] - self.hgr.number_of_modules()
+            if dist[v] == q:
+                continue
+            # Update position and self.count
+            self.count[axis][dist[v]] -= 1
+            self.count[axis][q] += 1
+            dist[v] = q
 
     def legalize_modules(self, place: List[List[int]], axis: int,
-                         care_io=False):
+                         care_io=True):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
             axis (int): _description_
         """
-        # bucket = [list() for _ in range(self.cfg.grid[axis ^ 1] + 2)]
-        bucket = self.bucket[axis]
+        bucket = [list() for _ in range(self.cfg.grid[axis] + 2)]
+        # bucket = self.bucket[axis]
         for lst in bucket:
             lst.clear()
         dist = place[axis ^ 1]
@@ -373,12 +388,9 @@ class NnsPlacer:
         half_x = grid_x // 2
         grid_y = self.cfg.grid[1]
         half_y = grid_y // 2
-        which_x = None
-        which_y = None
-        len_x = grid_x
-        len_y = grid_y
         n = self.hgr.number_of_modules()
         for i in range(n - self.hgr.num_pads, n):
+            # loop through io pad
             vp = self.hgr.modules[i]
             nbrs = list(self.gr.neighbors(vp))
             # TODO: pad attached to more than one node
@@ -484,13 +496,13 @@ class NnsPlacer:
             elif place[1][v] == self.cfg.grid[1] + 1:
                 bucket[3].append(v)
         if bucket[0]:
-            self.legalize(bucket[0], place, 1, True)
+            self.legalize(bucket[0], place, 1)
         if bucket[1]:
-            self.legalize(bucket[1], place, 1, True)
+            self.legalize(bucket[1], place, 1)
         if bucket[2]:
-            self.legalize(bucket[2], place, 0, True)
+            self.legalize(bucket[2], place, 0)
         if bucket[3]:
-            self.legalize(bucket[3], place, 0, True)
+            self.legalize(bucket[3], place, 0)
 
     def io_assign(self, place: List[List[int]]):
         """_summary_
@@ -510,7 +522,7 @@ class NnsPlacer:
     #     self.choose_nearest_iopad(place)
     #     self.legalize_iopad(place)
 
-    def optimize(self, place: List[List[int]], max_iter: int, care_io=False):
+    def optimize(self, place: List[List[int]], max_iter: int, care_io=True):
         """_summary_
 
         Args:
@@ -522,7 +534,7 @@ class NnsPlacer:
         """
         worst0 = self.calc_worst_wirelenght(place)
         place0 = [place[0].copy(), place[1].copy()]
-        for niter in range(1, max_iter):
+        for niter in range(max_iter):
             r1, C1 = self.apply_howard(place, 0, care_io=care_io)
             self.legalize_modules(place, 1, care_io=care_io)
             r2, C2 = self.apply_howard(place, 1, care_io=care_io)
@@ -549,16 +561,17 @@ class NnsPlacer:
         """
         # niter, worst = self.optimize(place, max_iter, care_io=False)
         # self.init_placement(place)
-        self.io_assign(place)
         # _, worst0 = self.optimize(place, max_iter, care_io=True)
+        self.io_assign(place)
         worst0 = self.calc_worst_wirelenght(place)
         place0 = [place[0].copy(), place[1].copy()]
-        for niter in range(1, max_iter):
-            _, worst1 = self.optimize(place, max_iter, care_io=True)
+        for niter in range(max_iter):
+            _, _ = self.optimize(place, max_iter, care_io=True)
             self.io_assign(place)
+            worst1 = self.calc_worst_wirelenght(place)
             if worst1 > worst0:
                 place = place0
                 return niter, worst0
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
-        return max_iter, worst1
+        return max_iter, worst0

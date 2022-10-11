@@ -2,7 +2,7 @@ from .neg_cycle import NegCycleFinder
 
 
 def min_parametric(gr, r, d, zero_cancel, dist,
-                   update_ok, pick_one_only=False, io=False):
+                   update_ok, pick_one_only=False, care_io=True):
     """minimum parametric problem:
 
         min  r
@@ -24,16 +24,17 @@ def min_parametric(gr, r, d, zero_cancel, dist,
     def get_weight(e):
         return d(r, e)
 
-    S = NegCycleFinder(gr, io)
+    S = NegCycleFinder(gr, care_io)
     r_max = r
     C = None
-    reverse = False
+    reverse = True
 
     while True:
         if reverse:
             cycles = S.find_neg_cycle_succ(dist, get_weight, update_ok)
         else:
             cycles = S.find_neg_cycle_pred(dist, get_weight, update_ok)
+        # cycles = S.find_neg_cycle_pred(dist, get_weight, update_ok)
 
         for Ci in cycles:
             ri = zero_cancel(Ci)

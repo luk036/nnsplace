@@ -1,7 +1,7 @@
 from typing import List
 
-from random import shuffle
 import networkx as nx
+from random import shuffle
 from networkx.algorithms import bipartite
 from physdes.interval import Interval
 # from physdes.point import Point
@@ -29,7 +29,7 @@ def create_flow_graph(hgr: Netlist):
     gr.init_nodes(hgr.num_modules)
     # gr.add_nodes_from(v for v in hgr)
     for net in hgr.nets:
-        for v1 in hgr.gr[net]: # assume return an integer
+        for v1 in hgr.gr[net]:  # assume return an integer
             for v2 in hgr.gr[net]:
                 if v1 == v2:
                     continue
@@ -209,9 +209,10 @@ class NnsPlacer:
         count = self.count[axis1]
 
         def update_ok(p, d):
-            if d <= 0 or d > grid_axis1: # don't outside the place area
+            if d <= 0 or d > grid_axis1:  # don't outside the place area
                 return False
-            if self.count[axis1][d] >= grid_axis2: # don't over-crowd in one line
+            if self.count[axis1][d] >= grid_axis2:
+                # don't over-crowd in one line
                 return False
             count[d] += 1
             count[p] -= 1
@@ -219,9 +220,10 @@ class NnsPlacer:
 
         # set_default(self.gr, 'time', 1.0 / self.cfg.delta[dir])
         # time = 1.0 / self.cfg.delta[axis1]
-        # TODO: should provide an API for calling back the (monotone) wire-model
+        # TODO: should provide an API for calling the (monotone) wire-model
         # TODO: should use `Fraction` to avoid floating point arithmetic
-        factor = self.cfg.delta[axis2] / self.cfg.delta[axis1] # floating point arithmetic???
+        # floating point arithmetic???
+        factor = self.cfg.delta[axis2] / self.cfg.delta[axis1]
         dist = place[axis2]
         worst = 0
         for u, v in self.gr.edges():
@@ -270,7 +272,7 @@ class NnsPlacer:
                 B.add_edge(v, q + i, weight=weight1 - weight0)
 
     def legalize(self, lst: List[int], place: List[List[int]],
-                 axis: int, neighborhood = 15, io=False):
+                 axis: int, neighborhood=15, io=False):
         """Legalization by solving the bipartite matching problem
 
         Args:
@@ -310,7 +312,7 @@ class NnsPlacer:
                 self.add_bipartite_edge(lst, B, place, i, grid, axis)
             except KeyError:
                 self.add_bipartite_edge(lst, B, place, i, grid, axis)
-            i += 1 # if no match, increase the neigborhood
+            i += 1  # if no match, increase the neigborhood
 
         # reassign the results
         if io:

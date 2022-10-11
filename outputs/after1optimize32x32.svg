@@ -1,107 +1,50 @@
-============================= test session starts ==============================
-platform linux -- Python 3.9.13, pytest-7.1.2, pluggy-1.0.0 -- /media/lubuntu/USBDISK/miniconda3/bin/python
-cachedir: .pytest_cache
-hypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('/media/lubuntu/USBDISK/github/luk036/py/nnsplace/.hypothesis/examples')
-benchmark: 3.4.1 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
-rootdir: /media/lubuntu/USBDISK/github/luk036/py/nnsplace, configfile: setup.cfg
-plugins: hypothesis-6.46.1, cov-3.0.0, benchmark-3.4.1
-collecting ... collected 1 item
+<svg viewBox="0 0 1360 1360" xmlns="http://www.w3.org/2000/svg">
+  <style type="text/css">
+    @import "mysvg.css"
+  </style>
 
-tests/test_place.py::test_placement FAILED                               [100%]
+  <!-- Create mask that we'll use to define a slight gradient -->
+  <mask maskUnits="userSpaceOnUse" id="fade">
+    <!-- Here's that slight gradient -->
+    <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="100%">
+      <stop offset ="0" style="stop-color: #FFFFFF" />
+      <stop offset ="1" style="stop-color: #000000" />
+    </linearGradient>
+    <!-- The canvas for our mask -->
+    <rect fill="url(#gradient)" width="100%" height="100%" />
+  </mask>
+    
+  <!-- Let's define the pattern -->
+  <!-- The width and height should be double the circle radius we plan to use -->
+  <pattern id="pattern-circles" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+    <!-- Now let's draw the circle -->
+    <!-- We're going to define the `fill` in the CSS for flexible use -->
+    <circle class="cell" opacity="0.2" cx="20" cy="20" r="15" />
+  </pattern>
 
-=================================== FAILURES ===================================
-________________________________ test_placement ________________________________
+  <!-- Let's define the pattern -->
+  <!-- The width and height should be double the circle radius we plan to use -->
+  <pattern id="pattern-io" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+    <!-- Now let's draw the circle -->
+    <!-- We're going to define the `fill` in the CSS for flexible use -->
+    <circle class="iopad" opacity="0.2" cx="20" cy="20" r="15" />
+  </pattern>
 
-    def test_placement():
-        seed(831)
-        H = read_json("testcases/p1.json")
-        # count_2 = 0
-        # count_3 = 0
-        # count_rest = 0
-        # for net in H.nets:
-        #     deg = H.G.degree(net)
-        #     if deg == 2:
-        #         count_2 += 1
-        #     elif deg == 3:
-        #         count_3 += 1
-        #     else:
-        #         count_rest += 1
-        # print(count_2, count_3, count_rest)
-        # assert count_2 == 494
-        # 00321C
-        # EC0000
-        n = H.number_of_modules()
-        placer = NnsPlacer(H, NnsConfig(32, 32, 40, 40))
-        place = [[], []]
-        place[0] = [0 for _ in range(n)]  # x-direction
-        place[1] = [0 for _ in range(n)]  # y-direction
-        placer.init_placement(place)
-        # assert place[0][1] == 1
-        # assert place[1][1] == 0
-        # assert placer.count[1][0] == 32
-        # assert placer.count[1][26] == 1
-        # assert placer.count[1][27] == 0
-        # assert placer.count[0][0] == 27
-        # assert placer.count[0][1] == 26
-        hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-        hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
-        print("Total HPWL before = {} + {} = {}".format(
-                  hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-        print("Worst wirelenght before = {}".format(
-                  placer.calc_worst_wirelenght(place)))
-    
-        # placer.io_assign(place)
-        # placer.choose_nearest_iopad(place)
-    
-        niter, worst = placer.run(place, 1)
-        print("Number of iterations = {}".format(niter))
-        hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-        hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
-        print("Total HPWL after = {} + {} = {}".format(
-                  hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-        print("Worst wirelenght after = {}".format(worst))
-    
-        for i in range(0, n - H.num_pads):
-            v = H.modules[i]
-            print("<use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
-                  .format(place[0][v] * 40, place[1][v] * 40))
-        for i in range(n - H.num_pads, n):
-            vp = H.modules[i]
-            print("<use x=\"{}\" y=\"{}\" href=\"#io\"/>"
-                  .format(place[0][vp] * 40, place[1][vp] * 40))
-        for i in range(n - H.num_pads, n):
-            vp = H.modules[i]
-            nbrs = list(placer.gr.neighbors(vp))
-            v = nbrs[0]
-            print("<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\"/>".format(
-                  place[0][vp] * 40 + 20, place[1][vp] * 40 + 20,
-                  place[0][v] * 40 + 20, place[1][v] * 40 + 20))
-    
-    #     for net in H.nets:
-    #         adjs = iter(H.gr[net])
-    #         v = next(adjs)
-    #         p = Point(place[0][v], place[1][v])
-    #         bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
-    #         for v in adjs:
-    #             q = Point(place[0][v], place[1][v])
-    #             bbox = bbox.hull_with(q)
-    #         x = bbox.x.lb * 40 + 10
-    #         y = bbox.y.lb * 40 + 10
-    #         width = bbox.width() * 40
-    #         height = bbox.height() * 40
-    #         print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" \
-    # height=\"{}\"/>".format(x, y, width, height))
-    
->       assert(place[0][1] < 0)
-E       assert 9 < 0
+  <!-- The canvas with our applied pattern -->
+  <rect x="40" y="40" width="1280" height="1280" fill="url(#pattern-circles)" />
 
-tests/test_place.py:99: AssertionError
------------------------------ Captured stdout call -----------------------------
-Total HPWL before = 520600 + 427720 = 948320
-Worst wirelenght before = 2120
-Number of iterations = 0
-Total HPWL after = 465840 + 354960 = 820800
-Worst wirelenght after = 2320
+  <rect x="40" y="0" width="1280" height="40" fill="url(#pattern-io)" />
+  <rect x="40" y="1320" width="1280" height="40" fill="url(#pattern-io)" />
+  <rect x="0" y="40" width="40" height="1280" fill="url(#pattern-io)" />
+  <rect x="1320" y="40" width="40" height="1280" fill="url(#pattern-io)" />
+  <defs>
+    <!-- A circle of radius 200 -->
+    <circle id = "s1" cx = "200" cy = "200" r = "200" fill = "yellow" stroke = "black" stroke-width = "3"/>
+    <!-- An ellipse (rx=200,ry=150) -->
+    <ellipse id = "s2" cx = "200" cy = "150" rx = "200" ry = "150" fill = "salmon" stroke = "black" stroke-width = "3"/>
+    <rect id = "r1" width="35" height="35" fill = "#FF00A7" opacity="0.2" stroke = "black" stroke-width = "3"/>
+    <rect id = "io" width="35" height="35" fill = "#00E7FF" opacity="0.2" stroke = "black" stroke-width = "3"/>
+  </defs>
 <use x="960" y="1160" href="#r1"/>
 <use x="360" y="800" href="#r1"/>
 <use x="720" y="320" href="#r1"/>
@@ -1016,33 +959,4 @@ Worst wirelenght after = 2320
 <line x1="980" y1="1340" x2="980" y2="1180"/>
 <line x1="220" y1="1340" x2="220" y2="1180"/>
 <line x1="500" y1="20" x2="500" y2="500"/>
-=============================== warnings summary ===============================
-tests/test_place.py::test_placement
-  /media/lubuntu/USBDISK/miniconda3/lib/python3.9/site-packages/networkx/algorithms/bipartite/matching.py:569: FutureWarning: biadjacency_matrix will return a scipy.sparse array instead of a matrix in NetworkX 3.0
-    weights_sparse = biadjacency_matrix(
-
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-
----------- coverage: platform linux, python 3.9.13-final-0 -----------
-Name                              Stmts   Miss Branch BrPart  Cover   Missing
------------------------------------------------------------------------------
-src/nnsplace/__init__.py              6      0      0      0   100%
-src/nnsplace/array_like.py           23      9      0      0    61%   26, 34, 42, 54, 57-58, 66, 77, 86
-src/nnsplace/bpqueue.py              89     45     28      0    43%   61, 74, 85-87, 96, 105-106, 134-140, 156-159, 173-182, 196-203, 216-221, 230-232
-src/nnsplace/dllist.py               63     24      2      0    63%   41, 52, 65-68, 100-103, 119-122, 133-137, 192, 203, 218, 249, 265
-src/nnsplace/lict.py                 32      3      4      0    92%   16, 25, 28
-src/nnsplace/max_cycle_ratio.py      16     16      8      0     0%   1-64
-src/nnsplace/max_mean_cycle.py       15     15      6      0     0%   1-63
-src/nnsplace/min_parametric.py       24      1     10      1    94%   44
-src/nnsplace/neg_cycle.py            95     12     49      2    86%   35-38, 55->57, 178-188
-src/nnsplace/neg_cycle_rev.py        57     57     25      0     0%   2-121
-src/nnsplace/netlist.py             116     59     14      0    45%   18, 28, 87, 95, 103, 111, 122, 145, 174-232, 236-262, 277-282, 297, 315-321, 325-340
-src/nnsplace/placement-new.py       259    259    125      0     0%   1-577
-src/nnsplace/placement.py           235     18    115      9    90%   117-123, 198, 335-338, 369-370, 494->486, 496->498, 498->500, 500->502, 502->exit, 544-545, 573-575
-src/nnsplace/placement_cfg.py         4      0      0      0   100%
------------------------------------------------------------------------------
-TOTAL                              1034    518    386     12    48%
-
-=========================== short test summary info ============================
-FAILED tests/test_place.py::test_placement - assert 9 < 0
-========================= 1 failed, 1 warning in 4.12s =========================
+</svg>
