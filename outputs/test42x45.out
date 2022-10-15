@@ -43,23 +43,23 @@ ________________________________ test_placement ________________________________
         # assert placer.count[1][27] == 0
         # assert placer.count[0][0] == 27
         # assert placer.count[0][1] == 26
-        hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-        hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
+        hpwl_x = placer.calc_total_hull_length(place[0], 0)
+        hpwl_y = placer.calc_total_hull_length(place[1], 1)
         print("Total HPWL before = {} + {} = {}".format(
                   hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-        print("Worst wirelenght before = {}".format(
-                  placer.calc_worst_wirelenght(place)))
+        print("Worst wirelength before = {}".format(
+                  placer.calc_worst_wirelength(place)))
     
         # placer.io_assign(place)
         # placer.choose_nearest_iopad(place)
     
         niter, worst = placer.run(place, 20)
         print("Number of iterations = {}".format(niter))
-        hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-        hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
+        hpwl_x = placer.calc_total_hull_length(place[0], 0)
+        hpwl_y = placer.calc_total_hull_length(place[1], 1)
         print("Total HPWL after = {} + {} = {}".format(
                   hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-        print("Worst wirelenght after = {}".format(worst))
+        print("Worst wirelength after = {}".format(worst))
     
         for i in range(0, n - H.num_pads):
             v = H.modules[i]
@@ -98,10 +98,10 @@ E       assert 24 < 0
 tests/test_place.py:98: AssertionError
 ----------------------------- Captured stdout call -----------------------------
 Total HPWL before = 668480 + 327000 = 995480
-Worst wirelenght before = 2240
+Worst wirelength before = 2240
 Number of iterations = 3
 Total HPWL after = 372600 + 237080 = 609680
-Worst wirelenght after = 1880
+Worst wirelength after = 1880
 <use x="1160" y="280" href="#r1"/>
 <use x="960" y="360" href="#r1"/>
 <use x="720" y="360" href="#r1"/>

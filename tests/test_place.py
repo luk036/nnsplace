@@ -47,36 +47,42 @@ def test_placement():
     # assert placer.count[1][27] == 0
     # assert placer.count[0][0] == 27
     # assert placer.count[0][1] == 26
-    hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-    hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
+    hpwl_x = placer.calc_total_hull_length(place[0], 0)
+    hpwl_y = placer.calc_total_hull_length(place[1], 1)
     print("Total HPWL before = {} + {} = {}".format(
-              hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-    print("Worst wirelenght before = {}".format(
-              placer.calc_worst_wirelenght(place)))
+        hpwl_x, hpwl_y, hpwl_x + hpwl_y))
+    print("Worst wirelength before = {}".format(
+        placer.calc_worst_wirelength(place)))
 
     # placer.io_assign(place)
     # placer.choose_nearest_iopad(place)
 
     niter, worst = placer.run(place, 200)
     print("Number of iterations = {}".format(niter))
-    hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-    hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
+    hpwl_x = placer.calc_total_hull_length(place[0], 0)
+    hpwl_y = placer.calc_total_hull_length(place[1], 1)
     print("Total HPWL after = {} + {} = {}".format(
-              hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-    print("Worst wirelenght after = {}".format(worst))
+        hpwl_x, hpwl_y, hpwl_x + hpwl_y))
+    print("Worst wirelength after = {}".format(worst))
 
-    for i in range(0, n - H.num_pads):
+    num_cells = n - H.num_pads
+    for i in range(0, num_cells):
         v = H.modules[i]
         print("<use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
               .format(place[0][v] * 40, place[1][v] * 40))
-    for i in range(n - H.num_pads, n):
+    for i in range(num_cells, n):
         vp = H.modules[i]
         print("<use x=\"{}\" y=\"{}\" href=\"#io\"/>"
               .format(place[0][vp] * 40, place[1][vp] * 40))
-    for i in range(n - H.num_pads, n):
+    for i in range(num_cells, n):
         vp = H.modules[i]
-        nbrs = list(placer.gr.neighbors(vp))
-        v = nbrs[0]
+        # nbrs = list(placer.gr.neighbors(vp))
+        # v = nbrs[0]
+        net = next(iter(H.gr[vp]))
+        v = None
+        for vi in H.gr[net]:
+            if vi < num_cells:
+                v = vi
         print("<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\"/>".format(
               place[0][vp] * 40 + 20, place[1][vp] * 40 + 20,
               place[0][v] * 40 + 20, place[1][v] * 40 + 20))

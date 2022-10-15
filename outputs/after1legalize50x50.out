@@ -45,19 +45,19 @@ ________________________________ test_placement ________________________________
         hpwl_x, hpwl_y = placer.calc_total_hpwl(place)
         print("Total HPWL before = {} + {} = {}".format(
                   hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-        print("Worst wirelenght before = {}".format(
-                  placer.calc_worst_wirelenght(place)))
+        print("Worst wirelength before = {}".format(
+                  placer.calc_worst_wirelength(place)))
     
         # niter, worst = placer.run(place)
         placer.apply_howard(place, 0)
         placer.legalize(place, 1)
-        worst = placer.calc_worst_wirelenght(place)
+        worst = placer.calc_worst_wirelength(place)
     
         # print("Number of iterations = {}".format(niter))
         hpwl_x, hpwl_y = placer.calc_total_hpwl(place)
         print("Total HPWL after = {} + {} = {}".format(
                   hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-        print("Worst wirelenght after = {}".format(worst))
+        print("Worst wirelength after = {}".format(worst))
     
         for v in H:
             print("<use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
@@ -83,9 +83,9 @@ E       assert 20 < 0
 tests/test_place.py:87: AssertionError
 ----------------------------- Captured stdout call -----------------------------
 Total HPWL before = 640760 + 69760 = 710520
-Worst wirelenght before = 2240
+Worst wirelength before = 2240
 Total HPWL after = 319760 + 476440 = 796200
-Worst wirelenght after = 2120
+Worst wirelength after = 2120
 <use x="1200" y="0" href="#r1"/>
 <use x="800" y="0" href="#r1"/>
 <use x="1440" y="0" href="#r1"/>

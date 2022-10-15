@@ -21,26 +21,26 @@ def test_placement():
     # assert placer.count[1][27] == 0
     # assert placer.count[0][0] == 27
     # assert placer.count[0][1] == 26
-    hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-    hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
+    hpwl_x = placer.calc_total_hull_length(place[0], 0)
+    hpwl_y = placer.calc_total_hull_length(place[1], 1)
     print("Total HPWL before = {} + {} = {}".format(
         hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-    print("Worst wirelenght before = {}".format(
-        placer.calc_worst_wirelenght(place)))
+    print("Worst wirelength before = {}".format(
+        placer.calc_worst_wirelength(place)))
 
     niter, worst = placer.run(place)
     # placer.apply_howard(place, 0)
     # placer.legalize(place, 1)
     # placer.apply_howard(place, 1)
     # placer.legalize(place, 0)
-    # worst = placer.calc_worst_wirelenght(place)
+    # worst = placer.calc_worst_wirelength(place)
 
     # print("Number of iterations = {}".format(niter))
-    hpwl_x = placer.calc_total_hull_lenght(place[0], 0)
-    hpwl_y = placer.calc_total_hull_lenght(place[1], 1)
+    hpwl_x = placer.calc_total_hull_length(place[0], 0)
+    hpwl_y = placer.calc_total_hull_length(place[1], 1)
     print("Total HPWL after = {} + {} = {}".format(
         hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-    print("Worst wirelenght after = {}".format(worst))
+    print("Worst wirelength after = {}".format(worst))
 
     for v in H:
         print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"

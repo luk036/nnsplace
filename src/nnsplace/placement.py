@@ -24,11 +24,10 @@ def create_flow_graph(hgr: Netlist) -> TinyDiGraph:
         TinyDiGraph: _description_
     """
     gr = TinyDiGraph(num_modules=hgr.num_modules, num_pads=hgr.num_pads)
-    # gr = TinyDiGraph()
     gr.init_nodes(hgr.num_modules)
-    # gr.add_nodes_from(v for v in hgr)
     for net in hgr.nets:
-        for v1 in hgr.gr[net]:  # assume return an integer
+        for v1 in hgr.gr[net]:
+            # assume return an integer
             for v2 in hgr.gr[net]:
                 if v1 == v2:
                     continue
@@ -56,13 +55,10 @@ class NnsPlacer:
         """
         self.hgr = hgr
         self.cfg = cfg
-        self.count = ([0 for _ in range(cfg.grid[0]+2)],
+        self.count = ([0 for _ in range(cfg.grid[0]+2)],  # plus 2 I/O
                       [0 for _ in range(cfg.grid[1]+2)])  # two lists
-        # plus 2 I/O
         self.gr = create_flow_graph(hgr)
-        # self.bucket: List[List] = [[], []]
-        # self.bucket[0] = [list() for _ in range(cfg.grid[1] + 2)]
-        # self.bucket[1] = [list() for _ in range(cfg.grid[0] + 2)]
+        self.num_cells = hgr.num_modules - hgr.num_pads
 
     def init_placement(self, place: List[List[int]]):
         """initial placement: just place one by one including I/O pad
@@ -86,8 +82,8 @@ class NnsPlacer:
             else:
                 col += 1
 
-    def calc_worst_wirelenght(self, place: List[List[int]]):
-        """Calculate the worst wirelenght
+    def calc_worst_wirelength(self, place: List[List[int]]):
+        """Calculate the worst wirelength
 
         Args:
             place (List[List[int]]): _description_
@@ -105,25 +101,25 @@ class NnsPlacer:
                 worst_wire = gruv
         return worst_wire
 
-    def calc_worst_wirelenght_v(self, v, place: List[List[int]]):
-        """Calculate the worst wirelenght w.r.t Module v
+    # def calc_worst_wirelength_v(self, v, place: List[List[int]]):
+    #     """Calculate the worst wirelength w.r.t Module v
+    #
+    #     Args:
+    #         place (List[List[int]]): _description_
+    #
+    #     Returns:
+    #         _type_: _description_
+    #     """
+    #     worst_wire = 0
+    #     for u in self.gr.neighbors(v):
+    #         gruv = abs(place[0][v] - place[0][u]) * self.cfg.delta[0] \
+    #             + abs(place[1][v] - place[1][u]) * self.cfg.delta[1]
+    #         if worst_wire < gruv:
+    #             worst_wire = gruv
+    #     return worst_wire
 
-        Args:
-            place (List[List[int]]): _description_
-
-        Returns:
-            _type_: _description_
-        """
-        worst_wire = 0
-        for u in self.gr.neighbors(v):
-            gruv = abs(place[0][v] - place[0][u]) * self.cfg.delta[0] \
-                + abs(place[1][v] - place[1][u]) * self.cfg.delta[1]
-            if worst_wire < gruv:
-                worst_wire = gruv
-        return worst_wire
-
-    # def calc_worst_wirelenght_axis(self, place: List[List[int]], axis):
-    #     """Calculate the worst wirelenght w.r.t one axis
+    # def calc_worst_wirelength_axis(self, place: List[List[int]], axis):
+    #     """Calculate the worst wirelength w.r.t one axis
 
     #     Args:
     #         place (List[List[int]]): _description_
@@ -165,7 +161,7 @@ class NnsPlacer:
     #     return total_hpwl_x * self.cfg.delta[0], \
     #         total_hpwl_y * self.cfg.delta[1]
 
-    def calc_total_hull_lenght(self, dist: List[int], axis) -> int:
+    def calc_total_hull_length(self, dist: List[int], axis) -> int:
         """Calculate the total hull w.r.t one axis
 
         Args:
@@ -175,7 +171,7 @@ class NnsPlacer:
         Returns:
             int: _description_
         """
-        total_hull_lenght = 0
+        total_hull_length = 0
         for net in self.hgr.nets:
             adjs = iter(self.hgr.gr[net])
             v = next(adjs)
@@ -183,8 +179,8 @@ class NnsPlacer:
             hull = Interval(p, p)
             for v in adjs:
                 hull = hull.hull_with(dist[v])
-            total_hull_lenght += hull.len()
-        return total_hull_lenght * self.cfg.delta[axis]
+            total_hull_length += hull.length()
+        return total_hull_length * self.cfg.delta[axis]
 
     def calc_total_HPWL(self, place: List[List[int]]):
         """Calculate total HPWL
@@ -195,10 +191,10 @@ class NnsPlacer:
         Returns:
             int: _description_
         """
-        return self.calc_total_hull_lenght(place[0], 0) \
-            + self.calc_total_hull_lenght(place[1], 1)
+        return self.calc_total_hull_length(place[0], 0) \
+            + self.calc_total_hull_length(place[1], 1)
 
-    def apply_howard(self, place: List[List[int]], axis1: int, care_io=True):
+    def apply_howard(self, place: List[List[int]], axis1: int):
         """_summary_
 
         Args:
@@ -255,12 +251,13 @@ class NnsPlacer:
         for u, v in self.gr.edges():
             # TODO: Find out how to formulate?
             gruv = abs(place[axis2][v] - place[axis2][u])
-            self.gr[u][v]['weight'] = gruv  # for bpqueue in NegCycleFinder ???
+            # self.gr[u][v]['weight'] = gruv  # for bpq in NegCycleFinder ???
             self.gr[u][v]['cost'] = gruv * self.cfg.delta[axis2]
             if worst < gruv:
                 worst = gruv
-        return min_parametric(self.gr, worst / 2, calc_weight, zero_cancel,
-                              place[axis1], update_ok, care_io=care_io)
+        # initial worst/2 or 0 or others?
+        return min_parametric(self.gr, 0, calc_weight, zero_cancel,
+                              place[axis1], update_ok)
 
     def add_bipartite_edge(self, lst: List[int], B: nx.Graph,
                            place: List[List[int]], i: int,
@@ -280,17 +277,17 @@ class NnsPlacer:
             # construct bipartite graph
             p = place[axis][v]
             q = p + self.hgr.number_of_modules()  # avoid same name
-            # weight0 = self.calc_worst_wirelenght_v(v, place)
+            # weight0 = self.calc_worst_wirelength_v(v, place)
             if p - i > 0:
                 # place[axis][v] -= i  # temporily set the position
-                # weight1 = self.calc_worst_wirelenght_v(v, place)
+                # weight1 = self.calc_worst_wirelength_v(v, place)
                 # place[axis][v] += i  # reset the position
                 B.add_node(q - i, bipartite=1)
                 B.add_edge(v, q - i, weight=i)
                 # B.add_edge(v, q - i, weight=weight1 - weight0)
             if p + i <= grid:
                 # place[axis][v] += i  # temporily set the position
-                # weight1 = self.calc_worst_wirelenght_v(v, place)
+                # weight1 = self.calc_worst_wirelength_v(v, place)
                 # place[axis][v] -= i  # reset the position
                 B.add_node(q + i, bipartite=1)
                 B.add_edge(v, q + i, weight=i)
@@ -350,27 +347,28 @@ class NnsPlacer:
             self.count[axis][q] += 1
             dist[v] = q
 
-    def legalize_modules(self, place: List[List[int]], axis: int,
-                         care_io=True):
+    def legalize_modules(self, place: List[List[int]], axis: int):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
             axis (int): _description_
         """
-        bucket = [list() for _ in range(self.cfg.grid[axis] + 2)]
+        bucket = [list() for _ in range(self.cfg.grid[axis ^ 1] + 2)]
         # bucket = self.bucket[axis]
-        for lst in bucket:
-            lst.clear()
+        # for lst in bucket:
+        #     lst.clear()
         dist = place[axis ^ 1]
-        if care_io:
-            for v in self.hgr:
-                if v < self.hgr.num_modules - self.hgr.num_pads:
-                    bucket[dist[v]].append(v)
-        else:
-            for v in self.hgr:
-                bucket[dist[v]].append(v)
-        for lst in filter(lambda lst: lst, bucket):
+        # if care_io:
+        #     for v in self.hgr:
+        #         if v < self.hgr.num_modules - self.hgr.num_pads:
+        #             bucket[dist[v]].append(v)
+        # else:
+        #     for v in self.hgr:
+        #         bucket[dist[v]].append(v)
+        for v in self.gr:
+            bucket[dist[v]].append(v)
+        for lst in filter(lambda lst: lst, bucket):  # lst is not null or empty
             self.legalize(lst, place, axis)
 
     def choose_nearest_iopad(self, place: List[List[int]]):
@@ -392,9 +390,14 @@ class NnsPlacer:
         for i in range(n - self.hgr.num_pads, n):
             # loop through io pad
             vp = self.hgr.modules[i]
-            nbrs = list(self.gr.neighbors(vp))
+            net = next(iter(self.hgr.gr[vp]))
+            v = None
+            for vi in self.hgr.gr[net]:
+                if vi < self.num_cells:
+                    v = vi
+            # nbrs = list(self.gr.neighbors(vp))
             # TODO: pad attached to more than one node
-            v = nbrs[0]  # workaround: take the first one only
+            # v = nbrs[0]  # workaround: take the first one only
 
             if place[0][v] <= half_x and self.count[0][0] < grid_y:
                 which_x = 0  # left
@@ -477,32 +480,24 @@ class NnsPlacer:
     #                 place[1][v] = grid_y + 1
     #             self.count[1][place[1][v]] += 1
 
-    def legalize_iopad(self, place: List[List[int]]):
+    def legalize_iopad(self, place: List[List[int]], axis: int):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
         """
-        bucket: List[List] = [list() for _ in range(4)]
+        bucket: List[List] = [list() for _ in range(2)]
         n = self.hgr.number_of_modules()
         for i in range(n - self.hgr.num_pads, n):
             v = self.hgr.modules[i]
-            if place[0][v] == 0:
+            if place[axis][v] == 0:
                 bucket[0].append(v)
-            elif place[0][v] == self.cfg.grid[0] + 1:
+            elif place[axis][v] == self.cfg.grid[axis] + 1:
                 bucket[1].append(v)
-            elif place[1][v] == 0:
-                bucket[2].append(v)
-            elif place[1][v] == self.cfg.grid[1] + 1:
-                bucket[3].append(v)
         if bucket[0]:
-            self.legalize(bucket[0], place, 1)
+            self.legalize(bucket[0], place, axis ^ 1)
         if bucket[1]:
-            self.legalize(bucket[1], place, 1)
-        if bucket[2]:
-            self.legalize(bucket[2], place, 0)
-        if bucket[3]:
-            self.legalize(bucket[3], place, 0)
+            self.legalize(bucket[1], place, axis ^ 1)
 
     def io_assign(self, place: List[List[int]]):
         """_summary_
@@ -511,7 +506,8 @@ class NnsPlacer:
             place (List[List[int]]): _description_
         """
         self.choose_nearest_iopad(place)
-        self.legalize_iopad(place)
+        # self.legalize_iopad(place, 0)
+        # self.legalize_iopad(place, 1)
 
     # def io_reassign(self, place: List[List[int]]):
     #     """_summary_
@@ -522,7 +518,7 @@ class NnsPlacer:
     #     self.choose_nearest_iopad(place)
     #     self.legalize_iopad(place)
 
-    def optimize(self, place: List[List[int]], max_iter: int, care_io=True):
+    def optimize(self, place: List[List[int]], max_iter: int):
         """_summary_
 
         Args:
@@ -532,18 +528,20 @@ class NnsPlacer:
         Returns:
             _type_: _description_
         """
-        worst0 = self.calc_worst_wirelenght(place)
+        worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
         for niter in range(max_iter):
-            r1, C1 = self.apply_howard(place, 0, care_io=care_io)
-            self.legalize_modules(place, 1, care_io=care_io)
-            r2, C2 = self.apply_howard(place, 1, care_io=care_io)
-            self.legalize_modules(place, 0, care_io=care_io)
+            r1, C1 = self.apply_howard(place, 0)
+            self.legalize_modules(place, 1)
+            r2, C2 = self.apply_howard(place, 1)
+            self.legalize_modules(place, 0)
+
             # TODO: How to utilize r1, C1, ...
-            worst1 = self.calc_worst_wirelenght(place)
+            worst1 = self.calc_worst_wirelength(place)
+            print(f"    x-y: {worst1}")
             # TODO: when to stop
             if worst1 > worst0:
-                place = place0
+                place = [place0[0].copy(), place0[1].copy()]
                 return niter, worst0
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
@@ -559,18 +557,20 @@ class NnsPlacer:
         Returns:
             _type_: _description_
         """
-        # niter, worst = self.optimize(place, max_iter, care_io=False)
+        # niter, worst = self.optimize(place, max_iter)
         # self.init_placement(place)
-        # _, worst0 = self.optimize(place, max_iter, care_io=True)
+        # _, worst0 = self.optimize(place, max_iter)
         self.io_assign(place)
-        worst0 = self.calc_worst_wirelenght(place)
+        worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
+        print(f"init: {worst0}")
         for niter in range(max_iter):
-            _, _ = self.optimize(place, max_iter, care_io=True)
+            _, _ = self.optimize(place, max_iter)
             self.io_assign(place)
-            worst1 = self.calc_worst_wirelenght(place)
+            worst1 = self.calc_worst_wirelength(place)
+            print(f"run {worst1}")
             if worst1 > worst0:
-                place = place0
+                place = [place0[0].copy(), place0[1].copy()]
                 return niter, worst0
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]

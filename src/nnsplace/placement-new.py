@@ -81,8 +81,8 @@ class NnsPlacer:
             else:
                 col += 1
 
-    def calc_worst_wirelenght(self, place: List[List[int]]):
-        """Calculate the worst wirelenght
+    def calc_worst_wirelength(self, place: List[List[int]]):
+        """Calculate the worst wirelength
 
         Args:
             place (List[List[int]]): _description_
@@ -100,8 +100,8 @@ class NnsPlacer:
                 worst_wire = gruv
         return worst_wire
 
-    def calc_worst_wirelenght_v(self, v, place: List[List[int]]):
-        """Calculate the worst wirelenght w.r.t Module v
+    def calc_worst_wirelength_v(self, v, place: List[List[int]]):
+        """Calculate the worst wirelength w.r.t Module v
 
         Args:
             place (List[List[int]]): _description_
@@ -117,8 +117,8 @@ class NnsPlacer:
                 worst_wire = gruv
         return worst_wire
 
-    # def calc_worst_wirelenght_axis(self, place: List[List[int]], axis):
-    #     """Calculate the worst wirelenght w.r.t one axis
+    # def calc_worst_wirelength_axis(self, place: List[List[int]], axis):
+    #     """Calculate the worst wirelength w.r.t one axis
 
     #     Args:
     #         place (List[List[int]]): _description_
@@ -160,7 +160,7 @@ class NnsPlacer:
     #     return total_hpwl_x * self.cfg.delta[0], \
     #         total_hpwl_y * self.cfg.delta[1]
 
-    def calc_total_hull_lenght(self, dist: List[int], axis) -> int:
+    def calc_total_hull_length(self, dist: List[int], axis) -> int:
         """Calculate the total hull w.r.t one axis
 
         Args:
@@ -170,7 +170,7 @@ class NnsPlacer:
         Returns:
             int: _description_
         """
-        total_hull_lenght = 0
+        total_hull_length = 0
         for net in self.hgr.nets:
             adjs = iter(self.hgr.gr[net])
             v = next(adjs)
@@ -178,8 +178,8 @@ class NnsPlacer:
             hull = Interval(p, p)
             for v in adjs:
                 hull = hull.hull_with(dist[v])
-            total_hull_lenght += hull.len()
-        return total_hull_lenght * self.cfg.delta[axis]
+            total_hull_length += hull.len()
+        return total_hull_length * self.cfg.delta[axis]
 
     def calc_total_HPWL(self, place: List[List[int]]):
         """Calculate total HPWL
@@ -190,8 +190,8 @@ class NnsPlacer:
         Returns:
             int: _description_
         """
-        return self.calc_total_hull_lenght(place[0], 0) \
-            + self.calc_total_hull_lenght(place[1], 1)
+        return self.calc_total_hull_length(place[0], 0) \
+            + self.calc_total_hull_length(place[1], 1)
 
     def apply_howard(self, place: List[List[int]], axis1: int, care_io=False):
         """_summary_
@@ -235,7 +235,7 @@ class NnsPlacer:
             # self.gr[u][v]['time'] = time
             if worst < gruv:
                 worst = gruv
-        # r0 = self.calc_worst_wirelenght_axis(place, oppo)
+        # r0 = self.calc_worst_wirelength_axis(place, oppo)
         return max_mean_cycle(self.gr, place[axis1], update_ok,
                               0, care_io=care_io)
 
@@ -257,16 +257,16 @@ class NnsPlacer:
             # construct bipartite graph
             p = place[axis][v]
             q = p + self.hgr.number_of_modules()  # avoid same name
-            weight0 = self.calc_worst_wirelenght_v(v, place)
+            weight0 = self.calc_worst_wirelength_v(v, place)
             if p - i > 0:
                 place[axis][v] -= i  # temporily set the position
-                weight1 = self.calc_worst_wirelenght_v(v, place)
+                weight1 = self.calc_worst_wirelength_v(v, place)
                 place[axis][v] += i  # reset the position
                 B.add_node(q - i, bipartite=1)
                 B.add_edge(v, q - i, weight=weight1 - weight0)
             if p + i <= grid:
                 place[axis][v] += i  # temporily set the position
-                weight1 = self.calc_worst_wirelenght_v(v, place)
+                weight1 = self.calc_worst_wirelength_v(v, place)
                 place[axis][v] -= i  # reset the position
                 B.add_node(q + i, bipartite=1)
                 B.add_edge(v, q + i, weight=weight1 - weight0)
@@ -529,7 +529,7 @@ class NnsPlacer:
         Returns:
             _type_: _description_
         """
-        worst0 = self.calc_worst_wirelenght(place)
+        worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
         for niter in range(1, max_iter):
             r1, C1 = self.apply_howard(place, 0, care_io=care_io)
@@ -537,7 +537,7 @@ class NnsPlacer:
             r2, C2 = self.apply_howard(place, 1, care_io=care_io)
             self.legalize_modules(place, 0, care_io=care_io)
             # TODO: How to utilize r1, C1, ...
-            worst1 = self.calc_worst_wirelenght(place)
+            worst1 = self.calc_worst_wirelength(place)
             # TODO: when to stop
             if worst1 > worst0:
                 place = place0
@@ -563,7 +563,7 @@ class NnsPlacer:
         # self.init_placement(place)
         self.io_assign(place)
         _, worst0 = self.optimize(place, max_iter, care_io=True)
-        # worst0 = self.calc_worst_wirelenght(place)
+        # worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
         for niter in range(1, max_iter):
             self.io_assign(place)

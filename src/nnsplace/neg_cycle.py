@@ -4,38 +4,39 @@ Negative cycle detection for weighed graphs.
 1. Support Lazy evalution
 """
 from typing import Dict
-from .bpqueue import BPQueue
-from .dllist import Dllink
+# from .bpqueue import BPQueue
+# from .dllist import Dllink
 
 
 class NegCycleFinder:
     pred: Dict = {}
     succ: Dict = {}
 
-    def __init__(self, G, care_io=True):
+    def __init__(self, G):
         """[summary]
 
         Arguments:
             G: Graph
         """
         self.G = G
-        max_weight = 0
-        for (u, v, weight) in G.edges.data('weight'):
-            if max_weight < weight:
-                max_weight = weight
-        self.bpq_pred = BPQueue(0, max_weight)
-        self.bpq_succ = BPQueue(0, max_weight)
-        if care_io:  # don't process I/O pad
-            for (u, v, weight) in G.edges.data('weight'):
-                if v < G.graph['num_modules'] - G.graph['num_pads']:
-                    self.bpq_pred.append(Dllink([0, (u, v)]), weight)
-                if u < G.graph['num_modules'] - G.graph['num_pads']:
-                    self.bpq_succ.append(Dllink([0, (u, v)]), weight)
-        else:
-            for (u, v, weight) in G.edges.data('weight'):
-                self.bpq_pred.append(Dllink([0, (u, v)]), weight)
-                # self.bpq_succ.append(Dllink([0, (u, v)]), weight)
-            self.bpq_succ = self.bpq_pred
+        self.num_cells = G.graph['num_modules'] - G.graph['num_pads']
+        # max_weight = 0
+        # for (u, v, weight) in G.edges.data('weight'):
+        #     if max_weight < weight:
+        #         max_weight = weight
+        # self.bpq_pred = BPQueue(0, max_weight)
+        # self.bpq_succ = BPQueue(0, max_weight)
+        # if care_io:  # don't process I/O pad
+        #     for (u, v, weight) in G.edges.data('weight'):
+        #         if v < G.graph['num_modules'] - G.graph['num_pads']:
+        #             self.bpq_pred.append(Dllink([0, (u, v)]), weight)
+        #         if u < G.graph['num_modules'] - G.graph['num_pads']:
+        #             self.bpq_succ.append(Dllink([0, (u, v)]), weight)
+        # else:
+        #     for (u, v, weight) in G.edges.data('weight'):
+        #         self.bpq_pred.append(Dllink([0, (u, v)]), weight)
+        #         # self.bpq_succ.append(Dllink([0, (u, v)]), weight)
+        #     self.bpq_succ = self.bpq_pred
 
     def find_cycle(self, point_to):
         """Find a cycle on the policy graph
@@ -67,11 +68,14 @@ class NegCycleFinder:
             [type]: [description]
         """
         changed = False
-        # for e in self.G.edges():
-        for vlink in self.bpq_pred:
-            e = vlink.data[1]
-            wt = get_weight(e)
+        # for vlink in self.bpq_pred:
+        #     e = vlink.data[1]
+        for e in self.G.edges():
             u, v = e
+            if v >= self.num_cells:
+                # don't process I/O pads
+                continue
+            wt = get_weight(e)
             d = dist[u] + wt
             if dist[v] > d:
                 if update_ok(dist[v], d):
@@ -91,11 +95,14 @@ class NegCycleFinder:
             [type]: [description]
         """
         changed = False
-        # for e in self.G.edges():
-        for vlink in self.bpq_succ:
-            e = vlink.data[1]
-            wt = get_weight(e)
+        # for vlink in self.bpq_succ:
+        #     e = vlink.data[1]
+        for e in self.G.edges():
             u, v = e
+            if u >= self.num_cells:
+                # don't process I/O pads
+                continue
+            wt = get_weight(e)
             d = dist[v] - wt
             if dist[u] < d:
                 if update_ok(dist[u], d):
@@ -114,7 +121,6 @@ class NegCycleFinder:
         Yields:
             list of edges: cycle list
         """
-        # self.dist = list(0 for _ in self.G)
         self.pred = {}
         found = False
         while not found and self.relax_pred(dist, get_weight, update_ok):

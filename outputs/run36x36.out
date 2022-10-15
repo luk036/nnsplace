@@ -45,19 +45,19 @@ ________________________________ test_placement ________________________________
         hpwl_x, hpwl_y = placer.calc_total_hpwl(place)
         print("Total HPWL before = {} + {} = {}".format(
                   hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-        print("Worst wirelenght before = {}".format(
-                  placer.calc_worst_wirelenght(place)))
+        print("Worst wirelength before = {}".format(
+                  placer.calc_worst_wirelength(place)))
     
         niter, worst = placer.run(place)
         # placer.apply_howard(place, 0)
         # placer.legalize(place, 1)
-        # worst = placer.calc_worst_wirelenght(place)
+        # worst = placer.calc_worst_wirelength(place)
     
         print("Number of iterations = {}".format(niter))
         hpwl_x, hpwl_y = placer.calc_total_hpwl(place)
         print("Total HPWL after = {} + {} = {}".format(
                   hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-        print("Worst wirelenght after = {}".format(worst))
+        print("Worst wirelength after = {}".format(worst))
     
         # for v in H:
         #     print("<use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
@@ -83,10 +83,10 @@ E       assert 10 < 0
 tests/test_place.py:87: AssertionError
 ----------------------------- Captured stdout call -----------------------------
 Total HPWL before = 473680 + 94400 = 568080
-Worst wirelenght before = 2080
+Worst wirelength before = 2080
 Number of iterations = 6
 Total HPWL after = 343320 + 254360 = 597680
-Worst wirelenght after = 1920
+Worst wirelength after = 1920
 <rect class="net" x="10" y="10" width="40" height="0"/>
 <rect class="net" x="50" y="10" width="360" height="40"/>
 <rect class="net" x="50" y="10" width="120" height="0"/>
