@@ -24,13 +24,14 @@ def create_flow_graph(hgr: Netlist) -> TinyDiGraph:
         TinyDiGraph: _description_
     """
     gr = TinyDiGraph(num_modules=hgr.num_modules, num_pads=hgr.num_pads)
+    num_cells = hgr.num_modules - hgr.num_pads
     gr.init_nodes(hgr.num_modules)
     for net in hgr.nets:
         for v1 in hgr.gr[net]:
             # assume return an integer
             for v2 in hgr.gr[net]:
-                if v1 == v2:
-                    continue
+                if v1 >= num_cells:
+                    continue   # ignore pad to pad connections
                 gr.add_edge(v1, v2)
                 gr.add_edge(v2, v1)
     return gr
@@ -174,9 +175,10 @@ class NnsPlacer:
         total_hull_length = 0
         for net in self.hgr.nets:
             adjs = iter(self.hgr.gr[net])
-            v = next(adjs)
-            p = dist[v]
-            hull = Interval(p, p)
+            # v = next(adjs)
+            # p = dist[v]
+            # hull = Interval(p, p)
+            hull = Interval(1000000000000, -1000000000000)
             for v in adjs:
                 hull = hull.hull_with(dist[v])
             total_hull_length += hull.length()
@@ -376,8 +378,8 @@ class NnsPlacer:
         posy = 0
         count = 0
         for vi in self.gr[vp]:
-            if vi >= self.num_cells:  # only non-io modules
-                continue
+            # if vi >= self.num_cells:  # only non-io modules
+            #     continue
             posx += place[0][vi]
             posy += place[1][vi]
             count += 1
@@ -559,7 +561,7 @@ class NnsPlacer:
             place0 = [place[0].copy(), place[1].copy()]
         return max_iter, worst1
 
-    def run(self, place: List[List[int]], max_iter=2000):
+    def run(self, place: List[List[int]], max_iter=200):
         """_summary_
 
         Args:
@@ -574,16 +576,16 @@ class NnsPlacer:
         # _, worst0 = self.optimize(place, max_iter)
         self.io_assign(place)
         worst0 = self.calc_worst_wirelength(place)
-        # place0 = [place[0].copy(), place[1].copy()]
-        # print(f"init: {worst0}")
-        # for niter in range(max_iter):
-        #     _, _ = self.optimize(place, max_iter)
-        #     self.io_assign(place)
-        #     worst1 = self.calc_worst_wirelength(place)
-        #     print(f"run {worst1}")
-        #     if worst1 > worst0:
-        #         place = [place0[0].copy(), place0[1].copy()]
-        #         return niter, worst0
-        #     worst0 = worst1
-        #     place0 = [place[0].copy(), place[1].copy()]
+        place0 = [place[0].copy(), place[1].copy()]
+        print(f"init: {worst0}")
+        for niter in range(max_iter):
+            _, _ = self.optimize(place, max_iter)
+            # self.io_assign(place)
+            worst1 = self.calc_worst_wirelength(place)
+            print(f"run {worst1}")
+            if worst1 > worst0:
+                place = [place0[0].copy(), place0[1].copy()]
+                return niter, worst0
+            worst0 = worst1
+            place0 = [place[0].copy(), place[1].copy()]
         return max_iter, worst0

@@ -16,6 +16,7 @@ rect.net {
 line {
   stroke: #00a200;
   stroke-width: 4;
+  stroke-opacity: 0.4;
 }
 
 /* PRESENTATIONAL STYLES */

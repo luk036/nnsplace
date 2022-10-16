@@ -35,7 +35,7 @@ def test_placement():
     # 00321C
     # EC0000
     n = H.number_of_modules()
-    placer = NnsPlacer(H, NnsConfig(50, 50, 40, 40))
+    placer = NnsPlacer(H, NnsConfig(30, 30, 40, 40))
     place = [[], []]
     place[0] = [0 for _ in range(n)]  # x-direction
     place[1] = [0 for _ in range(n)]  # y-direction
@@ -57,7 +57,7 @@ def test_placement():
     # placer.io_assign(place)
     # placer.choose_nearest_iopad(place)
 
-    niter, worst = placer.run(place, 1)
+    niter, worst = placer.run(place, 200)
     print("Number of iterations = {}".format(niter))
     hpwl_x = placer.calc_total_hull_length(place[0], 0)
     hpwl_y = placer.calc_total_hull_length(place[1], 1)

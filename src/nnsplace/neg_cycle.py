@@ -72,6 +72,8 @@ class NegCycleFinder:
         #     e = vlink.data[1]
         for e in self.G.edges():
             u, v = e
+            # if v >= self.num_cells:
+            #     continue  # don't move IO pad
             wt = get_weight(e)
             d = dist[u] + wt
             if dist[v] > d:
@@ -96,6 +98,8 @@ class NegCycleFinder:
         #     e = vlink.data[1]
         for e in self.G.edges():
             u, v = e
+            # if u >= self.num_cells:
+            #     continue  # don't move IO pad
             wt = get_weight(e)
             d = dist[v] - wt
             if dist[u] < d:
