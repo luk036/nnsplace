@@ -19,7 +19,7 @@ class NegCycleFinder:
             G: Graph
         """
         self.G = G
-        self.num_cells = G.graph['num_modules'] - G.graph['num_pads']
+        # self.num_cells = G.graph['num_modules'] - G.graph['num_pads']
         # max_weight = 0
         # for (u, v, weight) in G.edges.data('weight'):
         #     if max_weight < weight:
@@ -72,9 +72,6 @@ class NegCycleFinder:
         #     e = vlink.data[1]
         for e in self.G.edges():
             u, v = e
-            if v >= self.num_cells:
-                # don't process I/O pads
-                continue
             wt = get_weight(e)
             d = dist[u] + wt
             if dist[v] > d:
@@ -99,9 +96,6 @@ class NegCycleFinder:
         #     e = vlink.data[1]
         for e in self.G.edges():
             u, v = e
-            if u >= self.num_cells:
-                # don't process I/O pads
-                continue
             wt = get_weight(e)
             d = dist[v] - wt
             if dist[u] < d:
