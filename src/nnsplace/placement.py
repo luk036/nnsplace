@@ -56,8 +56,8 @@ class NnsPlacer:
         """
         self.hgr = hgr
         self.cfg = cfg
-        self.count = ([0 for _ in range(cfg.grid[0]+2)],  # plus 2 I/O
-                      [0 for _ in range(cfg.grid[1]+2)])  # two lists
+        self.count = [[0 for _ in range(cfg.grid[0]+2)],  # plus 2 I/O
+                      [0 for _ in range(cfg.grid[1]+2)]]  # two lists
         self.gr = create_flow_graph(hgr)
         self.num_cells = hgr.num_modules - hgr.num_pads
 
@@ -102,22 +102,22 @@ class NnsPlacer:
                 worst_wire = gruv
         return worst_wire
 
-    # def calc_worst_wirelength_v(self, v, place: List[List[int]]):
-    #     """Calculate the worst wirelength w.r.t Module v
-    #
-    #     Args:
-    #         place (List[List[int]]): _description_
-    #
-    #     Returns:
-    #         _type_: _description_
-    #     """
-    #     worst_wire = 0
-    #     for u in self.gr.neighbors(v):
-    #         gruv = abs(place[0][v] - place[0][u]) * self.cfg.delta[0] \
-    #             + abs(place[1][v] - place[1][u]) * self.cfg.delta[1]
-    #         if worst_wire < gruv:
-    #             worst_wire = gruv
-    #     return worst_wire
+    def calc_worst_wirelength_v(self, v, place: List[List[int]]):
+        """Calculate the worst wirelength w.r.t Module v
+
+        Args:
+            place (List[List[int]]): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        worst_wire = 0
+        for u in self.gr.neighbors(v):
+            gruv = abs(place[0][v] - place[0][u]) * self.cfg.delta[0] \
+                + abs(place[1][v] - place[1][u]) * self.cfg.delta[1]
+            if worst_wire < gruv:
+                worst_wire = gruv
+        return worst_wire
 
     # def calc_worst_wirelength_axis(self, place: List[List[int]], axis):
     #     """Calculate the worst wirelength w.r.t one axis
@@ -245,8 +245,6 @@ class NnsPlacer:
             return total_cost / len(C)
 
         # TODO: should provide an API for calling the (monotone) wire-model
-        # TODO: should use `Fraction` to avoid floating point arithmetic
-        # floating point arithmetic???
 
         # dt[0] * abs(p[0][i] - p[0][j]) + dt[1] * abs(p[1][i] - p[1][j]) < r
         worst = 0
@@ -279,21 +277,21 @@ class NnsPlacer:
             # construct bipartite graph
             p = place[axis][v]
             q = p + self.hgr.number_of_modules()  # avoid same name
-            # weight0 = self.calc_worst_wirelength_v(v, place)
+            weight0 = self.calc_worst_wirelength_v(v, place)
             if p - i > 0:
-                # place[axis][v] -= i  # temporily set the position
-                # weight1 = self.calc_worst_wirelength_v(v, place)
-                # place[axis][v] += i  # reset the position
+                place[axis][v] -= i  # temporily set the position
+                weight1 = self.calc_worst_wirelength_v(v, place)
+                place[axis][v] += i  # reset the position
                 B.add_node(q - i, bipartite=1)
-                B.add_edge(v, q - i, weight=i)
-                # B.add_edge(v, q - i, weight=weight1 - weight0)
+                # B.add_edge(v, q - i, weight=i)
+                B.add_edge(v, q - i, weight=weight1 - weight0)
             if p + i <= grid:
-                # place[axis][v] += i  # temporily set the position
-                # weight1 = self.calc_worst_wirelength_v(v, place)
-                # place[axis][v] -= i  # reset the position
+                place[axis][v] += i  # temporily set the position
+                weight1 = self.calc_worst_wirelength_v(v, place)
+                place[axis][v] -= i  # reset the position
                 B.add_node(q + i, bipartite=1)
-                B.add_edge(v, q + i, weight=i)
-                # B.add_edge(v, q + i, weight=weight1 - weight0)
+                # B.add_edge(v, q + i, weight=i)
+                B.add_edge(v, q + i, weight=weight1 - weight0)
 
     def legalize(self, lst: List[int], place: List[List[int]], axis: int):
         """Legalization by solving the bipartite matching problem
@@ -313,7 +311,7 @@ class NnsPlacer:
         # Add nodes with the node attribute "bipartite"
         B.add_nodes_from(lst, bipartite=0)
 
-        neighborhood = 15  # magic number for defining the neigborhood
+        neighborhood = 9  # magic number for defining the neigborhood
         for v in lst:
             # construct bipartite graph
             q = dist[v] + self.hgr.number_of_modules()  # avoid same name
@@ -387,7 +385,7 @@ class NnsPlacer:
         posy //= count
         return posx, posy
 
-    def choose_nearest_iopad(self, place: List[List[int]]):
+    def choose_nearest_iopad2(self, place: List[List[int]]):
         """Choose the nearest iopad in phase 2
 
            TODO: should apply Howard algorithm because one pad can
@@ -411,36 +409,195 @@ class NnsPlacer:
             # TODO: pad attached to more than one node
             # v = nbrs[0]  # workaround: take the first one only
 
-            if posx <= half_x and self.count[0][0] < grid_y:
-                which_x = 0  # left
-                len_x = posx
-            else:  # if self.count[0][grid_x + 1] < grid_y:
-                # assume enough empty IOs
-                which_x = 1  # right
-                len_x = grid_x - posx
+            if self.count[0][0] < grid_y:
+                if self.count[0][grid_x + 1] < grid_y:
+                    if posx <= half_x:
+                        which_x = 0  # left
+                        len_x = posx
+                    else:
+                        which_x = 1  # right
+                        len_x = grid_x - posx
+                else:
+                    which_x = 0  # left
+                    len_x = posx
+            else:
+                if self.count[0][grid_x + 1] < grid_y:
+                    which_x = 1  # right
+                    len_x = grid_x - posx
+                else:
+                    which_x = None  # no choice
 
-            if posy <= half_y and self.count[1][0] < grid_x:
-                which_y = 0  # top
-                len_y = posy
-            else:  # if self.count[1][grid_y + 1] < grid_x:
-                # assume enough empty IOs
-                which_y = 1  # bottom
-                len_y = grid_y - posy
+            if self.count[1][0] < grid_x:
+                if self.count[1][grid_y + 1] < grid_x:
+                    if posy <= half_y:
+                        which_y = 0  # left
+                        len_y = posy
+                    else:
+                        which_y = 1  # right
+                        len_y = grid_y - posy
+                else:
+                    which_y = 0  # left
+                    len_y = posy
+            else:
+                if self.count[1][grid_y + 1] < grid_x:
+                    which_y = 1  # right
+                    len_y = grid_y - posy
+                else:
+                    which_y = None  # no choice
 
             self.count[0][place[0][vp]] -= 1  # ???
             self.count[1][place[1][vp]] -= 1  # ???
-            if len_x * self.cfg.delta[0] < len_y * self.cfg.delta[1]:
-                if which_x == 0:
-                    place[0][vp] = 0
+            if which_x is not None:
+                if which_y is not None:
+                    if len_x * self.cfg.delta[0] < len_y * self.cfg.delta[1]:
+                        if which_x == 0:
+                            place[0][vp] = 0
+                        else:
+                            place[0][vp] = grid_x + 1
+                        place[1][vp] = posy
+                    else:
+                        if which_y == 0:
+                            place[1][vp] = 0
+                        else:
+                            place[1][vp] = grid_y + 1
+                        place[0][vp] = posx
                 else:
-                    place[0][vp] = grid_x + 1
-                place[1][vp] = posy
+                    if which_x == 0:
+                        place[0][vp] = 0
+                    else:
+                        place[0][vp] = grid_x + 1
+                    place[1][vp] = posy
             else:
-                if which_y == 0:
-                    place[1][vp] = 0
+                if which_y is not None:
+                    if which_y == 0:
+                        place[1][vp] = 0
+                    else:
+                        place[1][vp] = grid_y + 1
+                    place[0][vp] = posx
                 else:
-                    place[1][vp] = grid_y + 1
-                place[0][vp] = posx
+                    # Not enough I/O area!!!
+                    raise ValueError
+            self.count[1][place[1][vp]] += 1
+            self.count[0][place[0][vp]] += 1
+
+    def choose_nearest_iopad_vp(self, place: List[List[int]],
+                                vp: int, axis: int) -> (int, int, int):
+        # assume working on 0
+        # p[0][vp] = 0 or grid[0]
+        # dx * |p[0][vp] - p[0][vi]| + dy * |p[1][vp] - p[1][vi]| <= t
+        # dx * |p[1][vp] - p[1][vi]| <= t  - dy * |p[0][vp] - p[0][vi]| (li)
+        # -t  + li <= dx * (p[1][vp] - p[1][vi]) <= t  - li
+        # -t  + li + dx * p[1][vi] <= dx * p[1][vp] <= t  - li + dx * p[1][vi]
+        # -t  + max(dx * p[1][vi] + li) <= dx* p[1][vp] <= t  + min(dx * p[1][vi] - li)
+        # t >= (max(p[1][vi] + li) - min(p[1][vi] - li)) / 2
+        # p[1][vp] = (max(p[1][vi] + li) + min(p[1][vi] - li)) / 2
+
+        oppo = axis ^ 1
+        dx = self.cfg.delta[axis]
+        dy = self.cfg.delta[oppo]
+        grid = self.cfg.grid[axis]
+
+        max0 = -1000000000000
+        min0 = 1000000000000
+        for vi in self.gr[vp]:
+            li = dx * place[axis][vi]
+            ui = dy * place[oppo][vi]
+            tem_max = ui + li
+            tem_min = ui - li
+            max0 = max(tem_max, max0)
+            min0 = min(tem_min, min0)
+        worst0 = (max0 - min0 + 1) // 2
+        pos0 = (max0 + min0) // (2 * dx)
+
+        max1 = -1000000000000
+        min1 = 1000000000000
+        for vi in self.gr[vp]:
+            li = dx * (grid - place[axis][vi])
+            ui = dy * place[oppo][vi]
+            tem_max = ui + li
+            tem_min = ui - li
+            max1 = max(tem_max, max1)
+            min1 = min(tem_min, min1)
+        worst1 = (max1 - min1 + 1) // 2
+        pos1 = (max1 + min1) // (2 * dx)
+
+        grid_x = self.cfg.grid[axis]
+        grid_y = self.cfg.grid[oppo]
+        if self.count[axis][0] < grid_y:
+            if self.count[axis][grid_x + 1] < grid_y:
+                if worst0 <= worst1:
+                    choose = 0  # left (or top)
+                    pos = pos0
+                    worst = worst0
+                else:
+                    choose = 1  # right (or bottom)
+                    pos = pos1
+                    worst = worst1
+            else:
+                choose = 0  # left (or top)
+                pos = pos0
+                worst = worst0
+        else:
+            if self.count[axis][grid_x + 1] < grid_y:
+                choose = 1  # right (or bottom)
+                pos = pos1
+                worst = worst1
+            else:
+                choose = None  # no choice
+        return choose, pos, worst
+
+    def choose_nearest_iopad(self, place: List[List[int]]):
+        """Choose the nearest iopad in phase 2
+
+           TODO: should apply Howard algorithm because one pad can
+           connect to multiple modules and one modules can connect
+           to multiple pad.
+
+        Args:
+            place (List[List[int]]): _description_
+        """
+        # choose the nearest I/O
+        n = self.hgr.number_of_modules()
+        grid_x = self.cfg.grid[0]
+        grid_y = self.cfg.grid[1]
+        for i in range(n - self.hgr.num_pads, n):
+            # loop through io pad
+            vp = self.hgr.modules[i]
+            which_x, posy, worstx = self.choose_nearest_iopad_vp(place, vp, 0)
+            which_y, posx, worsty = self.choose_nearest_iopad_vp(place, vp, 1)
+
+            self.count[0][place[0][vp]] -= 1
+            self.count[1][place[1][vp]] -= 1
+            if which_x is not None:
+                if which_y is not None:
+                    if worstx < worsty:
+                        if which_x == 0:
+                            place[0][vp] = 0
+                        else:
+                            place[0][vp] = grid_x + 1
+                        place[1][vp] = posy
+                    else:
+                        if which_y == 0:
+                            place[1][vp] = 0
+                        else:
+                            place[1][vp] = grid_y + 1
+                        place[0][vp] = posx
+                else:
+                    if which_x == 0:
+                        place[0][vp] = 0
+                    else:
+                        place[0][vp] = grid_x + 1
+                    place[1][vp] = posy
+            else:
+                if which_y is not None:
+                    if which_y == 0:
+                        place[1][vp] = 0
+                    else:
+                        place[1][vp] = grid_y + 1
+                    place[0][vp] = posx
+                else:
+                    # Not enough I/O area!!!
+                    raise ValueError
 
             self.count[1][place[1][vp]] += 1
             self.count[0][place[0][vp]] += 1
@@ -542,6 +699,7 @@ class NnsPlacer:
         """
         worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
+        count0 = [self.count[0].copy(), self.count[1].copy()]
         for niter in range(max_iter):
             r1, C1 = self.apply_howard(place, 0)
             self.legalize_modules(place, 1)
@@ -554,14 +712,20 @@ class NnsPlacer:
             worst1 = self.calc_worst_wirelength(place)
             print(f"    x-y: {worst1}")
             # TODO: when to stop
-            if worst1 > worst0:
-                place = [place0[0].copy(), place0[1].copy()]
+            if worst1 >= worst0:
+                # place = [place0[0].copy(), place0[1].copy()]
+                place[0] = place0[0]
+                place[1] = place0[1]
+                self.count[0] = count0[0]
+                self.count[1] = count0[1]
+                # TODO: update self.count etc.
                 return niter, worst0
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
+            count0 = [self.count[0].copy(), self.count[1].copy()]
         return max_iter, worst1
 
-    def run(self, place: List[List[int]], max_iter=200):
+    def run(self, place: List[List[int]], max_iter=2000):
         """_summary_
 
         Args:
@@ -577,15 +741,22 @@ class NnsPlacer:
         self.io_assign(place)
         worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
+        count0 = [self.count[0].copy(), self.count[1].copy()]
         print(f"init: {worst0}")
         for niter in range(max_iter):
             _, _ = self.optimize(place, max_iter)
-            # self.io_assign(place)
+            self.io_assign(place)
             worst1 = self.calc_worst_wirelength(place)
             print(f"run {worst1}")
-            if worst1 > worst0:
-                place = [place0[0].copy(), place0[1].copy()]
+            if worst1 >= worst0:
+                # place = [place0[0].copy(), place0[1].copy()]
+                place[0] = place0[0]
+                place[1] = place0[1]
+                self.count[0] = count0[0]
+                self.count[1] = count0[1]
+                # TODO: update self.count etc.
                 return niter, worst0
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
+            count0 = [self.count[0].copy(), self.count[1].copy()]
         return max_iter, worst0

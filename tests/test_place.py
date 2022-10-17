@@ -57,7 +57,7 @@ def test_placement():
     # placer.io_assign(place)
     # placer.choose_nearest_iopad(place)
 
-    niter, worst = placer.run(place, 200)
+    niter, worst = placer.run(place, 2000)
     print("Number of iterations = {}".format(niter))
     hpwl_x = placer.calc_total_hull_length(place[0], 0)
     hpwl_y = placer.calc_total_hull_length(place[1], 1)
