@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from math import floor
 
 import networkx as nx
@@ -83,7 +83,7 @@ class NnsPlacer:
             else:
                 col += 1
 
-    def calc_worst_wirelength(self, place: List[List[int]]):
+    def calc_worst_wirelength(self, place: List[List[int]]) -> int:
         """Calculate the worst wirelength
 
         Args:
@@ -102,7 +102,7 @@ class NnsPlacer:
                 worst_wire = gruv
         return worst_wire
 
-    def calc_worst_wirelength_v(self, v, place: List[List[int]]):
+    def calc_worst_wirelength_v(self, v, place: List[List[int]]) -> int:
         """Calculate the worst wirelength w.r.t Module v
 
         Args:
@@ -162,7 +162,7 @@ class NnsPlacer:
     #     return total_hpwl_x * self.cfg.delta[0], \
     #         total_hpwl_y * self.cfg.delta[1]
 
-    def calc_total_hull_length(self, dist: List[int], axis) -> int:
+    def calc_total_hull_length(self, dist: List[int], axis: int) -> int:
         """Calculate the total hull w.r.t one axis
 
         Args:
@@ -184,7 +184,7 @@ class NnsPlacer:
             total_hull_length += hull.length()
         return total_hull_length * self.cfg.delta[axis]
 
-    def calc_total_HPWL(self, place: List[List[int]]):
+    def calc_total_HPWL(self, place: List[List[int]]) -> int:
         """Calculate total HPWL
 
         Args:
@@ -208,18 +208,28 @@ class NnsPlacer:
         """
         axis2 = axis1 ^ 1
 
-        def update_ok(p, d):
-            if d <= 0 or d > self.cfg.grid[axis1]:
+        def update_ok(from_where: int, to_where: int) -> bool:
+            """check additional constraints 
+
+            Args:
+                p (int): _description_
+                d (int): _description_
+
+            Returns:
+                _type_: _description_
+            """
+            if to_where <= 0 or to_where > self.cfg.grid[axis1]:
                 # don't outside the place area
                 return False
-            if self.count[axis1][d] >= self.cfg.grid[axis2]:
+            if self.count[axis1][to_where] >= self.cfg.grid[axis2]:
                 # don't over-crowd in one line
                 return False
-            self.count[axis1][d] += 1
-            self.count[axis1][p] -= 1
+            # update the count
+            self.count[axis1][to_where] += 1
+            self.count[axis1][from_where] -= 1
             return True
 
-        def calc_weight(r, e):
+        def calc_weight(r: float, e: Tuple[int, int]) -> int:
             """[summary]
 
             Arguments:
@@ -232,14 +242,14 @@ class NnsPlacer:
             u, v = e
             return floor((r - self.gr[u][v]['cost']) / self.cfg.delta[axis1])
 
-        def zero_cancel(C):
+        def zero_cancel(C: List[Tuple[int, int]]) -> float:
             """Calculate the zero cancelation of the cycle
 
             Arguments:
                 C {list}: cycle list
 
             Returns:
-                cycle ratio
+                float: cycle ratio
             """
             total_cost = sum(self.gr[u][v]['cost'] for (u, v) in C)
             return total_cost / len(C)
@@ -372,6 +382,15 @@ class NnsPlacer:
             self.legalize(lst, place, axis)
 
     def calc_average_position(self, vp: int, place: List[List[int]]):
+        """_summary_
+
+        Args:
+            vp (int): _description_
+            place (List[List[int]]): _description_
+
+        Returns:
+            _type_: _description_
+        """
         posx = 0
         posy = 0
         count = 0
@@ -738,7 +757,7 @@ class NnsPlacer:
         # niter, worst = self.optimize(place, max_iter)
         # self.init_placement(place)
         # _, worst0 = self.optimize(place, max_iter)
-        self.io_assign(place)
+        # self.io_assign(place)
         worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
         count0 = [self.count[0].copy(), self.count[1].copy()]
