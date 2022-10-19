@@ -7,9 +7,8 @@ from networkx.algorithms import bipartite
 from physdes.interval import Interval
 
 from .min_parametric import min_parametric
-from .netlist import Netlist
+from .netlist import Netlist, TinyDiGraph
 from .placement_cfg import NnsConfig
-from .lict import TinyDiGraph
 
 
 def create_flow_graph(hgr: Netlist) -> TinyDiGraph:
@@ -23,9 +22,16 @@ def create_flow_graph(hgr: Netlist) -> TinyDiGraph:
     Returns:
         TinyDiGraph: _description_
     """
-    gr = TinyDiGraph(num_modules=hgr.num_modules, num_pads=hgr.num_pads)
+    if isinstance(hgr.modules, range):
+        gr = TinyDiGraph(num_modules=hgr.num_modules, num_pads=hgr.num_pads)
+        gr.init_nodes(hgr.num_modules)
+    else:
+        gr = nx.DiGraph(num_modules=hgr.num_modules, num_pads=hgr.num_pads)
+        gr.add_node_from(hgr.modules)
+
+    # Assume a list of modules = a list of cells appends with a list of pads
     num_cells = hgr.num_modules - hgr.num_pads
-    gr.init_nodes(hgr.num_modules)
+
     for net in hgr.nets:
         for v1 in hgr.gr[net]:
             # assume return an integer
@@ -196,7 +202,7 @@ class NnsPlacer:
         return self.calc_total_hull_length(place[0], 0) \
             + self.calc_total_hull_length(place[1], 1)
 
-    def apply_howard(self, place: List[List[int]], axis1: int):
+    def apply_howard(self, place: List[List[int]], axis: int):
         """_summary_
 
         Args:
@@ -206,10 +212,10 @@ class NnsPlacer:
         Returns:
             _type_: _description_
         """
-        axis2 = axis1 ^ 1
+        oppo = axis ^ 1  # opposite axis
 
         def update_ok(from_where: int, to_where: int) -> bool:
-            """check additional constraints 
+            """check additional constraints
 
             Args:
                 p (int): _description_
@@ -218,18 +224,18 @@ class NnsPlacer:
             Returns:
                 _type_: _description_
             """
-            if to_where <= 0 or to_where > self.cfg.grid[axis1]:
+            if to_where <= 0 or to_where > self.cfg.grid[axis]:
                 # don't outside the place area
                 return False
-            if self.count[axis1][to_where] >= self.cfg.grid[axis2]:
+            if self.count[axis][to_where] >= self.cfg.grid[oppo]:
                 # don't over-crowd in one line
                 return False
             # update the count
-            self.count[axis1][to_where] += 1
-            self.count[axis1][from_where] -= 1
+            self.count[axis][to_where] += 1
+            self.count[axis][from_where] -= 1
             return True
 
-        def calc_weight(r: float, e: Tuple[int, int]) -> int:
+        def calc_weight(beta: float, e: Tuple[int, int]) -> int:
             """[summary]
 
             Arguments:
@@ -240,7 +246,7 @@ class NnsPlacer:
                 [type]: [description]
             """
             u, v = e
-            return floor((r - self.gr[u][v]['cost']) / self.cfg.delta[axis1])
+            return floor((beta - self.gr[u][v]['cost']) / self.cfg.delta[axis])
 
         def zero_cancel(C: List[Tuple[int, int]]) -> float:
             """Calculate the zero cancelation of the cycle
@@ -260,14 +266,14 @@ class NnsPlacer:
         worst = 0
         for u, v in self.gr.edges():
             # TODO: Find out how to formulate?
-            gruv = abs(place[axis2][v] - place[axis2][u])
+            gruv = abs(place[oppo][v] - place[oppo][u])
             # self.gr[u][v]['weight'] = gruv  # for bpq in NegCycleFinder ???
-            self.gr[u][v]['cost'] = gruv * self.cfg.delta[axis2]
+            self.gr[u][v]['cost'] = gruv * self.cfg.delta[oppo]
             if worst < gruv:
                 worst = gruv
         # initial worst/2 or 0 or others?
         return min_parametric(self.gr, 0, calc_weight, zero_cancel,
-                              place[axis1], update_ok)
+                              place[axis], update_ok)
 
     def add_bipartite_edge(self, lst: List[int], B: nx.Graph,
                            place: List[List[int]], i: int,
@@ -313,7 +319,6 @@ class NnsPlacer:
             io (bool, optional): _description_. Defaults to False.
         """
         dist = place[axis]
-        # count = self.count[axis]
         grid = self.cfg.grid[axis]
 
         # construct bipartite graph
@@ -337,7 +342,7 @@ class NnsPlacer:
             try:
                 matches = bipartite.minimum_weight_full_matching(B)
                 for v in lst:
-                    _ = matches[v]
+                    _ = matches[v]  # test if it is ok
                 matched = True
             except ValueError:
                 self.add_bipartite_edge(lst, B, place, i, grid, axis)
@@ -365,17 +370,7 @@ class NnsPlacer:
             axis (int): _description_
         """
         bucket = [list() for _ in range(self.cfg.grid[axis ^ 1] + 2)]
-        # bucket = self.bucket[axis]
-        # for lst in bucket:
-        #     lst.clear()
         dist = place[axis ^ 1]
-        # if care_io:
-        #     for v in self.hgr:
-        #         if v < self.hgr.num_modules - self.hgr.num_pads:
-        #             bucket[dist[v]].append(v)
-        # else:
-        #     for v in self.hgr:
-        #         bucket[dist[v]].append(v)
         for v in self.gr:
             bucket[dist[v]].append(v)
         for lst in filter(lambda lst: lst, bucket):  # lst is not null or empty
@@ -404,100 +399,100 @@ class NnsPlacer:
         posy //= count
         return posx, posy
 
-    def choose_nearest_iopad2(self, place: List[List[int]]):
-        """Choose the nearest iopad in phase 2
-
-           TODO: should apply Howard algorithm because one pad can
-           connect to multiple modules and one modules can connect
-           to multiple pad.
-
-        Args:
-            place (List[List[int]]): _description_
-        """
-        # choose the nearest I/O
-        grid_x = self.cfg.grid[0]
-        half_x = grid_x // 2
-        grid_y = self.cfg.grid[1]
-        half_y = grid_y // 2
-        n = self.hgr.number_of_modules()
-        for i in range(n - self.hgr.num_pads, n):
-            # loop through io pad
-            vp = self.hgr.modules[i]
-            posx, posy = self.calc_average_position(vp, place)
-            # nbrs = list(self.gr.neighbors(vp))
-            # TODO: pad attached to more than one node
-            # v = nbrs[0]  # workaround: take the first one only
-
-            if self.count[0][0] < grid_y:
-                if self.count[0][grid_x + 1] < grid_y:
-                    if posx <= half_x:
-                        which_x = 0  # left
-                        len_x = posx
-                    else:
-                        which_x = 1  # right
-                        len_x = grid_x - posx
-                else:
-                    which_x = 0  # left
-                    len_x = posx
-            else:
-                if self.count[0][grid_x + 1] < grid_y:
-                    which_x = 1  # right
-                    len_x = grid_x - posx
-                else:
-                    which_x = None  # no choice
-
-            if self.count[1][0] < grid_x:
-                if self.count[1][grid_y + 1] < grid_x:
-                    if posy <= half_y:
-                        which_y = 0  # left
-                        len_y = posy
-                    else:
-                        which_y = 1  # right
-                        len_y = grid_y - posy
-                else:
-                    which_y = 0  # left
-                    len_y = posy
-            else:
-                if self.count[1][grid_y + 1] < grid_x:
-                    which_y = 1  # right
-                    len_y = grid_y - posy
-                else:
-                    which_y = None  # no choice
-
-            self.count[0][place[0][vp]] -= 1  # ???
-            self.count[1][place[1][vp]] -= 1  # ???
-            if which_x is not None:
-                if which_y is not None:
-                    if len_x * self.cfg.delta[0] < len_y * self.cfg.delta[1]:
-                        if which_x == 0:
-                            place[0][vp] = 0
-                        else:
-                            place[0][vp] = grid_x + 1
-                        place[1][vp] = posy
-                    else:
-                        if which_y == 0:
-                            place[1][vp] = 0
-                        else:
-                            place[1][vp] = grid_y + 1
-                        place[0][vp] = posx
-                else:
-                    if which_x == 0:
-                        place[0][vp] = 0
-                    else:
-                        place[0][vp] = grid_x + 1
-                    place[1][vp] = posy
-            else:
-                if which_y is not None:
-                    if which_y == 0:
-                        place[1][vp] = 0
-                    else:
-                        place[1][vp] = grid_y + 1
-                    place[0][vp] = posx
-                else:
-                    # Not enough I/O area!!!
-                    raise ValueError
-            self.count[1][place[1][vp]] += 1
-            self.count[0][place[0][vp]] += 1
+    # def choose_nearest_iopad2(self, place: List[List[int]]):
+    #     """Choose the nearest iopad in phase 2
+    #
+    #        TODO: should apply Howard algorithm because one pad can
+    #        connect to multiple modules and one modules can connect
+    #        to multiple pad.
+    #
+    #     Args:
+    #         place (List[List[int]]): _description_
+    #     """
+    #     # choose the nearest I/O
+    #     grid_x = self.cfg.grid[0]
+    #     half_x = grid_x // 2
+    #     grid_y = self.cfg.grid[1]
+    #     half_y = grid_y // 2
+    #     n = self.hgr.number_of_modules()
+    #     for i in range(n - self.hgr.num_pads, n):
+    #         # loop through io pad
+    #         vp = self.hgr.modules[i]
+    #         posx, posy = self.calc_average_position(vp, place)
+    #         # nbrs = list(self.gr.neighbors(vp))
+    #         # TODO: pad attached to more than one node
+    #         # v = nbrs[0]  # workaround: take the first one only
+    #
+    #         if self.count[0][0] < grid_y:
+    #             if self.count[0][grid_x + 1] < grid_y:
+    #                 if posx <= half_x:
+    #                     which_x = 0  # left
+    #                     len_x = posx
+    #                 else:
+    #                     which_x = 1  # right
+    #                     len_x = grid_x - posx
+    #             else:
+    #                 which_x = 0  # left
+    #                 len_x = posx
+    #         else:
+    #             if self.count[0][grid_x + 1] < grid_y:
+    #                 which_x = 1  # right
+    #                 len_x = grid_x - posx
+    #             else:
+    #                 which_x = None  # no choice
+    #
+    #         if self.count[1][0] < grid_x:
+    #             if self.count[1][grid_y + 1] < grid_x:
+    #                 if posy <= half_y:
+    #                     which_y = 0  # left
+    #                     len_y = posy
+    #                 else:
+    #                     which_y = 1  # right
+    #                     len_y = grid_y - posy
+    #             else:
+    #                 which_y = 0  # left
+    #                 len_y = posy
+    #         else:
+    #             if self.count[1][grid_y + 1] < grid_x:
+    #                 which_y = 1  # right
+    #                 len_y = grid_y - posy
+    #             else:
+    #                 which_y = None  # no choice
+    #
+    #         self.count[0][place[0][vp]] -= 1  # ???
+    #         self.count[1][place[1][vp]] -= 1  # ???
+    #         if which_x is not None:
+    #             if which_y is not None:
+    #                 if len_x * self.cfg.delta[0] < len_y * self.cfg.delta[1]:
+    #                     if which_x == 0:
+    #                         place[0][vp] = 0
+    #                     else:
+    #                         place[0][vp] = grid_x + 1
+    #                     place[1][vp] = posy
+    #                 else:
+    #                     if which_y == 0:
+    #                         place[1][vp] = 0
+    #                     else:
+    #                         place[1][vp] = grid_y + 1
+    #                     place[0][vp] = posx
+    #             else:
+    #                 if which_x == 0:
+    #                     place[0][vp] = 0
+    #                 else:
+    #                     place[0][vp] = grid_x + 1
+    #                 place[1][vp] = posy
+    #         else:
+    #             if which_y is not None:
+    #                 if which_y == 0:
+    #                     place[1][vp] = 0
+    #                 else:
+    #                     place[1][vp] = grid_y + 1
+    #                 place[0][vp] = posx
+    #             else:
+    #                 # Not enough I/O area!!!
+    #                 raise ValueError
+    #         self.count[1][place[1][vp]] += 1
+    #         self.count[0][place[0][vp]] += 1
 
     def choose_nearest_iopad_vp(self, place: List[List[int]],
                                 vp: int, axis: int) -> (int, int, int):
@@ -505,11 +500,11 @@ class NnsPlacer:
         # p[0][vp] = 0 or grid[0]
         # dx * |p[0][vp] - p[0][vi]| + dy * |p[1][vp] - p[1][vi]| <= t
         # dx * |p[1][vp] - p[1][vi]| <= t  - dy * |p[0][vp] - p[0][vi]| (li)
-        # -t  + li <= dx * (p[1][vp] - p[1][vi]) <= t  - li
-        # -t  + li + dx * p[1][vi] <= dx * p[1][vp] <= t  - li + dx * p[1][vi]
-        # -t  + max(dx * p[1][vi] + li) <= dx* p[1][vp] <= t  + min(dx * p[1][vi] - li)
-        # t >= (max(p[1][vi] + li) - min(p[1][vi] - li)) / 2
-        # p[1][vp] = (max(p[1][vi] + li) + min(p[1][vi] - li)) / 2
+        # -t + li <= dx * (p[1][vp] - p[1][vi]) <= t - li
+        # -t + li + dx * p[1][vi] <= dx * p[1][vp] <= t - li + dx * p[1][vi]
+        # -t + max(dx*p[1][vi]+li) <= dx*p[1][vp] <= t + min(dx*p[1][vi]-li)
+        # t >= (max(dx*p[1][vi] + li) - min(dx*p[1][vi] - li)) / 2
+        # p[1][vp] = dx^-1 * (max(dx*p[1][vi]+li) + min(dx*p[1][vi]-li)) / 2
 
         oppo = axis ^ 1
         dx = self.cfg.delta[axis]

@@ -1863,15 +1863,15 @@ src/nnsplace/__init__.py             6      0      0      0   100%
 src/nnsplace/array_like.py          23      9      0      0    61%   26, 34, 42, 54, 57-58, 66, 77, 86
 src/nnsplace/bpqueue.py             89     89     28      0     0%   2-289
 src/nnsplace/dllist.py              63     63      2      0     0%   1-330
-src/nnsplace/lict.py                32      3      4      0    92%   16, 25, 28
+src/nnsplace/lict.py                18      3      0      0    83%   13, 22, 25
 src/nnsplace/min_parametric.py      24      1     10      1    94%   45
 src/nnsplace/neg_cycle.py           76      9     35      1    87%   56->58, 182-192
-src/nnsplace/netlist.py            116     59     14      0    45%   18, 28, 87, 95, 103, 111, 122, 145, 174-232, 236-262, 277-282, 297, 315-321, 325-340
-src/nnsplace/placement.py          362     88    155      8    73%   196, 345, 394-405, 418-500, 560-565, 605-619, 685->687, 687->exit, 745, 781
+src/nnsplace/netlist.py            100     35      8      0    66%   17, 27, 105, 113, 121, 129, 140, 163, 192-250, 254-280
+src/nnsplace/placement.py          361     88    155      8    73%   195, 344, 393-404, 417-499, 559-564, 604-618, 684->686, 686->exit, 744, 780
 src/nnsplace/placement_cfg.py        4      0      0      0   100%
 ----------------------------------------------------------------------------
-TOTAL                              795    321    248     10    60%
+TOTAL                              764    297    238     10    61%
 
 =========================== short test summary info ============================
 FAILED tests/test_place.py::test_placement - assert 10 < 0
-======================== 1 failed, 1 warning in 10.74s =========================
+======================== 1 failed, 1 warning in 10.14s =========================

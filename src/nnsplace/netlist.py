@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import json
-import random
 from typing import Dict, List, Optional, Union
 
 import networkx as nx
-from networkx.algorithms import bipartite
 from networkx.readwrite import json_graph
 
 from .array_like import repeat_array
+from .lict import Lict
 
 
 class ThinGraph(nx.Graph):
@@ -29,6 +28,25 @@ class SimpleGraph(nx.Graph):
 
     edge_attr_dict_factory = single_edge_dict
     node_attr_dict_factory = single_edge_dict
+
+
+class TinyDiGraph(nx.DiGraph):
+    num_nodes = 0
+
+    def cheat_node_dict(self):
+        return Lict([dict() for _ in range(self.num_nodes)])
+
+    def cheat_adjlist_outer_dict(self):
+        return Lict([dict() for _ in range(self.num_nodes)])
+
+    node_dict_factory = cheat_node_dict
+    adjlist_outer_dict_factory = cheat_adjlist_outer_dict
+
+    def init_nodes(self, n: int):
+        self.num_nodes = n
+        self._node = self.cheat_node_dict()
+        self._adj = self.cheat_adjlist_outer_dict()
+        self._pred = self.cheat_adjlist_outer_dict()
 
 
 class Netlist:
@@ -170,6 +188,56 @@ def read_json(filename):
     return hgr
 
 
+def create_inverter2():
+    gr = ThinGraph()
+    gr.add_nodes_from(["a0", "p1", "p2", "n0", "n1"])
+    nets = ["n0", "n1"]
+    modules = ["a0", "p1", "p2"]
+    module_weight = {"a0": 1, "p1": 0, "p2": 0}
+
+    gr.add_edges_from(
+        [
+            ("n0", "p1", {"dir": "I"}),
+            ("n0", "a0", {"dir": "O"}),
+            ("n1", "a0", {"dir": "I"}),
+            ("n1", "p2", {"dir": "O"}),
+        ]
+    )
+    gr.graph["num_modules"] = 3
+    gr.graph["num_nets"] = 2
+    gr.graph["num_pads"] = 2
+    hgr = Netlist(gr, modules, nets)
+    hgr.module_weight = module_weight
+    hgr.net_weight = repeat_array(1, len(nets))
+    hgr.num_pads = 2
+    return hgr
+
+
+def create_inverter():
+    gr = ThinGraph()
+    gr.add_nodes_from([0, 1, 2, 3, 4])
+    nets = range(3, 5)
+    modules = range(3)
+    module_weight = [1, 0, 0]
+
+    gr.add_edges_from(
+        [
+            (3, 1, {"dir": "I"}),
+            (3, 0, {"dir": "O"}),
+            (4, 0, {"dir": "I"}),
+            (4, 2, {"dir": "O"}),
+        ]
+    )
+    gr.graph["num_modules"] = 3
+    gr.graph["num_nets"] = 2
+    gr.graph["num_pads"] = 2
+    hgr = Netlist(gr, modules, nets)
+    hgr.module_weight = module_weight
+    hgr.net_weight = repeat_array(1, len(nets))
+    hgr.num_pads = 2
+    return hgr
+
+
 def create_drawf():
     gr = ThinGraph()
     gr.add_nodes_from(
@@ -219,7 +287,7 @@ def create_drawf():
             ("n3", "p2", {"dir": "O"}),
             ("n4", "a3", {"dir": "I"}),
             ("n4", "p3", {"dir": "O"}),
-            ("n5", "p2", {"dir": "B"}),
+            ("n5", "p2", {"dir": "B"}),  # self loop
         ]
     )
     gr.graph["num_modules"] = 7
@@ -259,82 +327,4 @@ def create_test_netlist():
     hgr = Netlist(gr, modules, nets)
     hgr.module_weight = module_weight
     hgr.net_weight = net_weight
-    return hgr
-
-
-def vdc(n, base=2):
-    """[summary]
-
-    Arguments:
-        n ([type]): [description]
-
-    Keyword Arguments:
-        base (int): [description] (default: {2})
-
-    Returns:
-        [type]: [description]
-    """
-    vdc, denom = 0.0, 1.0
-    while n:
-        denom *= base
-        n, remainder = divmod(n, base)
-        vdc += remainder / denom
-    return vdc
-
-
-def vdcorput(n, base=2):
-    """[summary]
-
-    Arguments:
-        n (int): number of vectors
-
-    Keyword Arguments:
-        base (int): [description] (default: {2})
-
-    Returns:
-        [type]: [description]
-    """
-    return [vdc(i, base) for i in range(n)]
-
-
-def formGraph(N, M, pos, eta, seed=None):
-    """Form N by N grid of nodes, connect nodes within eta.
-        mu and eta are relative to 1/(N-1)
-
-    Arguments:
-        t (float): the best-so-far optimal value
-        pos ([type]): [description]
-        eta ([type]): [description]
-
-    Keyword Arguments:
-        seed ([type]): [description] (default: {None})
-
-    Returns:
-        [type]: [description]
-    """
-    if seed:
-        random.seed(seed)
-
-    # connect nodes with edges
-    gr = bipartite.random_graph(N, M, eta)
-    # gr = nx.DiGraph(gr)
-    return gr
-
-
-def create_random_hgraph(N=30, M=26, eta=0.1):
-    T = N + M
-    xbase = 2
-    ybase = 3
-    x = [i for i in vdcorput(T, xbase)]
-    y = [i for i in vdcorput(T, ybase)]
-    pos = zip(x, y)
-    gr = formGraph(N, M, pos, eta, seed=5)
-
-    gr.graph["num_modules"] = N
-    gr.graph["num_nets"] = M
-    hgr = Netlist(gr, range(N), range(N, N + M))
-    hgr.module_weight = repeat_array(1, N)
-    hgr.net_weight = repeat_array(1, M)
-    # hgr.net_weight = shift_array(1 for _ in range(M))
-    # hgr.net_weight.set_start(N)
     return hgr
