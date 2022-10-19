@@ -188,7 +188,7 @@ def read_json(filename):
     return hgr
 
 
-def create_inverter2():
+def create_inverter():
     gr = ThinGraph()
     gr.add_nodes_from(["a0", "p1", "p2", "n0", "n1"])
     nets = ["n0", "n1"]
@@ -213,7 +213,7 @@ def create_inverter2():
     return hgr
 
 
-def create_inverter():
+def create_inverter2():
     gr = ThinGraph()
     gr.add_nodes_from([0, 1, 2, 3, 4])
     nets = range(3, 5)

@@ -27,16 +27,16 @@ def create_flow_graph(hgr: Netlist) -> TinyDiGraph:
         gr.init_nodes(hgr.num_modules)
     else:
         gr = nx.DiGraph(num_modules=hgr.num_modules, num_pads=hgr.num_pads)
-        gr.add_node_from(hgr.modules)
+        gr.add_nodes_from(hgr.modules)
 
     # Assume a list of modules = a list of cells appends with a list of pads
-    num_cells = hgr.num_modules - hgr.num_pads
+    # num_cells = hgr.num_modules - hgr.num_pads
 
     for net in hgr.nets:
         for v1 in hgr.gr[net]:
             # assume return an integer
             for v2 in hgr.gr[net]:
-                if v1 >= num_cells:
+                if hgr.module_weight[v2] == 0:  # whatever check io pad
                     continue   # ignore pad to pad connections
                 gr.add_edge(v1, v2)
                 gr.add_edge(v2, v1)

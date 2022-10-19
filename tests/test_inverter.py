@@ -24,9 +24,9 @@ def test_placement():
     H = create_inverter()
     n = H.number_of_modules()
     placer = NnsPlacer(H, NnsConfig(32, 32, 40, 40))
-    place = [[], []]
-    place[0] = [0 for _ in range(n)]  # x-direction
-    place[1] = [0 for _ in range(n)]  # y-direction
+    place = [dict(), dict()]
+    # place[0] = [0 for _ in range(n)]  # x-direction
+    # place[1] = [0 for _ in range(n)]  # y-direction
     placer.init_placement(place)
     placer.io_assign(place)
     hpwl_x = placer.calc_total_hull_length(place[0], 0)
@@ -80,4 +80,4 @@ def test_placement():
         print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" \
 height=\"{}\"/>".format(x, y, width, height))
 
-    assert place[1][0] == 1
+    assert place[1]["a0"] == 1
