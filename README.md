@@ -16,6 +16,7 @@ No NonSense Placement Python Code
 To setup develop environment:
 
     pip3 install -r ./requirements.txt &&
+    pip3 install git+https://github.com/luk036/physdes-py.git
     python3 setup.py develop
 
 To run unit tests:
