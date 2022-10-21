@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+"""
+Netlist
+"""
 
 import json
 from typing import Dict, List, Optional, Union
@@ -11,9 +13,22 @@ from .lict import Lict
 
 
 class ThinGraph(nx.Graph):
+    """_summary_
+
+    Args:
+        nx (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     all_edge_dict = {"weight": 1}
 
     def single_edge_dict(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         return self.all_edge_dict
 
     edge_attr_dict_factory = single_edge_dict
@@ -24,6 +39,11 @@ class SimpleGraph(nx.Graph):
     all_edge_dict = {"weight": 1}
 
     def single_edge_dict(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         return self.all_edge_dict
 
     edge_attr_dict_factory = single_edge_dict
@@ -34,27 +54,47 @@ class TinyDiGraph(nx.DiGraph):
     num_nodes = 0
 
     def cheat_node_dict(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         return Lict([dict() for _ in range(self.num_nodes)])
 
     def cheat_adjlist_outer_dict(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         return Lict([dict() for _ in range(self.num_nodes)])
 
     node_dict_factory = cheat_node_dict
     adjlist_outer_dict_factory = cheat_adjlist_outer_dict
 
-    def init_nodes(self, n: int):
-        self.num_nodes = n
+    def init_nodes(self, num: int):
+        """_summary_
+
+        Args:
+            n (int): _description_
+        """
+        self.num_nodes = num
         self._node = self.cheat_node_dict()
         self._adj = self.cheat_adjlist_outer_dict()
         self._pred = self.cheat_adjlist_outer_dict()
 
 
 class Netlist:
+    """_summary_
+
+    Returns:
+        _type_: _description_
+    """
     num_pads = 0
     cost_model = 0
 
     def __init__(
-        self, gr: nx.Graph,
+        self, graph: nx.Graph,
         modules: Union[range, List],
         nets: Union[range, List]
     ):
@@ -65,7 +105,7 @@ class Netlist:
             modules (Union[range, List]): [description]
             nets (Union[range, List]): [description]
         """
-        self.gr = gr
+        self.gr = graph
         self.modules = modules
         self.nets = nets
 
@@ -74,6 +114,7 @@ class Netlist:
         # self.net_weight: Optional[Union[Dict, List[int]]] = None
         self.module_weight: Optional[Union[Dict, List[int]]] = None
         self.module_fixed: set = set()
+        self.net_weight = repeat_array(1, len(nets))
 
         # self.module_dict = {}
         # for v in enumerate(self.module_list):
