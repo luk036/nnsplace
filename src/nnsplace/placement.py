@@ -3,6 +3,7 @@ from math import floor
 
 import networkx as nx
 from random import shuffle
+from fractions import Fraction
 from networkx.algorithms import bipartite
 from physdes.interval import Interval
 
@@ -235,7 +236,7 @@ class NnsPlacer:
             self.count[axis][from_where] -= 1
             return True
 
-        def calc_weight(beta: float, e: Tuple[int, int]) -> int:
+        def calc_weight(beta: Fraction, e: Tuple[int, int]) -> int:
             """[summary]
 
             Arguments:
@@ -246,19 +247,20 @@ class NnsPlacer:
                 [type]: [description]
             """
             u, v = e
-            return floor((beta - self.gr[u][v]['cost']) / self.cfg.delta[axis])
+            temp = (beta - self.gr[u][v]['cost']) / self.cfg.delta[axis]
+            return temp.numerator // temp.denominator
 
-        def zero_cancel(C: List[Tuple[int, int]]) -> float:
+        def zero_cancel(C: List[Tuple[int, int]]) -> Fraction:
             """Calculate the zero cancelation of the cycle
 
             Arguments:
                 C {list}: cycle list
 
             Returns:
-                float: cycle ratio
+                Fraction: cycle ratio
             """
             total_cost = sum(self.gr[u][v]['cost'] for (u, v) in C)
-            return total_cost / len(C)
+            return Fraction(total_cost, len(C))
 
         # TODO: should provide an API for calling the (monotone) wire-model
 
@@ -272,7 +274,7 @@ class NnsPlacer:
             if worst < gruv:
                 worst = gruv
         # initial worst/2 or 0 or others?
-        return min_parametric(self.gr, 0, calc_weight, zero_cancel,
+        return min_parametric(self.gr, Fraction(0), calc_weight, zero_cancel,
                               place[axis], update_ok)
 
     def add_bipartite_edge(self, lst: List[int], B: nx.Graph,
@@ -496,7 +498,7 @@ class NnsPlacer:
 
     def choose_nearest_iopad_vp(self, place: List[List[int]],
                                 vp: int, axis: int) -> (int, int, int):
-        # assume working on 0
+        # Assume working on 0 or grid[axis]
         # p[0][vp] = 0 or grid[0]
         # dx * |p[0][vp] - p[0][vi]| + dy * |p[1][vp] - p[1][vi]| <= t
         # dx * |p[1][vp] - p[1][vi]| <= t  - dy * |p[0][vp] - p[0][vi]| (li)
