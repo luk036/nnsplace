@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from math import floor
+# from math import floor
 
 import networkx as nx
 from random import shuffle
@@ -66,7 +66,7 @@ class NnsPlacer:
         self.count = [[0 for _ in range(cfg.grid[0]+2)],  # plus 2 I/O
                       [0 for _ in range(cfg.grid[1]+2)]]  # two lists
         self.gr = create_flow_graph(hgr)
-        self.num_cells = hgr.num_modules - hgr.num_pads
+        # self.num_cells = hgr.num_modules - hgr.num_pads
 
     def init_placement(self, place: List[List[int]]):
         """initial placement: just place one by one including I/O pad
@@ -90,6 +90,12 @@ class NnsPlacer:
             else:
                 col += 1
 
+    def cost(self, length, axis):
+        return length * self.cfg.delta[axis]
+
+    def cost_inv(self, length, axis):
+        return length / self.cfg.delta[axis]
+
     def calc_worst_wirelength(self, place: List[List[int]]) -> int:
         """Calculate the worst wirelength
 
@@ -100,13 +106,14 @@ class NnsPlacer:
             _type_: _description_
         """
         worst_wire = 0
-        for u, v in self.gr.edges():
-            if u > v:  # only need to calculate one of the two edges
-                continue
-            gruv = abs(place[0][v] - place[0][u]) * self.cfg.delta[0] \
-                + abs(place[1][v] - place[1][u]) * self.cfg.delta[1]
-            if worst_wire < gruv:
-                worst_wire = gruv
+        for u in self.gr:
+            for v in self.gr.neighbors(u):
+                if u > v:  # only need to calculate one of the two edges
+                    continue
+                gruv = self.cost(abs(place[0][v] - place[0][u]), 0) \
+                    + self.cost(abs(place[1][v] - place[1][u]), 1)
+                if worst_wire < gruv:
+                    worst_wire = gruv
         return worst_wire
 
     def calc_worst_wirelength_v(self, v, place: List[List[int]]) -> int:
@@ -119,9 +126,9 @@ class NnsPlacer:
             _type_: _description_
         """
         worst_wire = 0
-        for u in self.gr.neighbors(v):
-            gruv = abs(place[0][v] - place[0][u]) * self.cfg.delta[0] \
-                + abs(place[1][v] - place[1][u]) * self.cfg.delta[1]
+        for w in self.gr.neighbors(v):
+            gruv = self.cost(abs(place[0][v] - place[0][w]), 0) \
+                + self.cost(abs(place[1][v] - place[1][w]), 1)
             if worst_wire < gruv:
                 worst_wire = gruv
         return worst_wire
@@ -247,7 +254,7 @@ class NnsPlacer:
                 [type]: [description]
             """
             u, v = e
-            temp = (beta - self.gr[u][v]['cost']) / self.cfg.delta[axis]
+            temp = self.cost_inv(beta - self.gr[u][v]['cost'], axis)
             return temp.numerator // temp.denominator
 
         def zero_cancel(C: List[Tuple[int, int]]) -> Fraction:
@@ -255,6 +262,8 @@ class NnsPlacer:
 
             Arguments:
                 C {list}: cycle list
+
+            Note: Assume linear cost
 
             Returns:
                 Fraction: cycle ratio
@@ -266,16 +275,15 @@ class NnsPlacer:
 
         # dt[0] * abs(p[0][i] - p[0][j]) + dt[1] * abs(p[1][i] - p[1][j]) < r
         worst = 0
-        for u, v in self.gr.edges():
-            # TODO: Find out how to formulate?
-            gruv = abs(place[oppo][v] - place[oppo][u])
-            # self.gr[u][v]['weight'] = gruv  # for bpq in NegCycleFinder ???
-            self.gr[u][v]['cost'] = gruv * self.cfg.delta[oppo]
-            if worst < gruv:
-                worst = gruv
+        for u in self.gr:
+            for v in self.gr.neighbors(u):
+                gruv = abs(place[oppo][v] - place[oppo][u])
+                self.gr[u][v]['cost'] = self.cost(gruv, oppo)
+                if worst < gruv:
+                    worst = gruv
         # initial worst/2 or 0 or others?
-        return min_parametric(self.gr, Fraction(0), calc_weight, zero_cancel,
-                              place[axis], update_ok)
+        return min_parametric(self.gr, Fraction(worst), calc_weight,
+                              zero_cancel, place[axis], update_ok)
 
     def add_bipartite_edge(self, lst: List[int], B: nx.Graph,
                            place: List[List[int]], i: int,
@@ -378,28 +386,28 @@ class NnsPlacer:
         for lst in filter(lambda lst: lst, bucket):  # lst is not null or empty
             self.legalize(lst, place, axis)
 
-    def calc_average_position(self, vp: int, place: List[List[int]]):
-        """_summary_
-
-        Args:
-            vp (int): _description_
-            place (List[List[int]]): _description_
-
-        Returns:
-            _type_: _description_
-        """
-        posx = 0
-        posy = 0
-        count = 0
-        for vi in self.gr[vp]:
-            # if vi >= self.num_cells:  # only non-io modules
-            #     continue
-            posx += place[0][vi]
-            posy += place[1][vi]
-            count += 1
-        posx //= count
-        posy //= count
-        return posx, posy
+    # def calc_average_position(self, vp: int, place: List[List[int]]):
+    #     """_summary_
+    #
+    #     Args:
+    #         vp (int): _description_
+    #         place (List[List[int]]): _description_
+    #
+    #     Returns:
+    #         _type_: _description_
+    #     """
+    #     posx = 0
+    #     posy = 0
+    #     count = 0
+    #     for vi in self.gr[vp]:
+    #         # if vi >= self.num_cells:  # only non-io modules
+    #         #     continue
+    #         posx += place[0][vi]
+    #         posy += place[1][vi]
+    #         count += 1
+    #     posx //= count
+    #     posy //= count
+    #     return posx, posy
 
     # def choose_nearest_iopad2(self, place: List[List[int]]):
     #     """Choose the nearest iopad in phase 2
@@ -500,13 +508,14 @@ class NnsPlacer:
                                 vp: int, axis: int) -> (int, int, int):
         # Assume working on 0 or grid[axis]
         # p[0][vp] = 0 or grid[0]
-        # dx * |p[0][vp] - p[0][vi]| + dy * |p[1][vp] - p[1][vi]| <= t
-        # dx * |p[1][vp] - p[1][vi]| <= t  - dy * |p[0][vp] - p[0][vi]| (li)
-        # -t + li <= dx * (p[1][vp] - p[1][vi]) <= t - li
-        # -t + li + dx * p[1][vi] <= dx * p[1][vp] <= t - li + dx * p[1][vi]
-        # -t + max(dx*p[1][vi]+li) <= dx*p[1][vp] <= t + min(dx*p[1][vi]-li)
-        # t >= (max(dx*p[1][vi] + li) - min(dx*p[1][vi] - li)) / 2
-        # p[1][vp] = dx^-1 * (max(dx*p[1][vi]+li) + min(dx*p[1][vi]-li)) / 2
+        # cx * |p[0][vp] - p[0][vi]| + cy * |p[1][vp] - p[1][vi]| <= t
+        # cx * |p[1][vp] - p[1][vi]| <= t  - cy * |p[0][vp] - p[0][vi]| (li)
+        # -t + li <= cx * (p[1][vp] - p[1][vi]) <= t - li
+        # -(t - li) / cx <= p[1][vp] - p[1][vi] <= (t - li) / cx
+        # -(t - li) / cx + p[1][vi] <= p[1][vp] <= (t - li) / cx + p[1][vi]
+        # -t + max(cx*p[1][vi]+li) <= cx*p[1][vp] <= t + min(cx*p[1][vi]-li)
+        # t >= (max(cx*p[1][vi] + li) - min(cx*p[1][vi] - li)) / 2
+        # p[1][vp] = cx^-1 * (max(cx*p[1][vi]+li) + min(cx*p[1][vi]-li)) / 2
 
         oppo = axis ^ 1
         dx = self.cfg.delta[axis]
@@ -515,51 +524,57 @@ class NnsPlacer:
 
         max0 = -1000000000000
         min0 = 1000000000000
-        for vi in self.gr[vp]:
-            li = dx * place[axis][vi]
-            ui = dy * place[oppo][vi]
-            tem_max = ui + li
-            tem_min = ui - li
-            max0 = max(tem_max, max0)
-            min0 = min(tem_min, min0)
-        worst0 = (max0 - min0 + 1) // 2
-        pos0 = (max0 + min0) // (2 * dx)
-
         max1 = -1000000000000
         min1 = 1000000000000
-        for vi in self.gr[vp]:
-            li = dx * (grid - place[axis][vi])
+        for vi in self.gr.neighbors(vp):
+            li0 = dx * place[axis][vi]
+            li1 = dx * (grid - place[axis][vi])
             ui = dy * place[oppo][vi]
-            tem_max = ui + li
-            tem_min = ui - li
-            max1 = max(tem_max, max1)
-            min1 = min(tem_min, min1)
+            tem_max0 = ui + li0
+            tem_min0 = ui - li0
+            tem_max1 = ui + li1
+            tem_min1 = ui - li1
+            max0 = max(tem_max0, max0)
+            min0 = min(tem_min0, min0)
+            max1 = max(tem_max1, max1)
+            min1 = min(tem_min1, min1)
+        worst0 = (max0 - min0 + 1) // 2
+        pos0 = (max0 + min0) // (2 * dx)
         worst1 = (max1 - min1 + 1) // 2
         pos1 = (max1 + min1) // (2 * dx)
 
         grid_x = self.cfg.grid[axis]
         grid_y = self.cfg.grid[oppo]
-        if self.count[axis][0] < grid_y:
-            if self.count[axis][grid_x + 1] < grid_y:
-                if worst0 <= worst1:
-                    choose = 0  # left (or top)
-                    pos = pos0
-                    worst = worst0
-                else:
-                    choose = 1  # right (or bottom)
-                    pos = pos1
-                    worst = worst1
-            else:
+        full0 = self.count[axis][0] >= grid_y
+        full1 = self.count[axis][grid_x + 1] >= grid_y
+        if full0 and full1:
+            choose = 2  # no choice
+        else:
+            if (full0, worst0) <= (full1, worst1):
                 choose = 0  # left (or top)
                 pos = pos0
                 worst = worst0
-        else:
-            if self.count[axis][grid_x + 1] < grid_y:
+            else:
                 choose = 1  # right (or bottom)
                 pos = pos1
                 worst = worst1
-            else:
-                choose = None  # no choice
+
+        # if self.count[axis][0] < grid_y:
+        #     if self.count[axis][grid_x + 1] < grid_y and worst0 > worst1:
+        #         choose = 1  # right (or bottom)
+        #         pos = pos1
+        #         worst = worst1
+        #     else:
+        #         choose = 0  # left (or top)
+        #         pos = pos0
+        #         worst = worst0
+        # else:
+        #     if self.count[axis][grid_x + 1] < grid_y:
+        #         choose = 1  # right (or bottom)
+        #         pos = pos1
+        #         worst = worst1
+        #     else:
+        #         choose = None  # no choice
         return choose, pos, worst
 
     def choose_nearest_iopad(self, place: List[List[int]]):
@@ -584,36 +599,50 @@ class NnsPlacer:
 
             self.count[0][place[0][vp]] -= 1
             self.count[1][place[1][vp]] -= 1
-            if which_x is not None:
-                if which_y is not None:
-                    if worstx < worsty:
-                        if which_x == 0:
-                            place[0][vp] = 0
-                        else:
-                            place[0][vp] = grid_x + 1
-                        place[1][vp] = posy
-                    else:
-                        if which_y == 0:
-                            place[1][vp] = 0
-                        else:
-                            place[1][vp] = grid_y + 1
-                        place[0][vp] = posx
-                else:
+
+            full_x = which_x == 2
+            full_y = which_y == 2
+
+            if full_x and full_y:
+                # Not enough I/O area!!!
+                raise ValueError
+            else:
+                if (full_x, worstx) <= (full_y, worsty):
                     if which_x == 0:
                         place[0][vp] = 0
                     else:
                         place[0][vp] = grid_x + 1
                     place[1][vp] = posy
-            else:
-                if which_y is not None:
+                else:
                     if which_y == 0:
                         place[1][vp] = 0
                     else:
                         place[1][vp] = grid_y + 1
                     place[0][vp] = posx
-                else:
-                    # Not enough I/O area!!!
-                    raise ValueError
+
+            # if which_x is not None:
+            #     if which_y is not None and worstx >= worsty:
+            #         if which_y == 0:
+            #             place[1][vp] = 0
+            #         else:
+            #             place[1][vp] = grid_y + 1
+            #         place[0][vp] = posx
+            #     else:
+            #         if which_x == 0:
+            #             place[0][vp] = 0
+            #         else:
+            #             place[0][vp] = grid_x + 1
+            #         place[1][vp] = posy
+            # else:
+            #     if which_y is not None:
+            #         if which_y == 0:
+            #             place[1][vp] = 0
+            #         else:
+            #             place[1][vp] = grid_y + 1
+            #         place[0][vp] = posx
+            #     else:
+            #         # Not enough I/O area!!!
+            #         raise ValueError
 
             self.count[1][place[1][vp]] += 1
             self.count[0][place[0][vp]] += 1
