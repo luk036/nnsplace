@@ -93,8 +93,8 @@ class NnsPlacer:
     def cost(self, length, axis):
         return length * self.cfg.delta[axis]
 
-    def cost_inv(self, length, axis):
-        return length / self.cfg.delta[axis]
+    def cost_inv(self, cost, axis) -> Fraction:
+        return cost / self.cfg.delta[axis]
 
     def calc_worst_wirelength(self, place: List[List[int]]) -> int:
         """Calculate the worst wirelength
