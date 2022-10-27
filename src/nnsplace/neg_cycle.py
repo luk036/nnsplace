@@ -12,28 +12,28 @@ class NegCycleFinder:
     pred: Dict = {}
     succ: Dict = {}
 
-    def __init__(self, G):
+    def __init__(self, gra):
         """[summary]
 
         Arguments:
-            G: Graph
+            gra: Graph
         """
-        self.G = G
-        # self.num_cells = G.graph['num_modules'] - G.graph['num_pads']
+        self.gra = gra
+        # self.num_cells = gra.graph['num_modules'] - gra.graph['num_pads']
         # max_weight = 0
-        # for (u, v, weight) in G.edges.data('weight'):
+        # for (u, v, weight) in gra.edges.data('weight'):
         #     if max_weight < weight:
         #         max_weight = weight
         # self.bpq_pred = BPQueue(0, max_weight)
         # self.bpq_succ = BPQueue(0, max_weight)
         # if care_io:  # don't process I/O pad
-        #     for (u, v, weight) in G.edges.data('weight'):
-        #         if v < G.graph['num_modules'] - G.graph['num_pads']:
+        #     for (u, v, weight) in gra.edges.data('weight'):
+        #         if v < gra.graph['num_modules'] - gra.graph['num_pads']:
         #             self.bpq_pred.append(Dllink([0, (u, v)]), weight)
-        #         if u < G.graph['num_modules'] - G.graph['num_pads']:
+        #         if u < gra.graph['num_modules'] - gra.graph['num_pads']:
         #             self.bpq_succ.append(Dllink([0, (u, v)]), weight)
         # else:
-        #     for (u, v, weight) in G.edges.data('weight'):
+        #     for (u, v, weight) in gra.edges.data('weight'):
         #         self.bpq_pred.append(Dllink([0, (u, v)]), weight)
         #         # self.bpq_succ.append(Dllink([0, (u, v)]), weight)
         #     self.bpq_succ = self.bpq_pred
@@ -45,7 +45,7 @@ class NegCycleFinder:
             node: a start node of the cycle
         """
         visited = {}
-        for v in filter(lambda v: v not in visited, self.G):
+        for v in filter(lambda v: v not in visited, self.gra):
             u = v
             while True:
                 visited[u] = v
@@ -70,17 +70,16 @@ class NegCycleFinder:
         changed = False
         # for vlink in self.bpq_pred:
         #     e = vlink.data[1]
-        for e in self.G.edges():
+        for e in self.gra.edges():
             u, v = e
             # if v >= self.num_cells:
             #     continue  # don't move IO pad
-            wt = get_weight(e)
-            d = dist[u] + wt
-            if dist[v] > d:
-                if update_ok(dist[v], d):
-                    dist[v] = d
-                    self.pred[v] = u
-                    changed = True
+            weight = get_weight(e)
+            d = dist[u] + weight
+            if dist[v] > d and update_ok(dist[v], d):
+                dist[v] = d
+                self.pred[v] = u
+                changed = True
         return changed
 
     def relax_succ(self, dist, get_weight, update_ok):
@@ -96,17 +95,16 @@ class NegCycleFinder:
         changed = False
         # for vlink in self.bpq_succ:
         #     e = vlink.data[1]
-        for e in self.G.edges():
+        for e in self.gra.edges():
             u, v = e
             # if u >= self.num_cells:
             #     continue  # don't move IO pad
-            wt = get_weight(e)
-            d = dist[v] - wt
-            if dist[u] < d:
-                if update_ok(dist[u], d):
-                    dist[u] = d
-                    self.succ[u] = v
-                    changed = True
+            weight = get_weight(e)
+            d = dist[v] - weight
+            if dist[u] < d and update_ok(dist[u], d):
+                dist[u] = d
+                self.succ[u] = v
+                changed = True
         return changed
 
     def find_neg_cycle_pred(self, dist, get_weight, update_ok):
@@ -139,7 +137,7 @@ class NegCycleFinder:
         Yields:
             list of edges: cycle list
         """
-        # self.dist = list(0 for _ in self.G)
+        # self.dist = list(0 for _ in self.gra)
         self.succ = {}
         found = False
         while not found and self.relax_succ(dist, get_weight, update_ok):

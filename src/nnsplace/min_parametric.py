@@ -1,18 +1,23 @@
+"""
+Generalized Howard algorithm Solve minimum parametric network problems
+
+"""
+
 from .neg_cycle import NegCycleFinder
 
 
-def min_parametric(gr, r, d, zero_cancel, dist,
+def min_parametric(gra, ratio, cost, zero_cancel, dist,
                    update_ok, pick_one_only=False):
     """minimum parametric problem:
 
         min  r
-        s.t. dist[v] - dist[v] <= d(u, v, r)
+        s.t. dist[v] - dist[v] <= cost(u, v, r)
              for all (u, v) in G
 
     Arguments:
-        G ([type]): directed graph
-        r {float}: parameter to be minimized, initially a big number!!!
-        d ([type]): monotone decreasing function w.r.t. r
+        gra ([type]): directed graph
+        ratio {Any}: parameter to be minimized, initially a small number!!!
+        cost ([type]): monotone increasing function w.r.t. r
         zero_cancel ([type]): [description]
         pick_one_only {bool}: [description]
 
@@ -21,35 +26,35 @@ def min_parametric(gr, r, d, zero_cancel, dist,
         C: Most critial cycle
         dist: optimal sol'n
     """
-    def get_weight(e):
-        return d(r, e)
+    def get_weight(edge):
+        return cost(ratio, edge)
 
-    S = NegCycleFinder(gr)
-    r_max = r
-    C = None
+    omega = NegCycleFinder(gra)
+    r_max = ratio
+    cycle = None
     reverse = True
 
     while True:
         if reverse:
-            cycles = S.find_neg_cycle_succ(dist, get_weight, update_ok)
+            cycles = omega.find_neg_cycle_succ(dist, get_weight, update_ok)
         else:
-            cycles = S.find_neg_cycle_pred(dist, get_weight, update_ok)
+            cycles = omega.find_neg_cycle_pred(dist, get_weight, update_ok)
         # cycles = S.find_neg_cycle_pred(dist, get_weight, update_ok)
 
-        for Ci in cycles:
-            ri = zero_cancel(Ci)
-            if r_max < ri:
-                r_max = ri
-                C_max = Ci
+        for c_i in cycles:
+            r_i = zero_cancel(c_i)
+            if r_max < r_i:
+                r_max = r_i
+                c_max = c_i
                 if pick_one_only:
                     break
-        if r_max <= r:
+        if r_max <= ratio:
             break
 
-        C = C_max
-        r = r_max
+        cycle = c_max
+        ratio = r_max
         reverse = not reverse
-    return r, C
+    return ratio, cycle
 
 # if __name__ == "__main__":
 #     from __future__ import print_function

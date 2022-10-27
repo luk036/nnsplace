@@ -343,7 +343,7 @@ class NnsPlacer:
         # Add nodes with the node attribute "bipartite"
         B.add_nodes_from(lst, bipartite=0)
 
-        neighborhood = 9  # magic number for defining the neigborhood
+        neighborhood = 11  # magic number for defining the neigborhood
         for v in lst:
             # construct bipartite graph
             q = dist[v] + self.hgr.number_of_modules()  # avoid same name
