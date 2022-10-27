@@ -65,6 +65,8 @@ class NnsPlacer:
         self.cfg = cfg
         self.count = [[0 for _ in range(cfg.grid[0]+2)],  # plus 2 I/O
                       [0 for _ in range(cfg.grid[1]+2)]]  # two lists
+        self.limit = [cfg.grid[1], cfg.grid[0] - 1]
+        # assume col 27 is preserved for DSP or SRAM
         self.gr = create_flow_graph(hgr)
         # self.num_cells = hgr.num_modules - hgr.num_pads
 
@@ -89,6 +91,11 @@ class NnsPlacer:
                 row += 1
             else:
                 col += 1
+            if col == 27:  # assume col 27 is preserved for DSP or SRAM
+                col += 1
+        assert self.count[0][27] == 0
+        assert self.count[0][1] <= self.limit[0]  # e.g. 50
+        assert self.count[1][1] <= self.limit[1]  # e.g. 49
 
     def cost(self, length, axis):
         return length * self.cfg.delta[axis]
@@ -235,7 +242,7 @@ class NnsPlacer:
             if to_where <= 0 or to_where > self.cfg.grid[axis]:
                 # don't outside the place area
                 return False
-            if self.count[axis][to_where] >= self.cfg.grid[oppo]:
+            if self.count[axis][to_where] >= self.limit[axis]:
                 # don't over-crowd in one line
                 return False
             # update the count
@@ -304,14 +311,14 @@ class NnsPlacer:
             p = place[axis][v]
             q = p + self.hgr.number_of_modules()  # avoid same name
             weight0 = self.calc_worst_wirelength_v(v, place)
-            if p - i > 0:
+            if p - i > 0 and not (axis == 0 and p - i == 27):
                 place[axis][v] -= i  # temporily set the position
                 weight1 = self.calc_worst_wirelength_v(v, place)
                 place[axis][v] += i  # reset the position
                 B.add_node(q - i, bipartite=1)
                 # B.add_edge(v, q - i, weight=i)
                 B.add_edge(v, q - i, weight=weight1 - weight0)
-            if p + i <= grid:
+            if p + i <= grid and not (axis == 0 and p + i == 27):
                 place[axis][v] += i  # temporily set the position
                 weight1 = self.calc_worst_wirelength_v(v, place)
                 place[axis][v] -= i  # reset the position
@@ -340,6 +347,8 @@ class NnsPlacer:
         for v in lst:
             # construct bipartite graph
             q = dist[v] + self.hgr.number_of_modules()  # avoid same name
+            if axis == 0 and dist[v] == 27:
+                continue
             B.add_node(q, bipartite=1)
             B.add_edge(v, q, weight=0)  # closest position
         for i in range(1, neighborhood):
@@ -370,6 +379,7 @@ class NnsPlacer:
             # Update position and self.count
             self.count[axis][dist[v]] -= 1
             self.count[axis][q] += 1
+            # Why not check limit?
             dist[v] = q
 
     def legalize_modules(self, place: List[List[int]], axis: int):
@@ -544,9 +554,9 @@ class NnsPlacer:
         pos1 = (max1 + min1) // (2 * dx)
 
         grid_x = self.cfg.grid[axis]
-        grid_y = self.cfg.grid[oppo]
-        full0 = self.count[axis][0] >= grid_y
-        full1 = self.count[axis][grid_x + 1] >= grid_y
+        # grid_y = self.cfg.grid[oppo]
+        full0 = self.count[axis][0] >= self.limit[axis]
+        full1 = self.count[axis][grid_x + 1] >= self.limit[axis]
         if full0 and full1:
             choose = 2  # no choice
         else:

@@ -1,9 +1,9 @@
 from nnsplace.netlist import read_json
 from nnsplace.placement import NnsPlacer
 from nnsplace.placement_cfg import NnsConfig
-from physdes.interval import Interval
-from physdes.point import Point
-from physdes.recti import Rectangle
+# from physdes.interval import Interval
+# from physdes.point import Point
+# from physdes.recti import Rectangle
 from random import seed
 
 # def test_drawf():
@@ -22,21 +22,6 @@ from random import seed
 def test_placement():
     seed(831)
     H = read_json("testcases/p1.json")
-    # count_2 = 0
-    # count_3 = 0
-    # count_rest = 0
-    # for net in H.nets:
-    #     deg = H.G.degree(net)
-    #     if deg == 2:
-    #         count_2 += 1
-    #     elif deg == 3:
-    #         count_3 += 1
-    #     else:
-    #         count_rest += 1
-    # print(count_2, count_3, count_rest)
-    # assert count_2 == 494
-    # 00321C
-    # EC0000
     n = H.number_of_modules()
     placer = NnsPlacer(H, NnsConfig(32, 32, 40, 40))
     place = [[], []]
@@ -44,13 +29,6 @@ def test_placement():
     place[1] = [0 for _ in range(n)]  # y-direction
     placer.init_placement(place)
     placer.io_assign(place)
-    # assert place[0][1] == 1
-    # assert place[1][1] == 0
-    # assert placer.count[1][0] == 32
-    # assert placer.count[1][26] == 1
-    # assert placer.count[1][27] == 0
-    # assert placer.count[0][0] == 27
-    # assert placer.count[0][1] == 26
     hpwl_x = placer.calc_total_hull_length(place[0], 0)
     hpwl_y = placer.calc_total_hull_length(place[1], 1)
     print("Total HPWL before = {} + {} = {}".format(
@@ -89,20 +67,20 @@ def test_placement():
     #               place[0][vp] * 40 + 20, place[1][vp] * 40 + 20,
     #               place[0][vi] * 40 + 20, place[1][vi] * 40 + 20))
 
-    for net in H.nets:
-        adjs = iter(H.gr[net])
-        v = next(adjs)
-        px = place[0][v]
-        py = place[1][v]
-        bbox = Rectangle(Interval(px, px), Interval(py, py))
-        for v in adjs:
-            q = Point(place[0][v], place[1][v])
-            bbox = bbox.hull_with(q)
-        x = bbox.xcoord.lb * 40 + 10
-        y = bbox.ycoord.lb * 40 + 10
-        width = bbox.width() * 40
-        height = bbox.height() * 40
-        print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" \
-height=\"{}\"/>".format(x, y, width, height))
+    # for net in H.nets:
+    #     adjs = iter(H.gr[net])
+    #     v = next(adjs)
+    #     px = place[0][v]
+    #     py = place[1][v]
+    #     bbox = Rectangle(Interval(px, px), Interval(py, py))
+    #     for v in adjs:
+    #         q = Point(place[0][v], place[1][v])
+    #         bbox = bbox.hull_with(q)
+    #     x = bbox.xcoord.lb * 40 + 10
+    #     y = bbox.ycoord.lb * 40 + 10
+    #     width = bbox.width() * 40
+    #     height = bbox.height() * 40
+    #     print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" \
+    #         height=\"{}\"/>".format(x, y, width, height))
 
     assert(place[0][1] < 0)
