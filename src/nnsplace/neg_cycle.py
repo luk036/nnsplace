@@ -45,16 +45,16 @@ class NegCycleFinder:
             node: a start node of the cycle
         """
         visited = {}
-        for v in filter(lambda v: v not in visited, self.gra):
-            u = v
+        for vtx_v in filter(lambda vtx_v: vtx_v not in visited, self.gra):
+            vtx_u = vtx_v
             while True:
-                visited[u] = v
-                if u not in point_to:
+                visited[vtx_u] = vtx_v
+                if vtx_u not in point_to:
                     break
-                u = point_to[u]
-                if u in visited:
-                    if visited[u] == v:
-                        yield u
+                vtx_u = point_to[vtx_u]
+                if vtx_u in visited:
+                    if visited[vtx_u] == vtx_v:
+                        yield vtx_u
                     break
 
     def relax_pred(self, dist, get_weight, update_ok):
@@ -71,14 +71,14 @@ class NegCycleFinder:
         # for vlink in self.bpq_pred:
         #     e = vlink.data[1]
         for e in self.gra.edges():
-            u, v = e
+            vtx_u, vtx_v = e
             # if v >= self.num_cells:
             #     continue  # don't move IO pad
             weight = get_weight(e)
-            d = dist[u] + weight
-            if dist[v] > d and update_ok(dist[v], d):
-                dist[v] = d
-                self.pred[v] = u
+            d = dist[vtx_u] + weight
+            if dist[vtx_v] > d and update_ok(dist[vtx_v], d):
+                dist[vtx_v] = d
+                self.pred[vtx_v] = vtx_u
                 changed = True
         return changed
 
@@ -96,14 +96,14 @@ class NegCycleFinder:
         # for vlink in self.bpq_succ:
         #     e = vlink.data[1]
         for e in self.gra.edges():
-            u, v = e
-            # if u >= self.num_cells:
+            vtx_u, vtx_v = e
+            # if vtx_u >= self.num_cells:
             #     continue  # don't move IO pad
             weight = get_weight(e)
-            d = dist[v] - weight
-            if dist[u] < d and update_ok(dist[u], d):
-                dist[u] = d
-                self.succ[u] = v
+            d = dist[vtx_v] - weight
+            if dist[vtx_u] < d and update_ok(dist[vtx_u], d):
+                dist[vtx_u] = d
+                self.succ[vtx_u] = vtx_v
                 changed = True
         return changed
 
@@ -120,12 +120,12 @@ class NegCycleFinder:
         self.pred = {}
         found = False
         while not found and self.relax_pred(dist, get_weight, update_ok):
-            # v = self.find_cycle()
-            for v in self.find_cycle(self.pred):
+            # vtx_v = self.find_cycle()
+            for vtx_v in self.find_cycle(self.pred):
                 # Will zero cycle be found???
-                # assert self.is_negative(v, dist, get_weight)
+                # assert self.is_negative(vtx_v, dist, get_weight)
                 found = True
-                yield self.cycle_list(v, self.pred)
+                yield self.cycle_list(vtx_v, self.pred)
 
     def find_neg_cycle_succ(self, dist, get_weight, update_ok):
         """Perform a updating of dist and succ
@@ -141,12 +141,12 @@ class NegCycleFinder:
         self.succ = {}
         found = False
         while not found and self.relax_succ(dist, get_weight, update_ok):
-            # v = self.find_cycle()
-            for v in self.find_cycle(self.succ):
+            # vtx_v = self.find_cycle()
+            for vtx_v in self.find_cycle(self.succ):
                 # Will zero cycle be found???
-                # assert self.is_negative(v, dist, get_weight)
+                # assert self.is_negative(vtx_v, dist, get_weight)
                 found = True
-                yield self.cycle_list(v, self.succ)
+                yield self.cycle_list(vtx_v, self.succ)
 
     def cycle_list(self, handle, point_to):
         """Cycle list started from handle
@@ -157,13 +157,13 @@ class NegCycleFinder:
         Returns:
             list of edges: cycle list
         """
-        v = handle
+        vtx_v = handle
         cycle = list()
         while True:
-            u = point_to[v]
-            cycle += [(u, v)]
-            v = u
-            if v == handle:
+            vtx_u = point_to[vtx_v]
+            cycle += [(vtx_u, vtx_v)]
+            vtx_v = vtx_u
+            if vtx_v == handle:
                 break
         return cycle
 
@@ -177,14 +177,14 @@ class NegCycleFinder:
         Returns:
             bool: [description]
         """
-        v = handle
+        vtx_v = handle
         # do while loop in C++
         while True:
-            u = self.pred[v]
-            wt = get_weight((u, v))
-            if dist[v] > dist[u] + wt:
+            vtx_u = self.pred[vtx_v]
+            wt = get_weight((vtx_u, vtx_v))
+            if dist[vtx_v] > dist[vtx_u] + wt:
                 return True
-            v = u
-            if v == handle:
+            vtx_v = vtx_u
+            if vtx_v == handle:
                 break
         return False
