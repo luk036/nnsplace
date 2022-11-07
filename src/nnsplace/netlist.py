@@ -3,7 +3,7 @@ Netlist
 """
 
 import json
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union, Any
 
 import networkx as nx
 from networkx.readwrite import json_graph
@@ -36,6 +36,14 @@ class ThinGraph(nx.Graph):
 
 
 class SimpleGraph(nx.Graph):
+    """_summary_
+
+    Args:
+        nx (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     all_edge_dict = {"weight": 1}
 
     def single_edge_dict(self):
@@ -51,6 +59,14 @@ class SimpleGraph(nx.Graph):
 
 
 class TinyDiGraph(nx.DiGraph):
+    """_summary_
+
+    Args:
+        nx (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     num_nodes = 0
 
     def cheat_node_dict(self):
@@ -92,6 +108,7 @@ class Netlist:
     """
     num_pads = 0
     cost_model = 0
+    module_weight: Union[Dict, Lict[Any]]
 
     def __init__(
         self, graph: nx.Graph,
@@ -112,7 +129,7 @@ class Netlist:
         self.num_modules = len(modules)
         self.num_nets = len(nets)
         # self.net_weight: Optional[Union[Dict, List[int]]] = None
-        self.module_weight: Optional[Union[Dict, List[int]]] = None
+        # self.module_weight: Optional[Union[Dict, Lict[int, Any]]] = None
         self.module_fixed: set = set()
         self.net_weight = repeat_array(1, len(nets))
 

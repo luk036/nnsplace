@@ -389,7 +389,7 @@ class NnsPlacer:
             place (List[List[int]]): _description_
             axis (int): _description_
         """
-        bucket = [list() for _ in range(self.cfg.grid[axis ^ 1] + 2)]
+        bucket: List[List[int]] = [list() for _ in range(self.cfg.grid[axis ^ 1] + 2)]
         dist = place[axis ^ 1]
         for v in self.gr:
             bucket[dist[v]].append(v)
@@ -515,7 +515,7 @@ class NnsPlacer:
     #         self.count[0][place[0][vp]] += 1
 
     def choose_nearest_iopad_vp(self, place: List[List[int]],
-                                vp: int, axis: int) -> (int, int, int):
+                                vp: int, axis: int) -> Tuple[int, int, int]:
         # Assume working on 0 or grid[axis]
         # p[0][vp] = 0 or grid[0]
         # cx * |p[0][vp] - p[0][vi]| + cy * |p[1][vp] - p[1][vi]| <= t
