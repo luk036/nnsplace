@@ -3,7 +3,7 @@ Netlist
 """
 
 import json
-from typing import Dict, List, Union, Any
+from typing import Any, Dict, List, Union
 
 import networkx as nx
 from networkx.readwrite import json_graph
@@ -13,14 +13,8 @@ from .lict import Lict
 
 
 class ThinGraph(nx.Graph):
-    """_summary_
+    """_summary_"""
 
-    Args:
-        nx (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
     all_edge_dict = {"weight": 1}
 
     def single_edge_dict(self):
@@ -36,14 +30,8 @@ class ThinGraph(nx.Graph):
 
 
 class SimpleGraph(nx.Graph):
-    """_summary_
+    """_summary_"""
 
-    Args:
-        nx (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
     all_edge_dict = {"weight": 1}
 
     def single_edge_dict(self):
@@ -67,6 +55,7 @@ class TinyDiGraph(nx.DiGraph):
     Returns:
         _type_: _description_
     """
+
     num_nodes = 0
 
     def cheat_node_dict(self):
@@ -106,14 +95,13 @@ class Netlist:
     Returns:
         _type_: _description_
     """
+
     num_pads = 0
     cost_model = 0
     module_weight: Union[Dict, Lict[Any]]
 
     def __init__(
-        self, graph: nx.Graph,
-        modules: Union[range, List],
-        nets: Union[range, List]
+        self, graph: nx.Graph, modules: Union[range, List], nets: Union[range, List]
     ):
         """[summary]
 
@@ -236,8 +224,7 @@ def read_json(filename):
     num_modules = gr.graph["num_modules"]
     num_nets = gr.graph["num_nets"]
     num_pads = gr.graph["num_pads"]
-    hgr = Netlist(gr, range(num_modules), range(
-        num_modules, num_modules + num_nets))
+    hgr = Netlist(gr, range(num_modules), range(num_modules, num_modules + num_nets))
     hgr.num_pads = num_pads
     hgr.module_weight = repeat_array(1, num_modules)
     hgr.net_weight = repeat_array(1, num_nets)
@@ -327,8 +314,7 @@ def create_drawf():
     modules = ["a0", "a1", "a2", "a3", "p1", "p2", "p3"]
     # module_map = {v: i_v for i_v, v in enumerate(modules)}
     # module_weight = [1, 3, 4, 2, 0, 0, 0]
-    module_weight = {"a0": 1, "a1": 3, "a2": 4,
-                     "a3": 2, "p1": 0, "p2": 0, "p3": 0}
+    module_weight = {"a0": 1, "a1": 3, "a2": 4, "a3": 2, "p1": 0, "p2": 0, "p3": 0}
 
     gr.add_edges_from(
         [
