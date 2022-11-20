@@ -14,7 +14,7 @@ class Lict(Mapping[int, V]):
         Mapping (_type_): _description_
     """
 
-    def __init__(self, lst: List[V]):
+    def __init__(self, lst: List[V]) -> None:
         """_summary_
 
         Args:
@@ -52,6 +52,14 @@ class Lict(Mapping[int, V]):
         return iter(self.rng)
 
     def __contains__(self, key: object) -> bool:
+        """_summary_
+
+        Args:
+            key (object): _description_
+
+        Returns:
+            bool: _description_
+        """
         return key in self.rng
 
     def __len__(self) -> int:
@@ -82,7 +90,7 @@ class Lict(Mapping[int, V]):
 class ShiftLict(Mapping[int, V]):
     """Lict with arbitrary range"""
 
-    def __init__(self, lst: List[V], start=0):
+    def __init__(self, lst: List[V], start=0) -> None:
         """_summary_
 
         Args:
@@ -92,27 +100,27 @@ class ShiftLict(Mapping[int, V]):
         self.rng = range(start, len(lst) + start)
         self.lst = lst
 
-    def set_start(self, start):
-        """[summary]
+    def set_start(self, start: int) -> None:
+        """_summary_
 
         Args:
-            start ([type]): [description]
+            start (int): _description_
         """
         self.start = start
         self.rng = range(start, len(self.lst) + start)
 
     def __getitem__(self, key: int) -> V:
-        """[summary]
+        """_summary_
 
         Args:
-            key ([type]): [description]
+            key (int): _description_
 
         Returns:
-            V: [description]
+            V: _description_
         """
         return self.lst.__getitem__(key - self.start)
 
-    def __setitem__(self, key: int, newValue: V):
+    def __setitem__(self, key: int, newValue: V) -> None:
         """[summary]
 
         Args:
@@ -125,11 +133,22 @@ class ShiftLict(Mapping[int, V]):
         """_summary_
 
         Returns:
-            Iterable: _description_
+            _type_: _description_
+
+        Yields:
+            Iterator[int]: _description_
         """
         return iter(self.rng)
 
     def __contains__(self, key: object) -> bool:
+        """_summary_
+
+        Args:
+            key (object): _description_
+
+        Returns:
+            bool: _description_
+        """
         return key in self.rng
 
     def __len__(self) -> int:

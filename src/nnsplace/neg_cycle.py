@@ -3,7 +3,7 @@
 Negative cycle detection for weighed graphs.
 1. Support Lazy evalution
 """
-from typing import Dict
+from typing import Dict, Generator
 # from .bpqueue import BPQueue
 # from .dllist import Dllink
 
@@ -12,7 +12,7 @@ class NegCycleFinder:
     pred: Dict = {}
     succ: Dict = {}
 
-    def __init__(self, gra):
+    def __init__(self, gra) -> None:
         """[summary]
 
         Arguments:
@@ -41,8 +41,11 @@ class NegCycleFinder:
     def find_cycle(self, point_to):
         """Find a cycle on the policy graph
 
+        Args:
+            point_to (_type_): _description_
+
         Yields:
-            node: a start node of the cycle
+            _type_: _description_
         """
         visited = {}
         for vtx_v in filter(lambda vtx_v: vtx_v not in visited, self.gra):
@@ -57,15 +60,16 @@ class NegCycleFinder:
                         yield vtx_u
                     break
 
-    def relax_pred(self, dist, get_weight, update_ok):
+    def relax_pred(self, dist, get_weight, update_ok) -> bool:
         """Perform a updating of dist and pred
 
-        Arguments:
-            dist (Union[List, Dict]): [description]
-            get_weight (Callable): [description]
+        Args:
+            dist (_type_): _description_
+            get_weight (_type_): _description_
+            update_ok (_type_): _description_
 
         Returns:
-            [type]: [description]
+            bool: _description_
         """
         changed = False
         # for vlink in self.bpq_pred:
@@ -82,15 +86,16 @@ class NegCycleFinder:
                 changed = True
         return changed
 
-    def relax_succ(self, dist, get_weight, update_ok):
-        """Perform a updating of dist and pred
+    def relax_succ(self, dist, get_weight, update_ok) -> bool:
+        """Perform a updating of dist and succ
 
-        Arguments:
-            dist (Union[List, Dict]): [description]
-            get_weight (Callable): [description]
+        Args:
+            dist (_type_): _description_
+            get_weight (_type_): _description_
+            update_ok (_type_): _description_
 
         Returns:
-            [type]: [description]
+            bool: _description_
         """
         changed = False
         # for vlink in self.bpq_succ:
@@ -107,7 +112,7 @@ class NegCycleFinder:
                 changed = True
         return changed
 
-    def find_neg_cycle_pred(self, dist, get_weight, update_ok):
+    def find_neg_cycle_pred(self, dist, get_weight, update_ok) -> Generator:
         """Perform a updating of dist and pred
 
         Arguments:
@@ -127,7 +132,7 @@ class NegCycleFinder:
                 found = True
                 yield self.cycle_list(vtx_v, self.pred)
 
-    def find_neg_cycle_succ(self, dist, get_weight, update_ok):
+    def find_neg_cycle_succ(self, dist, get_weight, update_ok) -> Generator:
         """Perform a updating of dist and succ
 
         Arguments:
@@ -148,7 +153,7 @@ class NegCycleFinder:
                 found = True
                 yield self.cycle_list(vtx_v, self.succ)
 
-    def cycle_list(self, handle, point_to):
+    def cycle_list(self, handle, point_to) -> list:
         """Cycle list started from handle
 
         Arguments:
@@ -167,7 +172,7 @@ class NegCycleFinder:
                 break
         return cycle
 
-    def is_negative(self, handle, dist, get_weight):
+    def is_negative(self, handle, dist, get_weight) -> bool:
         """Check if the cycle list is negative
 
         Arguments:

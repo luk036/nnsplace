@@ -11,7 +11,7 @@ def min_parametric(gra, ratio, cost, zero_cancel, dist,
     """minimum parametric problem:
 
         min  r
-        s.t. dist[v] - dist[v] <= cost(u, v, r)
+        s.t. dist[v] - dist[v] ≤ cost(u, v, r)
              for all (u, v) in G
 
     Arguments:

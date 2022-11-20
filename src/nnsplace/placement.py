@@ -48,7 +48,7 @@ class NnsPlacer:
     # TODO: handle optimization aware of I/O pad, DSP, SRAM
     # TODO: handle ASIC placement
 
-    def __init__(self, hgr: Netlist, cfg: NnsConfig):
+    def __init__(self, hgr: Netlist, cfg: NnsConfig) -> None:
         """_summary_
 
         Notes:
@@ -70,7 +70,7 @@ class NnsPlacer:
         self.gr = create_flow_graph(hgr)
         # self.num_cells = hgr.num_modules - hgr.num_pads
 
-    def init_placement(self, place: List[List[int]]):
+    def init_placement(self, place: List[List[int]]) -> None:
         """initial placement: just place one by one including I/O pad
 
         Args:
@@ -98,9 +98,27 @@ class NnsPlacer:
         assert self.count[1][1] <= self.limit[1]  # e.g. 49
 
     def cost(self, length, axis):
+        """_summary_
+
+        Args:
+            length (_type_): _description_
+            axis (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         return length * self.cfg.delta[axis]
 
     def cost_inv(self, cost, axis) -> Fraction:
+        """_summary_
+
+        Args:
+            cost (_type_): _description_
+            axis (_type_): _description_
+
+        Returns:
+            Fraction: _description_
+        """
         return cost / self.cfg.delta[axis]
 
     def calc_worst_wirelength(self, place: List[List[int]]) -> int:
