@@ -23,10 +23,8 @@ def test_placement():
     # assert placer.count[0][1] == 26
     hpwl_x = placer.calc_total_hull_length(place[0], 0)
     hpwl_y = placer.calc_total_hull_length(place[1], 1)
-    print("Total HPWL before = {} + {} = {}".format(
-        hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-    print("Worst wirelength before = {}".format(
-        placer.calc_worst_wirelength(place)))
+    print("Total HPWL before = {} + {} = {}".format(hpwl_x, hpwl_y, hpwl_x + hpwl_y))
+    print("Worst wirelength before = {}".format(placer.calc_worst_wirelength(place)))
 
     niter, worst = placer.run(place)
     # placer.apply_howard(place, 0)
@@ -38,13 +36,16 @@ def test_placement():
     # print("Number of iterations = {}".format(niter))
     hpwl_x = placer.calc_total_hull_length(place[0], 0)
     hpwl_y = placer.calc_total_hull_length(place[1], 1)
-    print("Total HPWL after = {} + {} = {}".format(
-        hpwl_x, hpwl_y, hpwl_x + hpwl_y))
+    print("Total HPWL after = {} + {} = {}".format(hpwl_x, hpwl_y, hpwl_x + hpwl_y))
     print("Worst wirelength after = {}".format(worst))
 
     for v in H:
-        print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
-              .format(place[0][v] * 40, place[1][v] * 40))
+        print(
+            '  <use x="{}" y="{}" href="#r1"/>'.format(
+                place[0][v] * 40, place[1][v] * 40
+            )
+        )
+
 
 #     for net in H.nets:
 #         adjs = iter(H.gr[net])

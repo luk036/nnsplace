@@ -1,10 +1,11 @@
-from nnsplace.netlist import read_json
-from nnsplace.placement import NnsPlacer
-from nnsplace.placement_cfg import NnsConfig
 # from physdes.interval import Interval
 # from physdes.point import Point
 # from physdes.recti import Rectangle
 from random import seed
+
+from nnsplace.netlist import read_json
+from nnsplace.placement import NnsPlacer
+from nnsplace.placement_cfg import NnsConfig
 
 # def test_drawf():
 #     H = create_drawf()
@@ -31,10 +32,8 @@ def test_placement():
     placer.io_assign(place)
     hpwl_x = placer.calc_total_hull_length(place[0], 0)
     hpwl_y = placer.calc_total_hull_length(place[1], 1)
-    print("Total HPWL before = {} + {} = {}".format(
-        hpwl_x, hpwl_y, hpwl_x + hpwl_y))
-    print("Worst wirelength before = {}".format(
-        placer.calc_worst_wirelength(place)))
+    print("Total HPWL before = {} + {} = {}".format(hpwl_x, hpwl_y, hpwl_x + hpwl_y))
+    print("Worst wirelength before = {}".format(placer.calc_worst_wirelength(place)))
 
     # placer.io_assign(place)
     # placer.choose_nearest_iopad(place)
@@ -43,19 +42,22 @@ def test_placement():
     print("Number of iterations = {}".format(niter))
     hpwl_x = placer.calc_total_hull_length(place[0], 0)
     hpwl_y = placer.calc_total_hull_length(place[1], 1)
-    print("Total HPWL after = {} + {} = {}".format(
-        hpwl_x, hpwl_y, hpwl_x + hpwl_y))
+    print("Total HPWL after = {} + {} = {}".format(hpwl_x, hpwl_y, hpwl_x + hpwl_y))
     print("Worst wirelength after = {}".format(worst))
 
     num_cells = n - H.num_pads
     for i in range(0, num_cells):
         v = H.modules[i]
-        print("<use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
-              .format(place[0][v] * 40, place[1][v] * 40))
+        print(
+            '<use x="{}" y="{}" href="#r1"/>'.format(place[0][v] * 40, place[1][v] * 40)
+        )
     for i in range(num_cells, n):
         vp = H.modules[i]
-        print("<use x=\"{}\" y=\"{}\" href=\"#io\"/>"
-              .format(place[0][vp] * 40, place[1][vp] * 40))
+        print(
+            '<use x="{}" y="{}" href="#io"/>'.format(
+                place[0][vp] * 40, place[1][vp] * 40
+            )
+        )
     # for i in range(num_cells, n):
     #     vp = H.modules[i]
     #     # nbrs = list(placer.gr.neighbors(vp))
@@ -83,4 +85,4 @@ def test_placement():
     #     print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" \
     #         height=\"{}\"/>".format(x, y, width, height))
 
-    assert(place[0][1] < 0)
+    assert place[0][1] < 0

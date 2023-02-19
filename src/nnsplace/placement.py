@@ -1,15 +1,16 @@
+from fractions import Fraction
+from random import shuffle
 from typing import List, Tuple
-# from math import floor
 
 import networkx as nx
-from random import shuffle
-from fractions import Fraction
 from networkx.algorithms import bipartite
 from physdes.interval import Interval
 
 from .min_parametric import min_parametric
 from .netlist import Netlist, TinyDiGraph
 from .placement_cfg import NnsConfig
+
+# from math import floor
 
 
 def create_flow_graph(hgr: Netlist) -> TinyDiGraph:
@@ -38,7 +39,7 @@ def create_flow_graph(hgr: Netlist) -> TinyDiGraph:
             # assume return an integer
             for v2 in hgr.gr[net]:
                 if hgr.module_weight[v2] == 0:  # whatever check io pad
-                    continue   # ignore pad to pad connections
+                    continue  # ignore pad to pad connections
                 gr.add_edge(v1, v2)
                 gr.add_edge(v2, v1)
     return gr
@@ -63,8 +64,10 @@ class NnsPlacer:
         """
         self.hgr = hgr
         self.cfg = cfg
-        self.count = [[0 for _ in range(cfg.grid[0]+2)],  # plus 2 I/O
-                      [0 for _ in range(cfg.grid[1]+2)]]  # two lists
+        self.count = [
+            [0 for _ in range(cfg.grid[0] + 2)],  # plus 2 I/O
+            [0 for _ in range(cfg.grid[1] + 2)],
+        ]  # two lists
         self.limit = [cfg.grid[1], cfg.grid[0] - 1]
         # assume col 27 is preserved for DSP or SRAM
         self.gr = create_flow_graph(hgr)
@@ -135,8 +138,9 @@ class NnsPlacer:
             for v in self.gr.neighbors(u):
                 if u > v:  # only need to calculate one of the two edges
                     continue
-                gruv = self.cost(abs(place[0][v] - place[0][u]), 0) \
-                    + self.cost(abs(place[1][v] - place[1][u]), 1)
+                gruv = self.cost(abs(place[0][v] - place[0][u]), 0) + self.cost(
+                    abs(place[1][v] - place[1][u]), 1
+                )
                 if worst_wire < gruv:
                     worst_wire = gruv
         return worst_wire
@@ -152,8 +156,9 @@ class NnsPlacer:
         """
         worst_wire = 0
         for w in self.gr.neighbors(v):
-            gruv = self.cost(abs(place[0][v] - place[0][w]), 0) \
-                + self.cost(abs(place[1][v] - place[1][w]), 1)
+            gruv = self.cost(abs(place[0][v] - place[0][w]), 0) + self.cost(
+                abs(place[1][v] - place[1][w]), 1
+            )
             if worst_wire < gruv:
                 worst_wire = gruv
         return worst_wire
@@ -232,8 +237,9 @@ class NnsPlacer:
         Returns:
             int: _description_
         """
-        return self.calc_total_hull_length(place[0], 0) \
-            + self.calc_total_hull_length(place[1], 1)
+        return self.calc_total_hull_length(place[0], 0) + self.calc_total_hull_length(
+            place[1], 1
+        )
 
     def apply_howard(self, place: List[List[int]], axis: int):
         """_summary_
@@ -279,7 +285,7 @@ class NnsPlacer:
                 [type]: [description]
             """
             u, v = e
-            temp = self.cost_inv(beta - self.gr[u][v]['cost'], axis)
+            temp = self.cost_inv(beta - self.gr[u][v]["cost"], axis)
             return temp.numerator // temp.denominator
 
         def zero_cancel(C: List[Tuple[int, int]]) -> Fraction:
@@ -293,7 +299,7 @@ class NnsPlacer:
             Returns:
                 Fraction: cycle ratio
             """
-            total_cost = sum(self.gr[u][v]['cost'] for (u, v) in C)
+            total_cost = sum(self.gr[u][v]["cost"] for (u, v) in C)
             return Fraction(total_cost, len(C))
 
         # TODO: should provide an API for calling the (monotone) wire-model
@@ -303,16 +309,23 @@ class NnsPlacer:
         for u in self.gr:
             for v in self.gr.neighbors(u):
                 gruv = abs(place[oppo][v] - place[oppo][u])
-                self.gr[u][v]['cost'] = self.cost(gruv, oppo)
+                self.gr[u][v]["cost"] = self.cost(gruv, oppo)
                 if worst < gruv:
                     worst = gruv
         # initial worst/2 or 0 or others?
-        return min_parametric(self.gr, Fraction(worst), calc_weight,
-                              zero_cancel, place[axis], update_ok)
+        return min_parametric(
+            self.gr, Fraction(worst), calc_weight, zero_cancel, place[axis], update_ok
+        )
 
-    def add_bipartite_edge(self, lst: List[int], B: nx.Graph,
-                           place: List[List[int]], i: int,
-                           grid: int, axis: int):
+    def add_bipartite_edge(
+        self,
+        lst: List[int],
+        B: nx.Graph,
+        place: List[List[int]],
+        i: int,
+        grid: int,
+        axis: int,
+    ):
         """_summary_
 
         Args:
@@ -532,8 +545,9 @@ class NnsPlacer:
     #         self.count[1][place[1][vp]] += 1
     #         self.count[0][place[0][vp]] += 1
 
-    def choose_nearest_iopad_vp(self, place: List[List[int]],
-                                vp: int, axis: int) -> Tuple[int, int, int]:
+    def choose_nearest_iopad_vp(
+        self, place: List[List[int]], vp: int, axis: int
+    ) -> Tuple[int, int, int]:
         # Assume working on 0 or grid[axis]
         # p[0][vp] = 0 or grid[0]
         # cx * |p[0][vp] - p[0][vi]| + cy * |p[1][vp] - p[1][vi]| <= t

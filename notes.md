@@ -11,7 +11,7 @@
 
 # Outputs:
 
-- position of cells and I/O's 
+- position of cells and I/O's
 
 # Objective:
 
@@ -30,7 +30,7 @@
   from networkx.algorithms import bipartite
   matches = bipartite.minimum_weight_full_matching(B)
 
-# TODO: 
+# TODO:
 
 - More experiments
 - seed API (default the same seed)
@@ -40,10 +40,6 @@
 - Fine-tune the magic number
 - ASIC placement
 - C++ porting
-
-
-
-
 
 ## View Profile and Call Tree
 

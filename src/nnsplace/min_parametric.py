@@ -6,8 +6,7 @@ Generalized Howard algorithm Solve minimum parametric network problems
 from .neg_cycle import NegCycleFinder
 
 
-def min_parametric(gra, ratio, cost, zero_cancel, dist,
-                   update_ok, pick_one_only=False):
+def min_parametric(gra, ratio, cost, zero_cancel, dist, update_ok, pick_one_only=False):
     """minimum parametric problem:
 
         min  r
@@ -26,6 +25,7 @@ def min_parametric(gra, ratio, cost, zero_cancel, dist,
         C: Most critial cycle
         dist: optimal sol'n
     """
+
     def get_weight(edge):
         return cost(ratio, edge)
 
@@ -55,6 +55,7 @@ def min_parametric(gra, ratio, cost, zero_cancel, dist,
         ratio = r_max
         reverse = not reverse
     return ratio, cycle
+
 
 # if __name__ == "__main__":
 #     from __future__ import print_function
