@@ -5,33 +5,33 @@ import networkx as nx
 from .min_parametric import min_parametric
 
 
-def set_default(G: nx.DiGraph, weight, value):
+def set_default(gra: nx.DiGraph, weight, value):
     """[summary]
 
     Arguments:
-        G (nx.DiGraph): directed graph
+        gra (nx.DiGraph): directed graph
         weight ([type]): [description]
         value ([type]): [description]
     """
-    for u, v in G.edges:
-        if G[u][v].get(weight, None) is None:
-            G[u][v][weight] = value
+    for u, v in gra.edges:
+        if gra[u][v].get(weight, None) is None:
+            gra[u][v][weight] = value
 
 
-def max_cycle_ratio(G: nx.DiGraph, dist, update_ok, r0, care_io=False):
+def max_cycle_ratio(gra: nx.DiGraph, dist, update_ok, r0, care_io=False):
     """[summary]
 
     Arguments:
-        G ([type]): [description]
+        gra ([type]): [description]
 
     Returns:
         [type]: [description]
     """
     # mu = 'cost'
     # sigma = 'time'
-    # set_default(G, mu, 1)
-    # set_default(G, sigma, 1)
-    # T = type(dist[next(iter(G))])
+    # set_default(gra, mu, 1)
+    # set_default(gra, sigma, 1)
+    # T = type(dist[next(iter(gra))])
 
     def calc_weight(r, e):
         """[summary]
@@ -44,7 +44,7 @@ def max_cycle_ratio(G: nx.DiGraph, dist, update_ok, r0, care_io=False):
             [type]: [description]
         """
         u, v = e
-        return floor(r * G[u][v]['time'] - G[u][v]['cost'])
+        return floor(r * gra[u][v]['time'] - gra[u][v]['cost'])
 
     def calc_ratio(C):
         """Calculate the ratio of the cycle
@@ -55,11 +55,11 @@ def max_cycle_ratio(G: nx.DiGraph, dist, update_ok, r0, care_io=False):
         Returns:
             cycle ratio
         """
-        total_cost = sum(G[u][v]['cost'] for (u, v) in C)
-        total_time = sum(G[u][v]['time'] for (u, v) in C)
+        total_cost = sum(gra[u][v]['cost'] for (u, v) in C)
+        total_time = sum(gra[u][v]['time'] for (u, v) in C)
         return floor(total_cost / total_time)
 
-    # C0 = nx.find_cycle(G)
+    # C0 = nx.find_cycle(gra)
     # r0 = calc_ratio(C0)
-    return min_parametric(G, r0, calc_weight, calc_ratio, dist,
+    return min_parametric(gra, r0, calc_weight, calc_ratio, dist,
                           update_ok, io=care_io)

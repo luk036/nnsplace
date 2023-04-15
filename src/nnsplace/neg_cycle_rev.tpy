@@ -9,13 +9,13 @@ from typing import Dict
 class negCycleFinderRev:
     succ: Dict = {}
 
-    def __init__(self, G):
+    def __init__(self, gra):
         """[summary]
 
         Arguments:
-            G: Graph
+            gra: Graph
         """
-        self.G = G
+        self.gra = gra
 
     def find_cycle(self):
         """Find a cycle on the policy graph
@@ -24,7 +24,7 @@ class negCycleFinderRev:
             node: a start node of the cycle
         """
         visited = {}
-        for v in filter(lambda v: v not in visited, self.G):
+        for v in filter(lambda v: v not in visited, self.gra):
             u = v
             while True:
                 visited[u] = v
@@ -47,7 +47,7 @@ class negCycleFinderRev:
             [type]: [description]
         """
         changed = False
-        for e in self.G.edges():
+        for e in self.gra.edges():
             wt = get_weight(e)
             u, v = e
             d = (dist[u] - wt) if wt < 0 else dist[u]
@@ -68,7 +68,7 @@ class negCycleFinderRev:
         Yields:
             list of edges: cycle list
         """
-        # self.dist = list(0 for _ in self.G)
+        # self.dist = list(0 for _ in self.gra)
         self.succ = {}
         found = False
         while not found and self.relax(dist, get_weight, update_ok):

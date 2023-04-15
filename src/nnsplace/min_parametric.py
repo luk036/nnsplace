@@ -11,7 +11,7 @@ def min_parametric(gra, ratio, cost, zero_cancel, dist, update_ok, pick_one_only
 
         min  r
         s.t. dist[v] - dist[v] ≤ cost(u, v, r)
-             for all (u, v) in G
+             for all (u, v) in gra
 
     Arguments:
         gra ([type]): directed graph
@@ -64,19 +64,19 @@ def min_parametric(gra, ratio, cost, zero_cancel, dist, update_ok, pick_one_only
 #     from neg_cycle import *
 #     from networkx.utils import generate_unique_node
 
-#     G = create_test_case1()
-#     G[1][2]['cost'] = 5
-#     r, c, dist = max_cycle_ratio(G)
+#     gra = create_test_case1()
+#     gra[1][2]['cost'] = 5
+#     r, c, dist = max_cycle_ratio(gra)
 #     assert c != None
 #     print(r)
 #     print(c)
 #     print(dist.items())
 
-#     G = nx.cycle_graph(5, create_using=nx.DiGraph())
-#     G[1][2]['cost'] = -6.
+#     gra = nx.cycle_graph(5, create_using=nx.DiGraph())
+#     gra[1][2]['cost'] = -6.
 #     newnode = generate_unique_node()
-#     G.add_edges_from([(newnode, n) for n in G])
-#     r, c, dist = max_cycle_ratio(G)
+#     gra.add_edges_from([(newnode, n) for n in gra])
+#     r, c, dist = max_cycle_ratio(gra)
 #     assert c != None
 #     print(r)
 #     print(c)

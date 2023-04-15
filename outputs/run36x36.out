@@ -19,7 +19,7 @@ ________________________________ test_placement ________________________________
         # count_3 = 0
         # count_rest = 0
         # for net in H.nets:
-        #     deg = H.G.degree(net)
+        #     deg = H.gra.degree(net)
         #     if deg == 2:
         #         count_2 += 1
         #     elif deg == 3:
