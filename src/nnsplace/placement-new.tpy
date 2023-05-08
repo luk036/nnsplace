@@ -519,19 +519,19 @@ class NnsPlacer:
     #     self.choose_nearest_iopad(place)
     #     self.legalize_iopad(place)
 
-    def optimize(self, place: List[List[int]], max_iter: int, care_io=False):
+    def optimize(self, place: List[List[int]], max_iters: int, care_io=False):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
-            max_iter (int): _description_
+            max_iters (int): _description_
 
         Returns:
             _type_: _description_
         """
         worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
-        for niter in range(1, max_iter):
+        for niter in range(1, max_iters):
             r1, C1 = self.apply_howard(place, 0, care_io=care_io)
             self.legalize_modules(place, 1, care_io=care_io)
             r2, C2 = self.apply_howard(place, 1, care_io=care_io)
@@ -545,33 +545,33 @@ class NnsPlacer:
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
         place = place0
-        return max_iter, worst0
+        return max_iters, worst0
 
-    def run(self, place: List[List[int]], max_iter=2000):
+    def run(self, place: List[List[int]], max_iters=2000):
         """_summary_
 
         io_assign -> placementn
 
         Args:
             place (List[List[int]]): _description_
-            max_iter (int, optional): _description_. Defaults to 2000.
+            max_iters (int, optional): _description_. Defaults to 2000.
 
         Returns:
             _type_: _description_
         """
-        # niter, worst = self.optimize(place, max_iter, care_io=False)
+        # niter, worst = self.optimize(place, max_iters, care_io=False)
         # self.init_placement(place)
         self.io_assign(place)
-        _, worst0 = self.optimize(place, max_iter, care_io=True)
+        _, worst0 = self.optimize(place, max_iters, care_io=True)
         # worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
-        for niter in range(1, max_iter):
+        for niter in range(1, max_iters):
             self.io_assign(place)
-            _, worst1 = self.optimize(place, max_iter, care_io=True)
+            _, worst1 = self.optimize(place, max_iters, care_io=True)
             if worst1 > worst0:
                 place = place0
                 return niter, worst0
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
         place = place0
-        return max_iter, worst0
+        return max_iters, worst0

@@ -774,12 +774,12 @@ class NnsPlacer:
     #     self.choose_nearest_iopad(place)
     #     self.legalize_iopad(place)
 
-    def optimize(self, place: List[List[int]], max_iter: int):
+    def optimize(self, place: List[List[int]], max_iters: int):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
-            max_iter (int): _description_
+            max_iters (int): _description_
 
         Returns:
             _type_: _description_
@@ -787,7 +787,7 @@ class NnsPlacer:
         worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
         count0 = [self.count[0].copy(), self.count[1].copy()]
-        for niter in range(max_iter):
+        for niter in range(max_iters):
             r1, C1 = self.apply_howard(place, 0)
             self.legalize_modules(place, 1)
             self.choose_nearest_iopad(place)
@@ -810,28 +810,28 @@ class NnsPlacer:
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
             count0 = [self.count[0].copy(), self.count[1].copy()]
-        return max_iter, worst1
+        return max_iters, worst1
 
-    def run(self, place: List[List[int]], max_iter=2000):
+    def run(self, place: List[List[int]], max_iters=2000):
         """_summary_
 
         Args:
             place (List[List[int]]): _description_
-            max_iter (int, optional): _description_. Defaults to 2000.
+            max_iters (int, optional): _description_. Defaults to 2000.
 
         Returns:
             _type_: _description_
         """
-        # niter, worst = self.optimize(place, max_iter)
+        # niter, worst = self.optimize(place, max_iters)
         # self.init_placement(place)
-        # _, worst0 = self.optimize(place, max_iter)
+        # _, worst0 = self.optimize(place, max_iters)
         # self.io_assign(place)
         worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
         count0 = [self.count[0].copy(), self.count[1].copy()]
         print(f"init: {worst0}")
-        for niter in range(max_iter):
-            _, _ = self.optimize(place, max_iter)
+        for niter in range(max_iters):
+            _, _ = self.optimize(place, max_iters)
             self.io_assign(place)
             worst1 = self.calc_worst_wirelength(place)
             print(f"run {worst1}")
@@ -846,4 +846,4 @@ class NnsPlacer:
             worst0 = worst1
             place0 = [place[0].copy(), place[1].copy()]
             count0 = [self.count[0].copy(), self.count[1].copy()]
-        return max_iter, worst0
+        return max_iters, worst0
