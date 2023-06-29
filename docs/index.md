@@ -2,7 +2,7 @@
 
 Circuit Partitioning Python Code
 
-## Note
+## 👉 Note
 
 > This is the main page of your project's [Sphinx] documentation. It is
 > formatted in [Markdown]. Add additional pages by creating md-files in
@@ -12,7 +12,7 @@ Circuit Partitioning Python Code
 > Please check [Sphinx], [recommonmark] and [autostructify] for more information
 > about how to document your project and how to configure your preferences.
 
-## Contents
+## 🗺️ Overview
 
 - [Overview](readme)
 - [License](license)
