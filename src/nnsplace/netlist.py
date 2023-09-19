@@ -209,7 +209,7 @@ class Netlist:
         return 1
 
     def __iter__(self):
-        """Iterate over the modules. Use: 'for v in hgr'.
+        """Iterate over the modules. Use: 'for v in hyprgraph'.
 
         Returns:
             iterator: An iterator over all modules in the Netlist.
@@ -224,13 +224,13 @@ def read_json(filename):
     num_modules = gr.graph["num_modules"]
     num_nets = gr.graph["num_nets"]
     num_pads = gr.graph["num_pads"]
-    hgr = Netlist(gr, range(num_modules), range(num_modules, num_modules + num_nets))
-    hgr.num_pads = num_pads
-    hgr.module_weight = repeat_array(1, num_modules)
-    hgr.net_weight = repeat_array(1, num_nets)
-    # hgr.net_weight = shift_array(1 for _ in range(num_nets))
-    # hgr.net_weight.set_start(num_modules)
-    return hgr
+    hyprgraph = Netlist(gr, range(num_modules), range(num_modules, num_modules + num_nets))
+    hyprgraph.num_pads = num_pads
+    hyprgraph.module_weight = repeat_array(1, num_modules)
+    hyprgraph.net_weight = repeat_array(1, num_nets)
+    # hyprgraph.net_weight = shift_array(1 for _ in range(num_nets))
+    # hyprgraph.net_weight.set_start(num_modules)
+    return hyprgraph
 
 
 def create_inverter():
@@ -251,11 +251,11 @@ def create_inverter():
     gr.graph["num_modules"] = 3
     gr.graph["num_nets"] = 2
     gr.graph["num_pads"] = 2
-    hgr = Netlist(gr, modules, nets)
-    hgr.module_weight = module_weight
-    hgr.net_weight = repeat_array(1, len(nets))
-    hgr.num_pads = 2
-    return hgr
+    hyprgraph = Netlist(gr, modules, nets)
+    hyprgraph.module_weight = module_weight
+    hyprgraph.net_weight = repeat_array(1, len(nets))
+    hyprgraph.num_pads = 2
+    return hyprgraph
 
 
 def create_inverter2():
@@ -276,11 +276,11 @@ def create_inverter2():
     gr.graph["num_modules"] = 3
     gr.graph["num_nets"] = 2
     gr.graph["num_pads"] = 2
-    hgr = Netlist(gr, modules, nets)
-    hgr.module_weight = module_weight
-    hgr.net_weight = repeat_array(1, len(nets))
-    hgr.num_pads = 2
-    return hgr
+    hyprgraph = Netlist(gr, modules, nets)
+    hyprgraph.module_weight = module_weight
+    hyprgraph.net_weight = repeat_array(1, len(nets))
+    hyprgraph.num_pads = 2
+    return hyprgraph
 
 
 def create_drawf():
@@ -337,11 +337,11 @@ def create_drawf():
     gr.graph["num_modules"] = 7
     gr.graph["num_nets"] = 6
     gr.graph["num_pads"] = 3
-    hgr = Netlist(gr, modules, nets)
-    hgr.module_weight = module_weight
-    hgr.net_weight = repeat_array(1, len(nets))
-    hgr.num_pads = 3
-    return hgr
+    hyprgraph = Netlist(gr, modules, nets)
+    hyprgraph.module_weight = module_weight
+    hyprgraph.net_weight = repeat_array(1, len(nets))
+    hyprgraph.num_pads = 3
+    return hyprgraph
 
 
 def create_test_netlist():
@@ -368,7 +368,7 @@ def create_test_netlist():
     # net_weight = {net: 1 for net in nets}
     net_weight = repeat_array(1, len(nets))
 
-    hgr = Netlist(gr, modules, nets)
-    hgr.module_weight = module_weight
-    hgr.net_weight = net_weight
-    return hgr
+    hyprgraph = Netlist(gr, modules, nets)
+    hyprgraph.module_weight = module_weight
+    hyprgraph.net_weight = net_weight
+    return hyprgraph

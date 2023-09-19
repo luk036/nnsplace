@@ -54,12 +54,12 @@ def test_json2():
 
 
 def test_readjson():
-    hgr = read_json("testcases/p1.json")
+    hyprgraph = read_json("testcases/p1.json")
     count_2 = 0
     count_3 = 0
     count_rest = 0
-    for net in hgr.nets:
-        deg = hgr.gr.degree(net)
+    for net in hyprgraph.nets:
+        deg = hyprgraph.gr.degree(net)
         if deg == 2:
             count_2 += 1
         elif deg == 3:

@@ -14,23 +14,23 @@ from .placement_cfg import NnsConfig
 from .lict import TinyDiGraph
 
 
-def create_flow_graph(hgr: Netlist):
+def create_flow_graph(hyprgraph: Netlist):
     """Create the flow graph
 
     TODO: Utilize pin directions of a net (in-to-out)
 
     Args:
-        hgr (Netlist): _description_
+        hyprgraph (Netlist): _description_
 
     Returns:
         _type_: _description_
     """
-    gr = TinyDiGraph(num_modules=hgr.num_modules, num_pads=hgr.num_pads)
-    gr.init_nodes(hgr.num_modules)
-    # gr.add_nodes_from(v for v in hgr)
-    for net in hgr.nets:
-        for v1 in hgr.gr[net]:  # assume return an integer
-            for v2 in hgr.gr[net]:
+    gr = TinyDiGraph(num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads)
+    gr.init_nodes(hyprgraph.num_modules)
+    # gr.add_nodes_from(v for v in hyprgraph)
+    for net in hyprgraph.nets:
+        for v1 in hyprgraph.gr[net]:  # assume return an integer
+            for v2 in hyprgraph.gr[net]:
                 if v1 == v2:
                     continue
                 gr.add_edge(v1, v2)
@@ -42,19 +42,19 @@ class NnsPlacer:
     # TODO: handle optimization aware of I/O pad, DSP, SRAM
     # TODO: handle ASIC placement
 
-    def __init__(self, hgr: Netlist, cfg: NnsConfig):
+    def __init__(self, hyprgraph: Netlist, cfg: NnsConfig):
         """_summary_
 
         Args:
-            hgr (Netlist): _description_
+            hyprgraph (Netlist): _description_
             cfg (NnsConfig): _description_
         """
-        self.hgr = hgr
+        self.hyprgraph = hyprgraph
         self.cfg = cfg
         self.count = ([0 for _ in range(cfg.grid[0]+2)],
                       [0 for _ in range(cfg.grid[1]+2)])  # two lists
         # plus 2 I/O
-        self.gr = create_flow_graph(hgr)
+        self.gr = create_flow_graph(hyprgraph)
         self.bucket: List[List] = [[], []]
         self.bucket[0] = [list() for _ in range(self.cfg.grid[1] + 2)]
         self.bucket[1] = [list() for _ in range(self.cfg.grid[0] + 2)]
@@ -67,7 +67,7 @@ class NnsPlacer:
         """
         col = 1
         row = 1
-        lst = [v for v in self.hgr]
+        lst = [v for v in self.hyprgraph]
         shuffle(lst)
         for v in lst:
             place[0][v] = col
@@ -147,8 +147,8 @@ class NnsPlacer:
     #     """
     #     total_hpwl_x = 0
     #     total_hpwl_y = 0
-    #     for net in self.hgr.nets:
-    #         adjs = iter(self.hgr.gr[net])
+    #     for net in self.hyprgraph.nets:
+    #         adjs = iter(self.hyprgraph.gr[net])
     #         v = next(adjs)
     #         p = Point(place[0][v], place[1][v])
     #         bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
@@ -171,8 +171,8 @@ class NnsPlacer:
             int: _description_
         """
         total_hull_length = 0
-        for net in self.hgr.nets:
-            adjs = iter(self.hgr.gr[net])
+        for net in self.hyprgraph.nets:
+            adjs = iter(self.hyprgraph.gr[net])
             v = next(adjs)
             p = dist[v]
             hull = Interval(p, p)
@@ -256,7 +256,7 @@ class NnsPlacer:
         for v in lst:
             # construct bipartite graph
             p = place[axis][v]
-            q = p + self.hgr.number_of_modules()  # avoid same name
+            q = p + self.hyprgraph.number_of_modules()  # avoid same name
             weight0 = self.calc_worst_wirelength_v(v, place)
             if p - i > 0:
                 place[axis][v] -= i  # temporily set the position
@@ -293,7 +293,7 @@ class NnsPlacer:
 
         for v in lst:
             # construct bipartite graph
-            q = dist[v] + self.hgr.number_of_modules()  # avoid same name
+            q = dist[v] + self.hyprgraph.number_of_modules()  # avoid same name
             B.add_node(q, bipartite=1)
             B.add_edge(v, q, weight=0)
         for i in range(1, neighborhood):
@@ -317,7 +317,7 @@ class NnsPlacer:
         # reassign the results
         if io:
             for v in lst:
-                q = matches[v] - self.hgr.number_of_modules()
+                q = matches[v] - self.hyprgraph.number_of_modules()
                 if dist[v] == q:
                     continue
                 # Update position and self.count
@@ -326,7 +326,7 @@ class NnsPlacer:
                 dist[v] = q
         else:
             for v in lst:
-                q = matches[v] - self.hgr.number_of_modules()
+                q = matches[v] - self.hyprgraph.number_of_modules()
                 if dist[v] == q:
                     continue
                 # Update position and self.count
@@ -348,11 +348,11 @@ class NnsPlacer:
             lst.clear()
         dist = place[axis ^ 1]
         if care_io:
-            for v in self.hgr:
-                if v < self.hgr.num_modules - self.hgr.num_pads:
+            for v in self.hyprgraph:
+                if v < self.hyprgraph.num_modules - self.hyprgraph.num_pads:
                     bucket[dist[v]].append(v)
         else:
-            for v in self.hgr:
+            for v in self.hyprgraph:
                 bucket[dist[v]].append(v)
         for lst in filter(lambda lst: lst, bucket):
             self.legalize(lst, place, axis)
@@ -376,9 +376,9 @@ class NnsPlacer:
         which_y = None
         len_x = grid_x
         len_y = grid_y
-        n = self.hgr.number_of_modules()
-        for i in range(n - self.hgr.num_pads, n):
-            vp = self.hgr.modules[i]
+        n = self.hyprgraph.number_of_modules()
+        for i in range(n - self.hyprgraph.num_pads, n):
+            vp = self.hyprgraph.modules[i]
 
             # Take the average of all neighbors
             # place0 = 0
@@ -434,7 +434,7 @@ class NnsPlacer:
     #         place (List[List[int]]): _description_
     #     """
     #     # choose the nearest I/O
-    #     n = self.hgr.number_of_modules()
+    #     n = self.hyprgraph.number_of_modules()
     #     grid_x = self.cfg.grid[0]
     #     half_x = grid_x // 2
     #     grid_y = self.cfg.grid[1]
@@ -443,8 +443,8 @@ class NnsPlacer:
     #     which_y = None
     #     len_x = grid_x
     #     len_y = grid_y
-    #     for i in range(n - self.hgr.num_pads, n):
-    #         v = self.hgr.modules[i]
+    #     for i in range(n - self.hyprgraph.num_pads, n):
+    #         v = self.hyprgraph.modules[i]
     #         if place[0][v] <= half_x and self.count[0][0] < grid_y:
     #             which_x = 0  # left
     #             len_x = place[0][v]
@@ -481,9 +481,9 @@ class NnsPlacer:
             place (List[List[int]]): _description_
         """
         bucket: List[List] = [list() for _ in range(4)]
-        n = self.hgr.number_of_modules()
-        for i in range(n - self.hgr.num_pads, n):
-            v = self.hgr.modules[i]
+        n = self.hyprgraph.number_of_modules()
+        for i in range(n - self.hyprgraph.num_pads, n):
+            v = self.hyprgraph.modules[i]
             if place[0][v] == 0:
                 bucket[0].append(v)
             elif place[0][v] == self.cfg.grid[0] + 1:
