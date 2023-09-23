@@ -11,9 +11,6 @@ from .netlist import Netlist, TinyDiGraph
 from .placement_cfg import NnsConfig
 
 
-
-
-
 def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
     """
     The function `create_flow_graph` takes a netlist and creates a flow graph by adding edges between
@@ -49,11 +46,14 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
 
 
 class NnsPlacer:
+    """No non-sense placer"""
     # TODO: handle optimization aware of I/O pad, DSP, SRAM
     # TODO: handle ASIC placement
 
     def __init__(self, hyprgraph: Netlist, cfg: NnsConfig) -> None:
-        """_summary_
+        """
+        The function initializes an object with a hypergraph, configuration, count, limit, and flow graph
+        attributes.
 
         Notes:
             0 - x-axis
@@ -61,9 +61,12 @@ class NnsPlacer:
             count[0] - how many cells on each row, including 2 I/O rows
             count[1] - how many cells on each column, including 2 I/O columns
 
-        Args:
-            hyprgraph (Netlist): _description_
-            cfg (NnsConfig): _description_
+        :param hyprgraph: The `hyprgraph` parameter is a Netlist object, which represents the hypergraph of
+        the circuit design. It contains information about the modules and connections in the circuit
+        :type hyprgraph: Netlist
+        :param cfg: The `cfg` parameter is an instance of the `NnsConfig` class. It contains configuration
+        settings for the neural network system
+        :type cfg: NnsConfig
         """
         self.hyprgraph = hyprgraph
         self.cfg = cfg
@@ -77,10 +80,15 @@ class NnsPlacer:
         # self.num_cells = hyprgraph.num_modules - hyprgraph.num_pads
 
     def init_placement(self, place: List[List[int]]) -> None:
-        """initial placement: just place one by one including I/O pad
-
-        Args:
-            place (List[List[int]): placement sol'n
+        """
+        The `init_placement` function initializes the placement of nodes in a hypergraph by assigning them
+        to columns and rows in a grid.
+        
+        :param place: The "place" parameter is a 2D list representing the placement solution. It has two
+        rows and each column represents the placement of a vertex in the hypergraph. The first row
+        represents the column index of the placement and the second row represents the row index of the
+        placement
+        :type place: List[List[int]]
         """
         col = 1
         row = 1
@@ -103,38 +111,43 @@ class NnsPlacer:
         assert self.count[0][1] <= self.limit[0]  # e.g. 50
         assert self.count[1][1] <= self.limit[1]  # e.g. 49
 
-    def cost(self, length, axis):
-        """_summary_
-
-        Args:
-            length (_type_): _description_
-            axis (_type_): _description_
-
-        Returns:
-            _type_: _description_
+    def cost(self, length: int, axis: int) -> int:
+        """
+        The `cost` function calculates the cost based on the length and axis provided.
+        
+        :param length: The `length` parameter represents the length of something, such as the length of a
+        line or the number of elements in a list
+        :type length: int
+        :param axis: The `axis` parameter represents the axis along which the cost is calculated. It is an
+        integer value that specifies the axis
+        :type axis: int
+        :return: an integer value.
         """
         return length * self.cfg.delta[axis]
 
-    def cost_inv(self, cost, axis) -> Fraction:
-        """_summary_
-
-        Args:
-            cost (_type_): _description_
-            axis (_type_): _description_
-
-        Returns:
-            Fraction: _description_
+    def cost_inv(self, cost: int, axis: int) -> Fraction:
         """
-        return cost / self.cfg.delta[axis]
+        The `cost_inv` function calculates the inverse of a cost value based on a given axis.
+        
+        :param cost: The `cost` parameter represents the cost value that you want to convert into a
+        `Fraction` object
+        :type cost: int
+        :param axis: The `axis` parameter represents the axis along which the cost is being calculated. It
+        is of type `int`
+        :type axis: int
+        :return: a `Fraction` object.
+        """
+        return Fraction(cost, self.cfg.delta[axis])
 
     def calc_worst_wirelength(self, place: List[List[int]]) -> int:
-        """Calculate the worst wirelength
-
-        Args:
-            place (List[List[int]]): _description_
-
-        Returns:
-            _type_: _description_
+        """
+        The `calc_worst_wirelength` function calculates the worst wirelength based on the given placement of
+        nodes.
+        
+        :param place: The `place` parameter is a list of lists representing the coordinates of the nodes in
+        a graph. Each inner list contains two integers representing the x and y coordinates of a node
+        :type place: List[List[int]]
+        :return: an integer, which represents the worst wirelength calculated.
         """
         worst_wire = 0
         for u in self.gr:
@@ -149,13 +162,15 @@ class NnsPlacer:
         return worst_wire
 
     def calc_worst_wirelength_v(self, v, place: List[List[int]]) -> int:
-        """Calculate the worst wirelength w.r.t Module v
-
-        Args:
-            place (List[List[int]]): _description_
-
-        Returns:
-            _type_: _description_
+        """
+        The function `calc_worst_wirelength_v` calculates the worst wirelength with respect to a given
+        module `v` based on its placement coordinates.
+        
+        :param v: The parameter `v` represents a module in a circuit design
+        :param place: The `place` parameter is a list of lists representing the placement of modules in a
+        circuit. Each inner list contains the x and y coordinates of a module's position
+        :type place: List[List[int]]
+        :return: the worst wirelength with respect to Module v.
         """
         worst_wire = 0
         for w in self.gr.neighbors(v):
@@ -210,14 +225,18 @@ class NnsPlacer:
     #         total_hpwl_y * self.cfg.delta[1]
 
     def calc_total_hull_length(self, dist: List[int], axis: int) -> int:
-        """Calculate the total hull w.r.t one axis
-
-        Args:
-            dist (List[int]): _description_
-            axis (int): _description_
-
-        Returns:
-            int: _description_
+        """
+        The function calculates the total length of the convex hull with respect to a given axis.
+        
+        :param dist: The `dist` parameter is a list of integers representing the distances between nodes in
+        a hypergraph
+        :type dist: List[int]
+        :param axis: The `axis` parameter represents the axis along which the convex hull is calculated. It
+        is an integer value that determines the axis of the coordinate system. The convex hull is calculated
+        with respect to this axis
+        :type axis: int
+        :return: The function `calc_total_hull_length` returns an integer value, which represents the total
+        hull length multiplied by `self.cfg.delta[axis]`.
         """
         total_hull_length = 0
         for net in self.hyprgraph.nets:
@@ -232,39 +251,49 @@ class NnsPlacer:
         return total_hull_length * self.cfg.delta[axis]
 
     def calc_total_HPWL(self, place: List[List[int]]) -> int:
-        """Calculate total HPWL
-
-        Args:
-            place (List[List[int]]): _description_
-
-        Returns:
-            int: _description_
+        """
+        The `calc_total_HPWL` function calculates the total HPWL (Half Perimeter Wirelength) based on the
+        given placement.
+        
+        :param place: The `place` parameter is a list of lists. Each inner list represents the coordinates
+        of a point in a two-dimensional space. The first inner list represents the x-coordinates of the
+        points, and the second inner list represents the y-coordinates of the points
+        :type place: List[List[int]]
+        :return: the sum of the total hull length for two different lists within the `place` list.
         """
         return self.calc_total_hull_length(place[0], 0) + self.calc_total_hull_length(
             place[1], 1
         )
 
     def apply_howard(self, place: List[List[int]], axis: int):
-        """_summary_
-
-        Args:
-            place (List[List[int]]): _description_
-            axis1 (int): _description_
-
-        Returns:
-            _type_: _description_
+        """
+        The `apply_howard` function applies Howard's algorithm to optimize the placement of elements in a
+        grid along a specified axis.
+        
+        :param place: The `place` parameter is a 2D list representing the coordinates of points in a grid.
+        Each inner list represents the coordinates of a point, where the first element is the x-coordinate
+        and the second element is the y-coordinate
+        :type place: List[List[int]]
+        :param axis: The `axis` parameter in the `apply_howard` function represents the axis along which the
+        algorithm will be applied. It is an integer value that determines whether the algorithm will be
+        applied along the x-axis (0) or the y-axis (1)
+        :type axis: int
+        :return: The function `apply_howard` returns a value of type `_type_`. The specific type and
+        description of the return value is not provided in the code snippet.
         """
         oppo = axis ^ 1  # opposite axis
 
         def update_ok(from_where: int, to_where: int) -> bool:
-            """check additional constraints
-
-            Args:
-                p (int): _description_
-                d (int): _description_
-
-            Returns:
-                _type_: _description_
+            """
+            The function `update_ok` checks additional constraints before updating the count of elements in a
+            specific axis.
+            
+            :param from_where: The starting position from where the update is being made
+            :type from_where: int
+            :param to_where: The `to_where` parameter represents the position where an update is being made. It
+            is an integer value indicating the new position
+            :type to_where: int
+            :return: The function `update_ok` returns a boolean value.
             """
             if to_where <= 0 or to_where > self.cfg.grid[axis]:
                 # don't outside the place area
@@ -277,33 +306,37 @@ class NnsPlacer:
             self.count[axis][from_where] -= 1
             return True
 
-        def calc_weight(beta: Fraction, e: Tuple[int, int]) -> int:
-            """[summary]
-
-            Arguments:
-                r ([type]): [description]
-                e ([type]): [description]
-
-            Returns:
-                [type]: [description]
+        def calc_weight(beta: Fraction, edge: Tuple[int, int]) -> int:
             """
-            u, v = e
+            The function `calc_weight` calculates the weight based on the given beta value and edge.
+            
+            :param beta: The beta parameter represents a fraction value. It is used in the calculation of the
+            weight
+            :type beta: Fraction
+            :param edge: The `edge` parameter is a tuple of two integers representing the nodes in a graph. It
+            represents an edge between the two nodes `u` and `v`
+            :type edge: Tuple[int, int]
+            :return: The function `calc_weight` returns an integer value.
+            """
+            u, v = edge
             temp = self.cost_inv(beta - self.gr[u][v]["cost"], axis)
             return temp.numerator // temp.denominator
 
-        def zero_cancel(C: List[Tuple[int, int]]) -> Fraction:
-            """Calculate the zero cancelation of the cycle
-
-            Arguments:
-                C {list}: cycle list
-
-            Note: Assume linear cost
-
-            Returns:
-                Fraction: cycle ratio
+        def zero_cancel(cycle: List[Tuple[int, int]]) -> Fraction:
             """
-            total_cost = sum(self.gr[u][v]["cost"] for (u, v) in C)
-            return Fraction(total_cost, len(C))
+            The function calculates the zero cancellation of a cycle by summing the costs of the edges in the
+            cycle and dividing by the number of edges.
+
+            Note: Assume linear cost here
+            
+            :param cycle: The `cycle` parameter is a list of tuples representing a cycle. Each tuple contains
+            two integers `u` and `v`, representing the nodes in the cycle
+            :type cycle: List[Tuple[int, int]]
+            :return: The function `zero_cancel` returns a `Fraction` object, which represents the ratio of the
+            total cost of the cycle to the length of the cycle.
+            """
+            total_cost = sum(self.gr[u][v]["cost"] for (u, v) in cycle)
+            return Fraction(total_cost, len(cycle))
 
         # TODO: should provide an API for calling the (monotone) wire-model
 
@@ -329,15 +362,29 @@ class NnsPlacer:
         grid: int,
         axis: int,
     ):
-        """_summary_
-
-        Args:
-            lst (List[int]): _description_
-            B (nx.Graph): _description_
-            place (List[List[int]]): _description_
-            i (int): _description_
-            grid (int): _description_
-            axis (int): _description_
+        """
+        The `add_bipartite_edge` function adds edges to a bipartite graph based on certain conditions and
+        weights.
+        
+        :param lst: A list of integers representing the vertices in the bipartite graph
+        :type lst: List[int]
+        :param B: `B` is a graph object of type `nx.Graph`. It represents a bipartite graph
+        :type B: nx.Graph
+        :param place: The `place` parameter is a 2D list that represents the positions of the modules in a
+        grid. Each element in the list represents a module, and its value is a list of two integers
+        representing its position on the grid. The first integer represents the x-coordinate, and the second
+        integer represents
+        :type place: List[List[int]]
+        :param i: The parameter `i` represents the distance by which the position of a vertex is shifted in
+        the bipartite graph. It is used to create edges between the original vertex and its shifted
+        positions in the bipartite graph
+        :type i: int
+        :param grid: The `grid` parameter represents the size of the grid. It is an integer value that
+        determines the maximum position value for each axis in the grid
+        :type grid: int
+        :param axis: The `axis` parameter represents the axis along which the bipartite edges are being
+        added. It is an integer value that indicates the axis direction
+        :type axis: int
         """
         # increase the number of edges if no sol'n
         for v in lst:
@@ -361,13 +408,21 @@ class NnsPlacer:
                 B.add_edge(v, q + i, weight=weight1 - weight0)
 
     def legalize(self, lst: List[int], place: List[List[int]], axis: int):
-        """Legalization by solving the bipartite matching problem
-
-        Args:
-            lst (List[int]): _description_
-            place (List[List[int]]): _description_
-            axis (int): _description_
-            io (bool, optional): _description_. Defaults to False.
+        """
+        The `legalize` function solves the bipartite matching problem to reassign positions in a grid based
+        on a given list and placement information.
+        
+        :param lst: lst is a list of integers. It represents a set of elements that need to be matched with
+        positions in the bipartite graph
+        :type lst: List[int]
+        :param place: The `place` parameter is a list of lists that represents the positions of the elements
+        in a grid. Each inner list corresponds to a different axis (e.g., x-axis, y-axis), and contains the
+        positions of the elements along that axis
+        :type place: List[List[int]]
+        :param axis: The "axis" parameter in the "legalize" function represents the axis along which the
+        legalization is being performed. It is an integer value that determines whether the legalization is
+        being done along the x-axis (axis=0) or the y-axis (axis=1)
+        :type axis: int
         """
         dist = place[axis]
         grid = self.cfg.grid[axis]
@@ -417,11 +472,19 @@ class NnsPlacer:
             dist[v] = q
 
     def legalize_modules(self, place: List[List[int]], axis: int):
-        """_summary_
-
-        Args:
-            place (List[List[int]]): _description_
-            axis (int): _description_
+        """
+        The `legalize_modules` function takes a `place` list and an `axis` integer as input, and it
+        organizes the elements of `place` into buckets based on their distance from the `axis`. It then
+        calls the `legalize` function on each non-empty bucket.
+        
+        :param place: The `place` parameter is a list of lists of integers. It represents the coordinates of
+        a place in a grid. Each inner list represents the coordinates of a point in the grid. The outer list
+        contains all the points in the grid
+        :type place: List[List[int]]
+        :param axis: The `axis` parameter is an integer that represents the axis along which the modules are
+        being legalized. It is used to determine the distance of each module from a reference point on that
+        axis
+        :type axis: int
         """
         bucket: List[List[int]] = [list() for _ in range(self.cfg.grid[axis ^ 1] + 2)]
         dist = place[axis ^ 1]
@@ -551,6 +614,21 @@ class NnsPlacer:
     def choose_nearest_iopad_vp(
         self, place: List[List[int]], vp: int, axis: int
     ) -> Tuple[int, int, int]:
+        """
+        The function `choose_nearest_iopad_vp` calculates the position and worst-case distance of the
+        nearest I/O pad to a given point on a grid, based on certain conditions and calculations.
+        
+        :param place: The `place` parameter is a list of lists representing the coordinates of points in a
+        grid. Each inner list contains two integers representing the x and y coordinates of a point
+        :type place: List[List[int]]
+        :param vp: The parameter `vp` represents the index of the current I/O pad that we are considering
+        :type vp: int
+        :param axis: The `axis` parameter represents the axis along which the calculations are being
+        performed. It is an integer value that can be either 0 or 1
+        :type axis: int
+        :return: The function `choose_nearest_iopad_vp` returns a tuple containing three values: `choose`,
+        `pos`, and `worst`.
+        """
         # Assume working on 0 or grid[axis]
         # p[0][vp] = 0 or grid[0]
         # cx * |p[0][vp] - p[0][vi]| + cy * |p[1][vp] - p[1][vi]| <= t
@@ -622,15 +700,20 @@ class NnsPlacer:
         #         choose = None  # no choice
         return choose, pos, worst
 
-    def choose_nearest_iopad(self, place: List[List[int]]):
+    def choose_nearest_iopad(self, place: List[List[int]]) -> None:
         """Choose the nearest iopad in phase 2
 
            TODO: should apply Howard algorithm because one pad can
            connect to multiple modules and one modules can connect
            to multiple pad.
 
-        Args:
-            place (List[List[int]]): _description_
+        The `choose_nearest_iopad` function selects the nearest I/O pad for each module in a hypergraph
+        based on their positions in a grid.
+        
+        :param place: The `place` parameter is a list of lists representing the placement of modules on a
+        grid. Each inner list represents the x and y coordinates of a module. The `choose_nearest_iopad`
+        function is used to choose the nearest I/O pad for each module in the placement
+        :type place: List[List[int]]
         """
         # choose the nearest I/O
         n = self.hyprgraph.number_of_modules()
@@ -739,11 +822,20 @@ class NnsPlacer:
     #                 place[1][v] = grid_y + 1
     #             self.count[1][place[1][v]] += 1
 
-    def legalize_iopad(self, place: List[List[int]], axis: int):
-        """_summary_
-
-        Args:
-            place (List[List[int]]): _description_
+    def legalize_iopad(self, place: List[List[int]], axis: int) -> None:
+        """
+        The `legalize_iopad` function takes a `place` parameter, which is a list of lists, and an `axis`
+        parameter, which is an integer, and performs some operations on the `place` list based on the `axis`
+        value.
+        
+        :param place: The `place` parameter is a 2D list of integers. It represents the placement of modules
+        on a grid. Each element in the list represents the position of a module on a specific axis. The
+        `axis` parameter is an integer that specifies the axis along which the legalization should be
+        performed
+        :type place: List[List[int]]
+        :param axis: The `axis` parameter is an integer that represents the axis along which the I/O pads
+        are being legalized. It is used to determine the placement of the I/O pads in the `place` list
+        :type axis: int
         """
         bucket: List[List] = [list() for _ in range(2)]
         n = self.hyprgraph.number_of_modules()
@@ -758,11 +850,14 @@ class NnsPlacer:
         if bucket[1]:
             self.legalize(bucket[1], place, axis ^ 1)
 
-    def io_assign(self, place: List[List[int]]):
-        """_summary_
-
-        Args:
-            place (List[List[int]]): _description_
+    def io_assign(self, place: List[List[int]]) -> None:
+        """
+        The `io_assign` function chooses the nearest iopad, and then legalizes it in the given place.
+        
+        :param place: The `place` parameter is a list of lists of integers. Each inner list represents the
+        coordinates of an I/O pad. The first integer in each inner list represents the x-coordinate, and the
+        second integer represents the y-coordinate
+        :type place: List[List[int]]
         """
         self.choose_nearest_iopad(place)
         self.legalize_iopad(place, 0)
@@ -778,14 +873,19 @@ class NnsPlacer:
     #     self.legalize_iopad(place)
 
     def optimize(self, place: List[List[int]], max_iters: int):
-        """_summary_
-
-        Args:
-            place (List[List[int]]): _description_
-            max_iters (int): _description_
-
-        Returns:
-            _type_: _description_
+        """
+        The `optimize` function is used to iteratively improve the placement of modules in a circuit layout
+        by applying various optimization techniques.
+        
+        :param place: The `place` parameter is a list of lists representing the current placement of
+        modules. Each inner list represents the coordinates of a module in the form `[x, y]`. The `place`
+        parameter is used to store the current placement of modules during the optimization process
+        :type place: List[List[int]]
+        :param max_iters: The `max_iters` parameter is the maximum number of iterations that the
+        optimization algorithm will run for. It determines how many times the algorithm will go through the
+        optimization steps before stopping
+        :type max_iters: int
+        :return: the number of iterations performed and the worst wirelength achieved.
         """
         worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
@@ -815,14 +915,21 @@ class NnsPlacer:
         return max_iters, worst1
 
     def run(self, place: List[List[int]], max_iters=2000):
-        """_summary_
-
-        Args:
-            place (List[List[int]]): _description_
-            max_iters (int, optional): _description_. Defaults to 2000.
-
-        Returns:
-            _type_: _description_
+        """
+        The `run` function performs an optimization algorithm on a given placement and returns the number of
+        iterations and the worst wirelength achieved.
+        
+        :param place: The `place` parameter is a list of lists representing the current placement of
+        components. Each inner list represents the coordinates of a component in the form [x, y]. The outer
+        list contains two inner lists, one for the x-coordinates and one for the y-coordinates of the
+        components
+        :type place: List[List[int]]
+        :param max_iters: The `max_iters` parameter is an optional integer that specifies the maximum number
+        of iterations for the `run` method. It determines how many iterations the optimization algorithm
+        will run before stopping. The default value is 2000, but you can change it to a different integer
+        value if desired, defaults to 2000 (optional)
+        :return: a tuple containing the number of iterations performed and the worst wirelength achieved
+        during the optimization process.
         """
         # niter, worst = self.optimize(place, max_iters)
         # self.init_placement(place)
