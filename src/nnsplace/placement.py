@@ -77,7 +77,6 @@ class NnsPlacer:
         self.limit = [cfg.grid[1], cfg.grid[0] - 1]
         # assume col 27 is preserved for DSP or SRAM
         self.gr = create_flow_graph(hyprgraph)
-        # self.num_cells = hyprgraph.num_modules - hyprgraph.num_pads
 
     def init_placement(self, place: List[List[int]]) -> None:
         """
@@ -310,8 +309,7 @@ class NnsPlacer:
             """
             The function `calc_weight` calculates the weight based on the given beta value and edge.
             
-            :param beta: The beta parameter represents a fraction value. It is used in the calculation of the
-            weight
+            :param beta: The beta parameter represents a fraction value. It is used in the calculation of the weight
             :type beta: Fraction
             :param edge: The `edge` parameter is a tuple of two integers representing the nodes in a graph. It
             represents an edge between the two nodes `u` and `v`
@@ -339,7 +337,6 @@ class NnsPlacer:
             return Fraction(total_cost, len(cycle))
 
         # TODO: should provide an API for calling the (monotone) wire-model
-
         # dt[0] * abs(p[0][i] - p[0][j]) + dt[1] * abs(p[1][i] - p[1][j]) < r
         worst = 0
         for u in self.gr:
@@ -667,7 +664,6 @@ class NnsPlacer:
         pos1 = (max1 + min1) // (2 * dx)
 
         grid_x = self.cfg.grid[axis]
-        # grid_y = self.cfg.grid[oppo]
         full0 = self.count[axis][0] >= self.limit[axis]
         full1 = self.count[axis][grid_x + 1] >= self.limit[axis]
         if full0 and full1:

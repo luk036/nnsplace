@@ -5,48 +5,30 @@ Negative cycle detection for weighed graphs.
 """
 from typing import Dict, Generator
 
-# from .bpqueue import BPQueue
-# from .dllist import Dllink
 
-
+# The `NegCycleFinder` class is used to find negative cycles in a graph.
 class NegCycleFinder:
     pred: Dict = {}
     succ: Dict = {}
 
     def __init__(self, gra) -> None:
-        """[summary]
-
-        Arguments:
-            gra: Graph
+        """
+        The above function is the initialization method for a class, which takes a graph as an argument and
+        initializes various attributes and data structures.
+        
+        :param gra: The parameter `gra` is a graph object. It is used to represent a graph and store
+        information about the graph's nodes, edges, and weights. The `gra` object is used in the
+        initialization of the class and is stored as an instance variable (`self.gra`) for later use in
         """
         self.gra = gra
-        # self.num_cells = gra.graph['num_modules'] - gra.graph['num_pads']
-        # max_weight = 0
-        # for (u, v, weight) in gra.edges.data('weight'):
-        #     if max_weight < weight:
-        #         max_weight = weight
-        # self.bpq_pred = BPQueue(0, max_weight)
-        # self.bpq_succ = BPQueue(0, max_weight)
-        # if care_io:  # don't process I/O pad
-        #     for (u, v, weight) in gra.edges.data('weight'):
-        #         if v < gra.graph['num_modules'] - gra.graph['num_pads']:
-        #             self.bpq_pred.append(Dllink([0, (u, v)]), weight)
-        #         if u < gra.graph['num_modules'] - gra.graph['num_pads']:
-        #             self.bpq_succ.append(Dllink([0, (u, v)]), weight)
-        # else:
-        #     for (u, v, weight) in gra.edges.data('weight'):
-        #         self.bpq_pred.append(Dllink([0, (u, v)]), weight)
-        #         # self.bpq_succ.append(Dllink([0, (u, v)]), weight)
-        #     self.bpq_succ = self.bpq_pred
 
     def find_cycle(self, point_to):
-        """Find a cycle on the policy graph
-
-        Args:
-            point_to (_type_): _description_
-
-        Yields:
-            _type_: _description_
+        """
+        The `find_cycle` function finds a cycle on a policy graph.
+        
+        :param point_to: The `point_to` parameter is a dictionary that represents the edges of a directed
+        graph. Each key-value pair in the dictionary represents an edge from the key vertex to the value
+        vertex
         """
         visited = {}
         for vtx_v in filter(lambda vtx_v: vtx_v not in visited, self.gra):
@@ -62,23 +44,23 @@ class NegCycleFinder:
                     break
 
     def relax_pred(self, dist, get_weight, update_ok) -> bool:
-        """Perform a updating of dist and pred
-
-        Args:
-            dist (_type_): _description_
-            get_weight (_type_): _description_
-            update_ok (_type_): _description_
-
-        Returns:
-            bool: _description_
+        """
+        The `relax_pred` function updates the `dist` and `pred` arrays based on the weights of edges in a
+        graph.
+        
+        :param dist: The `dist` parameter is a data structure that represents the distances from a source
+        vertex to all other vertices in a graph. It is typically implemented as an array or a dictionary,
+        where the keys are the vertices and the values are the corresponding distances
+        :param get_weight: The `get_weight` parameter is a function that takes an edge as input and returns
+        the weight of that edge
+        :param update_ok: The `update_ok` parameter is a function that determines whether an update to the
+        distance `dist[vtx_v]` is allowed. It takes two arguments: the current value of `dist[vtx_v]` and
+        the new value `d`. It should return `True` if the update is
+        :return: a boolean value.
         """
         changed = False
-        # for vlink in self.bpq_pred:
-        #     e = vlink.data[1]
         for e in self.gra.edges():
             vtx_u, vtx_v = e
-            # if v >= self.num_cells:
-            #     continue  # don't move IO pad
             weight = get_weight(e)
             d = dist[vtx_u] + weight
             if dist[vtx_v] > d and update_ok(dist[vtx_v], d):
@@ -88,23 +70,19 @@ class NegCycleFinder:
         return changed
 
     def relax_succ(self, dist, get_weight, update_ok) -> bool:
-        """Perform a updating of dist and succ
-
-        Args:
-            dist (_type_): _description_
-            get_weight (_type_): _description_
-            update_ok (_type_): _description_
-
-        Returns:
-            bool: _description_
+        """
+        The `relax_succ` function performs an update of the `dist` and `succ` variables.
+        
+        :param dist: The `dist` parameter is a variable that represents the distance between nodes in a
+        graph. It is typically a dictionary where the keys are nodes and the values are the distances from a
+        source node to each node in the graph
+        :param get_weight: A function that takes in two nodes and returns the weight of the edge between
+        them
+        :param update_ok: A boolean value indicating whether the update operation is allowed or not
         """
         changed = False
-        # for vlink in self.bpq_succ:
-        #     e = vlink.data[1]
         for e in self.gra.edges():
             vtx_u, vtx_v = e
-            # if vtx_u >= self.num_cells:
-            #     continue  # don't move IO pad
             weight = get_weight(e)
             d = dist[vtx_v] - weight
             if dist[vtx_u] < d and update_ok(dist[vtx_u], d):
@@ -114,54 +92,58 @@ class NegCycleFinder:
         return changed
 
     def find_neg_cycle_pred(self, dist, get_weight, update_ok) -> Generator:
-        """Perform a updating of dist and pred
-
-        Arguments:
-            dist (Union[List, Dict]): [description]
-            get_weight (Callable): [description]
-
-        Yields:
-            list of edges: cycle list
+        """
+        The function `find_neg_cycle_pred` performs an updating of `dist` and `pred` and yields a list of
+        edges representing a negative cycle.
+        
+        :param dist: The `dist` parameter is either a list or a dictionary. It represents the distances from
+        a source vertex to all other vertices in the graph. If it is a list, the indices of the list
+        correspond to the vertices, and the values represent the distances. If it is a dictionary, the keys
+        :param get_weight: The `get_weight` parameter is a callable function that takes in an edge and
+        returns its weight
+        :param update_ok: The `update_ok` parameter is a callable function that determines whether an update
+        to the distance value of a vertex is allowed. It takes in three arguments: the current distance
+        value of the vertex, the weight of the edge being considered for update, and the current distance
+        value of the vertex at the other
         """
         self.pred = {}
         found = False
         while not found and self.relax_pred(dist, get_weight, update_ok):
-            # vtx_v = self.find_cycle()
             for vtx_v in self.find_cycle(self.pred):
-                # Will zero cycle be found???
-                # assert self.is_negative(vtx_v, dist, get_weight)
                 found = True
                 yield self.cycle_list(vtx_v, self.pred)
 
     def find_neg_cycle_succ(self, dist, get_weight, update_ok) -> Generator:
-        """Perform a updating of dist and succ
-
-        Arguments:
-            dist (Union[List, Dict]): [description]
-            get_weight (Callable): [description]
-
-        Yields:
-            list of edges: cycle list
         """
-        # self.dist = list(0 for _ in self.gra)
+        The function `find_neg_cycle_succ` performs an updating of `dist` and `succ` and yields a list of
+        edges representing a negative cycle.
+        
+        :param dist: The `dist` parameter is either a list or a dictionary. It represents the distances from
+        a source vertex to all other vertices in the graph. If it is a list, the indices of the list
+        correspond to the vertices in the graph. If it is a dictionary, the keys represent the vertices and
+        :param get_weight: get_weight is a callable function that takes in an edge and returns the weight of
+        that edge
+        :param update_ok: The `update_ok` parameter is a callable function that determines whether an update
+        to the distance value of a vertex is allowed. It takes in three arguments: the current distance
+        value of the vertex, the weight of the edge being considered for update, and the current distance
+        value of the vertex at the other
+        """
         self.succ = {}
         found = False
         while not found and self.relax_succ(dist, get_weight, update_ok):
-            # vtx_v = self.find_cycle()
             for vtx_v in self.find_cycle(self.succ):
-                # Will zero cycle be found???
-                # assert self.is_negative(vtx_v, dist, get_weight)
                 found = True
                 yield self.cycle_list(vtx_v, self.succ)
 
     def cycle_list(self, handle, point_to) -> list:
-        """Cycle list started from handle
-
-        Arguments:
-            handle: graph node
-
-        Returns:
-            list of edges: cycle list
+        """
+        The `cycle_list` function takes a starting node and a dictionary mapping nodes to their next node,
+        and returns a list of edges representing a cycle in the graph.
+        
+        :param handle: The `handle` parameter represents the starting node of the cycle in the graph. It is
+        the node from which the cycle traversal begins
+        :param point_to: point_to is a dictionary that maps each graph node to the node it points to
+        :return: a list of edges, which represents a cycle in a graph.
         """
         vtx_v = handle
         cycle = list()
@@ -174,17 +156,20 @@ class NegCycleFinder:
         return cycle
 
     def is_negative(self, handle, dist, get_weight) -> bool:
-        """Check if the cycle list is negative
-
-        Arguments:
-            handle: graph node
-            get_weight (Callable): [description]
-
-        Returns:
-            bool: [description]
+        """
+        The `is_negative` function checks if a cycle in a graph is negative by iterating through the cycle
+        and comparing the distances between nodes.
+        
+        :param handle: The `handle` parameter is a graph node that represents the starting point of the
+        cycle list
+        :param dist: The `dist` parameter is a list that represents the distance from the starting node to
+        each node in the graph. Each element in the list corresponds to a node in the graph, and the value
+        represents the distance from the starting node to that node
+        :param get_weight: The `get_weight` parameter is a callable function that takes in a tuple `(vtx_u,
+        vtx_v)` as input and returns the weight of the edge between vertices `vtx_u` and `vtx_v`
+        :return: a boolean value.
         """
         vtx_v = handle
-        # do while loop in C++
         while True:
             vtx_u = self.pred[vtx_v]
             wt = get_weight((vtx_u, vtx_v))

@@ -7,23 +7,35 @@ from .neg_cycle import NegCycleFinder
 
 
 def min_parametric(gra, ratio, cost, zero_cancel, dist, update_ok, pick_one_only=False):
-    """minimum parametric problem:
+    """
+    The `min_parametric` function solves a minimum parametric problem by finding the smallest value of a
+    parameter that satisfies a set of constraints in a directed graph:
 
         min  r
         s.t. dist[v] - dist[v] ≤ cost(u, v, r)
              for all (u, v) in gra
 
-    Arguments:
-        gra ([type]): directed graph
-        ratio {Any}: parameter to be minimized, initially a small number!!!
-        cost ([type]): monotone increasing function w.r.t. r
-        zero_cancel ([type]): [description]
-        pick_one_only {bool}: [description]
-
-    Returns:
-        r: optimal value
-        C: Most critial cycle
-        dist: optimal sol'n
+    :param gra: The parameter `gra` represents a directed graph
+    :param ratio: The parameter to be minimized. It is initially set to a small number and will be
+    updated during the optimization process
+    :param cost: The `cost` parameter is a function that takes in three arguments: `ratio`, `edge`, and
+    `r`. It represents the cost of traversing an edge in the graph. The `ratio` parameter is the current
+    value of the ratio being minimized, `edge` is the edge being considered
+    :param zero_cancel: The `zero_cancel` parameter is a function that takes a cycle `c_i` and returns a
+    modified cycle `c_i'` such that `cost(u, v, zero_cancel(c_i')) = 0` if and only if `cost(u, v, c_i)
+    = 0
+    :param dist: The `dist` parameter represents the distances between vertices in the directed graph
+    `gra`. It is used in the constraint of the minimum parametric problem to ensure that the difference
+    between the distances of two vertices is less than or equal to the cost of the corresponding edge
+    :param update_ok: The `update_ok` parameter is a function that determines whether an update to the
+    distance value is allowed or not. It takes two arguments: the current distance value and the new
+    distance value. If the function returns `True`, the update is allowed. If it returns `False`, the
+    update is not
+    :param pick_one_only: A boolean parameter that determines whether to pick only one cycle with the
+    maximum ratio or to consider all cycles with the maximum ratio. If set to True, only one cycle will
+    be picked. If set to False, all cycles with the maximum ratio will be considered, defaults to False
+    (optional)
+    :return: The function `min_parametric` returns three values: `ratio`, `cycle`, and `dist`.
     """
 
     def get_weight(edge):
@@ -39,7 +51,6 @@ def min_parametric(gra, ratio, cost, zero_cancel, dist, update_ok, pick_one_only
             cycles = omega.find_neg_cycle_succ(dist, get_weight, update_ok)
         else:
             cycles = omega.find_neg_cycle_pred(dist, get_weight, update_ok)
-        # cycles = S.find_neg_cycle_pred(dist, get_weight, update_ok)
 
         for c_i in cycles:
             r_i = zero_cancel(c_i)
