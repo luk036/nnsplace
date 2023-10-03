@@ -11,11 +11,20 @@ No NonSense Placement Python Code
 [![CodeFactor](https://www.codefactor.io/repository/github/luk036/nnsplace/badge)](https://www.codefactor.io/repository/github/luk036/nnsplace)
 [![Maintainability](https://api.codeclimate.com/v1/badges/2551a7289b83520b6cac/maintainability)](https://codeclimate.com/github/luk036/nnsplace/maintainability)
 
+## Dependencies
+
+- [luk036/mywheel](https://github.com/luk036/mywheel)
+- [luk036/digraphxl](https://github.com/luk036/digraphx)
+- [luk036/physdes-py](https://github.com/luk036/physdes-py)
+- networkx
+
 ## Installation and Run
 
 To setup develop environment:
 
     pip3 install -r ./requirements.txt &&
+    pip3 install git+https://github.com/luk036/mywheel.git
+    pip3 install git+https://github.com/luk036/digraphx.git
     pip3 install git+https://github.com/luk036/physdes-py.git
     python3 setup.py develop
 

@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Union
 import networkx as nx
 from networkx.readwrite import json_graph
 
-from .array_like import repeat_array
-from .lict import Lict
+from mywheel.array_like import RepeatArray
+from mywheel.lict import Lict
 
 
 class ThinGraph(nx.Graph):
@@ -119,7 +119,7 @@ class Netlist:
         # self.net_weight: Optional[Union[Dict, List[int]]] = None
         # self.module_weight: Optional[Union[Dict, Lict[int, Any]]] = None
         self.module_fixed: set = set()
-        self.net_weight = repeat_array(1, len(nets))
+        self.net_weight = RepeatArray(1, len(nets))
 
         # self.module_dict = {}
         # for v in enumerate(self.module_list):
@@ -226,8 +226,8 @@ def read_json(filename):
     num_pads = gr.graph["num_pads"]
     hyprgraph = Netlist(gr, range(num_modules), range(num_modules, num_modules + num_nets))
     hyprgraph.num_pads = num_pads
-    hyprgraph.module_weight = repeat_array(1, num_modules)
-    hyprgraph.net_weight = repeat_array(1, num_nets)
+    hyprgraph.module_weight = RepeatArray(1, num_modules)
+    hyprgraph.net_weight = RepeatArray(1, num_nets)
     # hyprgraph.net_weight = shift_array(1 for _ in range(num_nets))
     # hyprgraph.net_weight.set_start(num_modules)
     return hyprgraph
@@ -253,7 +253,7 @@ def create_inverter():
     gr.graph["num_pads"] = 2
     hyprgraph = Netlist(gr, modules, nets)
     hyprgraph.module_weight = module_weight
-    hyprgraph.net_weight = repeat_array(1, len(nets))
+    hyprgraph.net_weight = RepeatArray(1, len(nets))
     hyprgraph.num_pads = 2
     return hyprgraph
 
@@ -278,7 +278,7 @@ def create_inverter2():
     gr.graph["num_pads"] = 2
     hyprgraph = Netlist(gr, modules, nets)
     hyprgraph.module_weight = module_weight
-    hyprgraph.net_weight = repeat_array(1, len(nets))
+    hyprgraph.net_weight = RepeatArray(1, len(nets))
     hyprgraph.num_pads = 2
     return hyprgraph
 
@@ -339,7 +339,7 @@ def create_drawf():
     gr.graph["num_pads"] = 3
     hyprgraph = Netlist(gr, modules, nets)
     hyprgraph.module_weight = module_weight
-    hyprgraph.net_weight = repeat_array(1, len(nets))
+    hyprgraph.net_weight = RepeatArray(1, len(nets))
     hyprgraph.num_pads = 3
     return hyprgraph
 
@@ -366,7 +366,7 @@ def create_test_netlist():
     # module_map = {v: i_v for i_v, v in enumerate(modules)}
     nets = ["a3", "a4", "a5"]
     # net_weight = {net: 1 for net in nets}
-    net_weight = repeat_array(1, len(nets))
+    net_weight = RepeatArray(1, len(nets))
 
     hyprgraph = Netlist(gr, modules, nets)
     hyprgraph.module_weight = module_weight

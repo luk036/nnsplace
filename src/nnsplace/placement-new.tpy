@@ -11,7 +11,7 @@ from physdes.interval import Interval
 from .max_mean_cycle import max_mean_cycle
 from .netlist import Netlist
 from .placement_cfg import NnsConfig
-from .lict import TinyDiGraph
+from mywheel.lict import TinyDiGraph
 
 
 def create_flow_graph(hyprgraph: Netlist):
