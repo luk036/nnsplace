@@ -15,7 +15,7 @@ class NegCycleFinder:
         """
         The above function is the initialization method for a class, which takes a graph as an argument and
         initializes various attributes and data structures.
-        
+
         :param gra: The parameter `gra` is a graph object. It is used to represent a graph and store
         information about the graph's nodes, edges, and weights. The `gra` object is used in the
         initialization of the class and is stored as an instance variable (`self.gra`) for later use in
@@ -25,7 +25,7 @@ class NegCycleFinder:
     def find_cycle(self, point_to):
         """
         The `find_cycle` function finds a cycle on a policy graph.
-        
+
         :param point_to: The `point_to` parameter is a dictionary that represents the edges of a directed
         graph. Each key-value pair in the dictionary represents an edge from the key vertex to the value
         vertex
@@ -47,7 +47,7 @@ class NegCycleFinder:
         """
         The `relax_pred` function updates the `dist` and `pred` arrays based on the weights of edges in a
         graph.
-        
+
         :param dist: The `dist` parameter is a data structure that represents the distances from a source
         vertex to all other vertices in a graph. It is typically implemented as an array or a dictionary,
         where the keys are the vertices and the values are the corresponding distances
@@ -72,7 +72,7 @@ class NegCycleFinder:
     def relax_succ(self, dist, get_weight, update_ok) -> bool:
         """
         The `relax_succ` function performs an update of the `dist` and `succ` variables.
-        
+
         :param dist: The `dist` parameter is a variable that represents the distance between nodes in a
         graph. It is typically a dictionary where the keys are nodes and the values are the distances from a
         source node to each node in the graph
@@ -95,7 +95,7 @@ class NegCycleFinder:
         """
         The function `find_neg_cycle_pred` performs an updating of `dist` and `pred` and yields a list of
         edges representing a negative cycle.
-        
+
         :param dist: The `dist` parameter is either a list or a dictionary. It represents the distances from
         a source vertex to all other vertices in the graph. If it is a list, the indices of the list
         correspond to the vertices, and the values represent the distances. If it is a dictionary, the keys
@@ -117,7 +117,7 @@ class NegCycleFinder:
         """
         The function `find_neg_cycle_succ` performs an updating of `dist` and `succ` and yields a list of
         edges representing a negative cycle.
-        
+
         :param dist: The `dist` parameter is either a list or a dictionary. It represents the distances from
         a source vertex to all other vertices in the graph. If it is a list, the indices of the list
         correspond to the vertices in the graph. If it is a dictionary, the keys represent the vertices and
@@ -139,7 +139,7 @@ class NegCycleFinder:
         """
         The `cycle_list` function takes a starting node and a dictionary mapping nodes to their next node,
         and returns a list of edges representing a cycle in the graph.
-        
+
         :param handle: The `handle` parameter represents the starting node of the cycle in the graph. It is
         the node from which the cycle traversal begins
         :param point_to: point_to is a dictionary that maps each graph node to the node it points to
@@ -159,7 +159,7 @@ class NegCycleFinder:
         """
         The `is_negative` function checks if a cycle in a graph is negative by iterating through the cycle
         and comparing the distances between nodes.
-        
+
         :param handle: The `handle` parameter is a graph node that represents the starting point of the
         cycle list
         :param dist: The `dist` parameter is a list that represents the distance from the starting node to

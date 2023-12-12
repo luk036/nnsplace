@@ -9,7 +9,7 @@ from physdes.interval import Interval
 
 # from .max_cycle_ratio import max_cycle_ratio
 from .max_mean_cycle import max_mean_cycle
-from .netlist import Netlist
+from netlistx.netlist import Netlist
 from .placement_cfg import NnsConfig
 from mywheel.lict import TinyDiGraph
 

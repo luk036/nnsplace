@@ -7,7 +7,8 @@ from networkx.algorithms import bipartite
 from physdes.interval import Interval
 
 from .min_parametric import min_parametric
-from .netlist import Netlist, TinyDiGraph
+from netlistx.netlist import Netlist
+from digraphx.tiny_digraph import TinyDiGraph
 from .placement_cfg import NnsConfig
 
 
@@ -47,6 +48,7 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
 
 class NnsPlacer:
     """No non-sense placer"""
+
     # TODO: handle optimization aware of I/O pad, DSP, SRAM
     # TODO: handle ASIC placement
 
@@ -82,7 +84,7 @@ class NnsPlacer:
         """
         The `init_placement` function initializes the placement of nodes in a hypergraph by assigning them
         to columns and rows in a grid.
-        
+
         :param place: The "place" parameter is a 2D list representing the placement solution. It has two
         rows and each column represents the placement of a vertex in the hypergraph. The first row
         represents the column index of the placement and the second row represents the row index of the
@@ -113,7 +115,7 @@ class NnsPlacer:
     def cost(self, length: int, axis: int) -> int:
         """
         The `cost` function calculates the cost based on the length and axis provided.
-        
+
         :param length: The `length` parameter represents the length of something, such as the length of a
         line or the number of elements in a list
         :type length: int
@@ -127,7 +129,7 @@ class NnsPlacer:
     def cost_inv(self, cost: int, axis: int) -> Fraction:
         """
         The `cost_inv` function calculates the inverse of a cost value based on a given axis.
-        
+
         :param cost: The `cost` parameter represents the cost value that you want to convert into a
         `Fraction` object
         :type cost: int
@@ -142,7 +144,7 @@ class NnsPlacer:
         """
         The `calc_worst_wirelength` function calculates the worst wirelength based on the given placement of
         nodes.
-        
+
         :param place: The `place` parameter is a list of lists representing the coordinates of the nodes in
         a graph. Each inner list contains two integers representing the x and y coordinates of a node
         :type place: List[List[int]]
@@ -164,7 +166,7 @@ class NnsPlacer:
         """
         The function `calc_worst_wirelength_v` calculates the worst wirelength with respect to a given
         module `v` based on its placement coordinates.
-        
+
         :param v: The parameter `v` represents a module in a circuit design
         :param place: The `place` parameter is a list of lists representing the placement of modules in a
         circuit. Each inner list contains the x and y coordinates of a module's position
@@ -226,7 +228,7 @@ class NnsPlacer:
     def calc_total_hull_length(self, dist: List[int], axis: int) -> int:
         """
         The function calculates the total length of the convex hull with respect to a given axis.
-        
+
         :param dist: The `dist` parameter is a list of integers representing the distances between nodes in
         a hypergraph
         :type dist: List[int]
@@ -253,7 +255,7 @@ class NnsPlacer:
         """
         The `calc_total_HPWL` function calculates the total HPWL (Half Perimeter Wirelength) based on the
         given placement.
-        
+
         :param place: The `place` parameter is a list of lists. Each inner list represents the coordinates
         of a point in a two-dimensional space. The first inner list represents the x-coordinates of the
         points, and the second inner list represents the y-coordinates of the points
@@ -268,7 +270,7 @@ class NnsPlacer:
         """
         The `apply_howard` function applies Howard's algorithm to optimize the placement of elements in a
         grid along a specified axis.
-        
+
         :param place: The `place` parameter is a 2D list representing the coordinates of points in a grid.
         Each inner list represents the coordinates of a point, where the first element is the x-coordinate
         and the second element is the y-coordinate
@@ -286,7 +288,7 @@ class NnsPlacer:
             """
             The function `update_ok` checks additional constraints before updating the count of elements in a
             specific axis.
-            
+
             :param from_where: The starting position from where the update is being made
             :type from_where: int
             :param to_where: The `to_where` parameter represents the position where an update is being made. It
@@ -308,7 +310,7 @@ class NnsPlacer:
         def calc_weight(beta: Fraction, edge: Tuple[int, int]) -> int:
             """
             The function `calc_weight` calculates the weight based on the given beta value and edge.
-            
+
             :param beta: The beta parameter represents a fraction value. It is used in the calculation of the weight
             :type beta: Fraction
             :param edge: The `edge` parameter is a tuple of two integers representing the nodes in a graph. It
@@ -326,7 +328,7 @@ class NnsPlacer:
             cycle and dividing by the number of edges.
 
             Note: Assume linear cost here
-            
+
             :param cycle: The `cycle` parameter is a list of tuples representing a cycle. Each tuple contains
             two integers `u` and `v`, representing the nodes in the cycle
             :type cycle: List[Tuple[int, int]]
@@ -362,7 +364,7 @@ class NnsPlacer:
         """
         The `add_bipartite_edge` function adds edges to a bipartite graph based on certain conditions and
         weights.
-        
+
         :param lst: A list of integers representing the vertices in the bipartite graph
         :type lst: List[int]
         :param B: `B` is a graph object of type `nx.Graph`. It represents a bipartite graph
@@ -408,7 +410,7 @@ class NnsPlacer:
         """
         The `legalize` function solves the bipartite matching problem to reassign positions in a grid based
         on a given list and placement information.
-        
+
         :param lst: lst is a list of integers. It represents a set of elements that need to be matched with
         positions in the bipartite graph
         :type lst: List[int]
@@ -473,7 +475,7 @@ class NnsPlacer:
         The `legalize_modules` function takes a `place` list and an `axis` integer as input, and it
         organizes the elements of `place` into buckets based on their distance from the `axis`. It then
         calls the `legalize` function on each non-empty bucket.
-        
+
         :param place: The `place` parameter is a list of lists of integers. It represents the coordinates of
         a place in a grid. Each inner list represents the coordinates of a point in the grid. The outer list
         contains all the points in the grid
@@ -614,7 +616,7 @@ class NnsPlacer:
         """
         The function `choose_nearest_iopad_vp` calculates the position and worst-case distance of the
         nearest I/O pad to a given point on a grid, based on certain conditions and calculations.
-        
+
         :param place: The `place` parameter is a list of lists representing the coordinates of points in a
         grid. Each inner list contains two integers representing the x and y coordinates of a point
         :type place: List[List[int]]
@@ -705,7 +707,7 @@ class NnsPlacer:
 
         The `choose_nearest_iopad` function selects the nearest I/O pad for each module in a hypergraph
         based on their positions in a grid.
-        
+
         :param place: The `place` parameter is a list of lists representing the placement of modules on a
         grid. Each inner list represents the x and y coordinates of a module. The `choose_nearest_iopad`
         function is used to choose the nearest I/O pad for each module in the placement
@@ -823,7 +825,7 @@ class NnsPlacer:
         The `legalize_iopad` function takes a `place` parameter, which is a list of lists, and an `axis`
         parameter, which is an integer, and performs some operations on the `place` list based on the `axis`
         value.
-        
+
         :param place: The `place` parameter is a 2D list of integers. It represents the placement of modules
         on a grid. Each element in the list represents the position of a module on a specific axis. The
         `axis` parameter is an integer that specifies the axis along which the legalization should be
@@ -849,7 +851,7 @@ class NnsPlacer:
     def io_assign(self, place: List[List[int]]) -> None:
         """
         The `io_assign` function chooses the nearest iopad, and then legalizes it in the given place.
-        
+
         :param place: The `place` parameter is a list of lists of integers. Each inner list represents the
         coordinates of an I/O pad. The first integer in each inner list represents the x-coordinate, and the
         second integer represents the y-coordinate
@@ -872,7 +874,7 @@ class NnsPlacer:
         """
         The `optimize` function is used to iteratively improve the placement of modules in a circuit layout
         by applying various optimization techniques.
-        
+
         :param place: The `place` parameter is a list of lists representing the current placement of
         modules. Each inner list represents the coordinates of a module in the form `[x, y]`. The `place`
         parameter is used to store the current placement of modules during the optimization process
@@ -914,7 +916,7 @@ class NnsPlacer:
         """
         The `run` function performs an optimization algorithm on a given placement and returns the number of
         iterations and the worst wirelength achieved.
-        
+
         :param place: The `place` parameter is a list of lists representing the current placement of
         components. Each inner list represents the coordinates of a component in the form [x, y]. The outer
         list contains two inner lists, one for the x-coordinates and one for the y-coordinates of the

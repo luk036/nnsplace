@@ -224,7 +224,9 @@ def read_json(filename):
     num_modules = gr.graph["num_modules"]
     num_nets = gr.graph["num_nets"]
     num_pads = gr.graph["num_pads"]
-    hyprgraph = Netlist(gr, range(num_modules), range(num_modules, num_modules + num_nets))
+    hyprgraph = Netlist(
+        gr, range(num_modules), range(num_modules, num_modules + num_nets)
+    )
     hyprgraph.num_pads = num_pads
     hyprgraph.module_weight = RepeatArray(1, num_modules)
     hyprgraph.net_weight = RepeatArray(1, num_nets)

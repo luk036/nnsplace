@@ -6,7 +6,7 @@ class NnsConfig:
     def __init__(self, x: int, y: int, delta_x: int, delta_y: int):
         """
         The function initializes an object with grid coordinates and delta values.
-        
+
         :param x: The x parameter represents the initial x-coordinate of the grid. It is an integer value
         :type x: int
         :param y: The `y` parameter represents the initial y-coordinate of the grid

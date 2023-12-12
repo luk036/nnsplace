@@ -16,6 +16,7 @@ No NonSense Placement Python Code
 - [luk036/mywheel](https://github.com/luk036/mywheel)
 - [luk036/digraphxl](https://github.com/luk036/digraphx)
 - [luk036/physdes-py](https://github.com/luk036/physdes-py)
+- [luk036/netlistx](https://github.com/luk036/netlistx)
 - networkx
 
 ## Installation and Run
@@ -25,6 +26,7 @@ To setup develop environment:
     pip3 install -r ./requirements.txt &&
     pip3 install git+https://github.com/luk036/mywheel.git
     pip3 install git+https://github.com/luk036/digraphx.git
+    pip3 install git+https://github.com/luk036/netlistx.git
     pip3 install git+https://github.com/luk036/physdes-py.git
     python3 setup.py develop
 
