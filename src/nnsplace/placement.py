@@ -3,12 +3,12 @@ from random import shuffle
 from typing import List, Tuple
 
 import networkx as nx
+from digraphx.tiny_digraph import TinyDiGraph
+from netlistx.netlist import Netlist
 from networkx.algorithms import bipartite
 from physdes.interval import Interval
 
 from .min_parametric import min_parametric
-from netlistx.netlist import Netlist
-from digraphx.tiny_digraph import TinyDiGraph
 from .placement_cfg import NnsConfig
 
 

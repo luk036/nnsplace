@@ -6,10 +6,9 @@ import json
 from typing import Any, Dict, List, Union
 
 import networkx as nx
-from networkx.readwrite import json_graph
-
 from mywheel.array_like import RepeatArray
 from mywheel.lict import Lict
+from networkx.readwrite import json_graph
 
 
 class ThinGraph(nx.Graph):

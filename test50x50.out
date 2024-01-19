@@ -49,10 +49,10 @@ ________________________________ test_placement ________________________________
             hpwl_x, hpwl_y, hpwl_x + hpwl_y))
         print("Worst wirelength before = {}".format(
             placer.calc_worst_wirelength(place)))
-    
+
         # placer.io_assign(place)
         # placer.choose_nearest_iopad(place)
-    
+
         niter, worst = placer.run(place, 2000)
         print("Number of iterations = {}".format(niter))
         hpwl_x = placer.calc_total_hull_length(place[0], 0)
@@ -60,7 +60,7 @@ ________________________________ test_placement ________________________________
         print("Total HPWL after = {} + {} = {}".format(
             hpwl_x, hpwl_y, hpwl_x + hpwl_y))
         print("Worst wirelength after = {}".format(worst))
-    
+
         num_cells = n - H.num_pads
         for i in range(0, num_cells):
             v = H.modules[i]
@@ -80,7 +80,7 @@ ________________________________ test_placement ________________________________
                 print("<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\"/>".format(
                       place[0][vp] * 40 + 20, place[1][vp] * 40 + 20,
                       place[0][vi] * 40 + 20, place[1][vi] * 40 + 20))
-    
+
     #     for net in H.nets:
     #         adjs = iter(H.gr[net])
     #         v = next(adjs)
@@ -95,7 +95,7 @@ ________________________________ test_placement ________________________________
     #         height = bbox.height() * 40
     #         print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" \
     # height=\"{}\"/>".format(x, y, width, height))
-    
+
 >       assert(place[0][1] < 0)
 E       assert 39 < 0
 

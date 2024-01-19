@@ -48,7 +48,7 @@ ________________________________ test_placement ________________________________
         print("Worst wirelength before = {}".format(
                   placer.calc_worst_wirelength(place)))
         # placer.run(place)
-    
+
         for v in H:
             print("  <use x=\"{}\" y=\"{}\" href=\"#r1\"/>"
                   .format(place[0][v] * 40, place[1][v] * 40))
@@ -66,13 +66,13 @@ ________________________________ test_placement ________________________________
             height = bbox.height() * 40
             print("<rect class=\"net\" x=\"{}\" y=\"{}\" width=\"{}\" \
     height=\"{}\"/>".format(x, y, width, height))
-    
+
         # hpwl_x, hpwl_y = placer.calc_total_hpwl(place)
         # print("Total HPWL after = {} + {} = {}".format(
         #           hpwl_x, hpwl_y, hpwl_x + hpwl_y))
         # print("Worst wirelength after = {}".format(
         #           placer.calc_worst_wirelength(place)))
-    
+
 >       assert(place[0][1] < 0)
 E       assert 1 < 0
 

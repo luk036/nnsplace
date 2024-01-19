@@ -13,7 +13,7 @@
     <!-- The canvas for our mask -->
     <rect fill="url(#gradient)" width="100%" height="100%" />
   </mask>
-  
+
   <!-- Let's define the pattern -->
   <!-- The width and height should be double the circle radius we plan to use -->
   <pattern id="pattern-io" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
