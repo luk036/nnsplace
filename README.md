@@ -1,6 +1,6 @@
 # 📍 nnsplace
 
-No NonSense Placement Python Code
+Affordable Placement Python Code
 
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/luk036/nnsplace)
 [![Python application w/ Coverage](https://github.com/luk036/nnsplace/actions/workflows/python-app.yml/badge.svg)](https://github.com/luk036/nnsplace/actions/workflows/python-app.yml)
@@ -29,10 +29,6 @@ To setup develop environment:
     pip3 install git+https://github.com/luk036/netlistx.git
     pip3 install git+https://github.com/luk036/physdes-py.git
     python3 setup.py develop
-
-To run unit tests:
-
-    python3 setup.py test
 
 ## 👀 See also
 
