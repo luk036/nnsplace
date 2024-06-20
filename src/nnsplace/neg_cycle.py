@@ -3,6 +3,7 @@
 Negative cycle detection for weighed graphs.
 1. Support Lazy evalution
 """
+
 from typing import Dict, Generator
 
 
