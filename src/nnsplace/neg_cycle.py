@@ -18,8 +18,8 @@ class NegCycleFinder:
         initializes various attributes and data structures.
 
         :param gra: The parameter `gra` is a graph object. It is used to represent a graph and store
-        information about the graph's nodes, edges, and weights. The `gra` object is used in the
-        initialization of the class and is stored as an instance variable (`self.gra`) for later use in
+            information about the graph's nodes, edges, and weights. The `gra` object is used in the
+            initialization of the class and is stored as an instance variable (`self.gra`) for later use in
         """
         self.gra = gra
 
@@ -28,8 +28,8 @@ class NegCycleFinder:
         The `find_cycle` function finds a cycle on a policy graph.
 
         :param point_to: The `point_to` parameter is a dictionary that represents the edges of a directed
-        graph. Each key-value pair in the dictionary represents an edge from the key vertex to the value
-        vertex
+            graph. Each key-value pair in the dictionary represents an edge from the key vertex to the value
+            vertex
         """
         visited = {}
         for vtx_v in filter(lambda vtx_v: vtx_v not in visited, self.gra):
@@ -50,13 +50,13 @@ class NegCycleFinder:
         graph.
 
         :param dist: The `dist` parameter is a data structure that represents the distances from a source
-        vertex to all other vertices in a graph. It is typically implemented as an array or a dictionary,
-        where the keys are the vertices and the values are the corresponding distances
+            vertex to all other vertices in a graph. It is typically implemented as an array or a dictionary,
+            where the keys are the vertices and the values are the corresponding distances
         :param get_weight: The `get_weight` parameter is a function that takes an edge as input and returns
-        the weight of that edge
+            the weight of that edge
         :param update_ok: The `update_ok` parameter is a function that determines whether an update to the
-        distance `dist[vtx_v]` is allowed. It takes two arguments: the current value of `dist[vtx_v]` and
-        the new value `d`. It should return `True` if the update is
+            distance `dist[vtx_v]` is allowed. It takes two arguments: the current value of `dist[vtx_v]` and
+            the new value `d`. It should return `True` if the update is
         :return: a boolean value.
         """
         changed = False
@@ -75,10 +75,9 @@ class NegCycleFinder:
         The `relax_succ` function performs an update of the `dist` and `succ` variables.
 
         :param dist: The `dist` parameter is a variable that represents the distance between nodes in a
-        graph. It is typically a dictionary where the keys are nodes and the values are the distances from a
-        source node to each node in the graph
-        :param get_weight: A function that takes in two nodes and returns the weight of the edge between
-        them
+            graph. It is typically a dictionary where the keys are nodes and the values are the distances from a
+            source node to each node in the graph
+        :param get_weight: A function that takes in two nodes and returns the weight of the edge between them
         :param update_ok: A boolean value indicating whether the update operation is allowed or not
         """
         changed = False
@@ -98,14 +97,14 @@ class NegCycleFinder:
         edges representing a negative cycle.
 
         :param dist: The `dist` parameter is either a list or a dictionary. It represents the distances from
-        a source vertex to all other vertices in the graph. If it is a list, the indices of the list
-        correspond to the vertices, and the values represent the distances. If it is a dictionary, the keys
+            a source vertex to all other vertices in the graph. If it is a list, the indices of the list
+            correspond to the vertices, and the values represent the distances. If it is a dictionary, the keys
         :param get_weight: The `get_weight` parameter is a callable function that takes in an edge and
-        returns its weight
+            returns its weight
         :param update_ok: The `update_ok` parameter is a callable function that determines whether an update
-        to the distance value of a vertex is allowed. It takes in three arguments: the current distance
-        value of the vertex, the weight of the edge being considered for update, and the current distance
-        value of the vertex at the other
+            to the distance value of a vertex is allowed. It takes in three arguments: the current distance
+            value of the vertex, the weight of the edge being considered for update, and the current distance
+            value of the vertex at the other
         """
         self.pred = {}
         found = False
@@ -120,14 +119,14 @@ class NegCycleFinder:
         edges representing a negative cycle.
 
         :param dist: The `dist` parameter is either a list or a dictionary. It represents the distances from
-        a source vertex to all other vertices in the graph. If it is a list, the indices of the list
-        correspond to the vertices in the graph. If it is a dictionary, the keys represent the vertices and
+            a source vertex to all other vertices in the graph. If it is a list, the indices of the list
+            correspond to the vertices in the graph. If it is a dictionary, the keys represent the vertices and
         :param get_weight: get_weight is a callable function that takes in an edge and returns the weight of
-        that edge
+            that edge
         :param update_ok: The `update_ok` parameter is a callable function that determines whether an update
-        to the distance value of a vertex is allowed. It takes in three arguments: the current distance
-        value of the vertex, the weight of the edge being considered for update, and the current distance
-        value of the vertex at the other
+            to the distance value of a vertex is allowed. It takes in three arguments: the current distance
+            value of the vertex, the weight of the edge being considered for update, and the current distance
+            value of the vertex at the other
         """
         self.succ = {}
         found = False
@@ -142,7 +141,7 @@ class NegCycleFinder:
         and returns a list of edges representing a cycle in the graph.
 
         :param handle: The `handle` parameter represents the starting node of the cycle in the graph. It is
-        the node from which the cycle traversal begins
+            the node from which the cycle traversal begins
         :param point_to: point_to is a dictionary that maps each graph node to the node it points to
         :return: a list of edges, which represents a cycle in a graph.
         """
@@ -162,12 +161,12 @@ class NegCycleFinder:
         and comparing the distances between nodes.
 
         :param handle: The `handle` parameter is a graph node that represents the starting point of the
-        cycle list
+            cycle list
         :param dist: The `dist` parameter is a list that represents the distance from the starting node to
-        each node in the graph. Each element in the list corresponds to a node in the graph, and the value
-        represents the distance from the starting node to that node
+            each node in the graph. Each element in the list corresponds to a node in the graph, and the value
+            represents the distance from the starting node to that node
         :param get_weight: The `get_weight` parameter is a callable function that takes in a tuple `(vtx_u,
-        vtx_v)` as input and returns the weight of the edge between vertices `vtx_u` and `vtx_v`
+            vtx_v)` as input and returns the weight of the edge between vertices `vtx_u` and `vtx_v`
         :return: a boolean value.
         """
         vtx_v = handle
