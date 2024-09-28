@@ -1,3 +1,36 @@
+"""
+Placement.py
+
+This code implements a placement algorithm for electronic circuit design, specifically for Field-Programmable Gate Arrays (FPGAs). The purpose of the code is to optimize the placement of circuit components (modules) on a grid-like structure, minimizing the total wire length between connected components.
+
+The main input to this algorithm is a netlist, which is a description of the circuit components and their connections. It also takes configuration parameters that define the grid size and other placement constraints. The output is an optimized placement of the circuit components on the grid, represented as coordinates for each module.
+
+The code achieves its purpose through several key steps:
+
+1. It starts by creating a flow graph from the input netlist, which represents the connections between modules.
+
+2. An initial random placement of modules is generated on the grid.
+
+3. The algorithm then iteratively improves this placement using a technique called the "No Non-Sense" (NNS) placement method. This involves:
+    - Applying Howard's algorithm to optimize module positions along each axis.
+    - Legalizing the placement to ensure modules don't overlap and respect grid constraints.
+    - Assigning I/O pads (input/output connections) to the edges of the grid.
+
+4. The optimization process continues for a specified number of iterations or until no further improvement is possible.
+
+The code uses several important data structures and algorithms:
+
+- A graph representation of the circuit (using NetworkX library)
+- Bipartite matching for legalization
+- A parametric minimum cost flow algorithm (Howard's algorithm)
+
+Throughout the process, the code calculates and tries to minimize the "worst wirelength" - the longest connection between any two connected modules. This serves as a metric for the quality of the placement.
+
+The main logic flow involves repeatedly applying optimization steps along both the x and y axes, then legalizing the placement to ensure it respects the grid constraints. This process is repeated until a satisfactory placement is achieved or the maximum number of iterations is reached.
+
+In simple terms, you can think of this algorithm as trying to arrange puzzle pieces (circuit modules) on a board (the grid) in a way that minimizes the total length of strings (wires) connecting related pieces, while making sure all pieces fit within the board's boundaries.
+"""
+
 from fractions import Fraction
 from random import shuffle
 from typing import List, Tuple
