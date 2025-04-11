@@ -1,7 +1,7 @@
 """
 Placement.py
 
-This code implements a placement algorithm for electronic circuit design, specifically for Field-Programmable Gate Arrays (FPGAs). The purpose of the code is to optimize the placement of circuit components (modules) on a grid-like structure, minimizing the total wire length between connected components.
+This code implements a placement algorithm for electronic circuit design, specifically for Field-Programmable Gate Arrays (FPGAs). The purpose of the code is to optimize the placement of circuit components (modules) on a grid-like structure, minimizing the worst wire length between connected components.
 
 The main input to this algorithm is a netlist, which is a description of the circuit components and their connections. It also takes configuration parameters that define the grid size and other placement constraints. The output is an optimized placement of the circuit components on the grid, represented as coordinates for each module.
 
@@ -11,7 +11,7 @@ The code achieves its purpose through several key steps:
 
 2. An initial random placement of modules is generated on the grid.
 
-3. The algorithm then iteratively improves this placement using a technique called the "No Non-Sense" (NNS) placement method. This involves:
+3. The algorithm then iteratively improves this placement using a technique called the "fairness-centric" (NNS) placement method. This involves:
     - Applying Howard's algorithm to optimize module positions along each axis.
     - Legalizing the placement to ensure modules don't overlap and respect grid constraints.
     - Assigning I/O pads (input/output connections) to the edges of the grid.
