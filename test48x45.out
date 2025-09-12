@@ -1153,7 +1153,7 @@ src/nnsplace/__init__.py              6      0      0      0   100%
 src/nnsplace/array_like.py           23      9      0      0    61%   26, 34, 42, 54, 57-58, 66, 77, 86
 src/nnsplace/bpqueue.py              89     89     28      0     0%   2-289
 src/nnsplace/dllist.py               63     63      2      0     0%   1-330
-src/nnsplace/lict.py                 32      3      4      0    92%   16, 25, 28
+src/nnsplace/map_adapter.py                 32      3      4      0    92%   16, 25, 28
 src/nnsplace/max_cycle_ratio.py      16     16      8      0     0%   1-64
 src/nnsplace/max_mean_cycle.py       15     15      6      0     0%   1-63
 src/nnsplace/min_parametric.py       24      1     10      1    94%   45

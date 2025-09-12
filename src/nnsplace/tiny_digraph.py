@@ -1,5 +1,5 @@
 import networkx as nx
-from mywheel.lict import Lict
+from mywheel.map_adapter import MapAdapter
 
 
 # The DiGraphAdapter class is a subclass of nx.DiGraph that adds a method to return the adjacency list
@@ -15,10 +15,10 @@ class TinyDiGraph(DiGraphAdapter):
     num_nodes = 0
 
     def cheat_node_dict(self):
-        return Lict([dict() for _ in range(self.num_nodes)])
+        return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     def cheat_adjlist_outer_dict(self):
-        return Lict([dict() for _ in range(self.num_nodes)])
+        return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     node_dict_factory = cheat_node_dict
     adjlist_outer_dict_factory = cheat_adjlist_outer_dict
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         for vtx in gr.neighbors(utx):
             print(f"{utx}, {vtx}")
 
-    a = Lict([0] * 8)
+    a = MapAdapter([0] * 8)
     for i in a:
         a[i] = i * i
     for i, vtx in a.items():

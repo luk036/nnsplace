@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Union
 
 import networkx as nx
 from mywheel.array_like import RepeatArray
-from mywheel.lict import Lict
+from mywheel.map_adapter import MapAdapter
 from networkx.readwrite import json_graph
 
 
@@ -63,7 +63,7 @@ class TinyDiGraph(nx.DiGraph):
         Returns:
             _type_: _description_
         """
-        return Lict([dict() for _ in range(self.num_nodes)])
+        return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     def cheat_adjlist_outer_dict(self):
         """_summary_
@@ -71,7 +71,7 @@ class TinyDiGraph(nx.DiGraph):
         Returns:
             _type_: _description_
         """
-        return Lict([dict() for _ in range(self.num_nodes)])
+        return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     node_dict_factory = cheat_node_dict
     adjlist_outer_dict_factory = cheat_adjlist_outer_dict
@@ -97,7 +97,7 @@ class Netlist:
 
     num_pads = 0
     cost_model = 0
-    module_weight: Union[Dict, Lict[Any]]
+    module_weight: Union[Dict, MapAdapter[Any]]
 
     def __init__(
         self, graph: nx.Graph, modules: Union[range, List], nets: Union[range, List]
@@ -116,7 +116,7 @@ class Netlist:
         self.num_modules = len(modules)
         self.num_nets = len(nets)
         # self.net_weight: Optional[Union[Dict, List[int]]] = None
-        # self.module_weight: Optional[Union[Dict, Lict[int, Any]]] = None
+        # self.module_weight: Optional[Union[Dict, MapAdapter[int, Any]]] = None
         self.module_fixed: set = set()
         self.net_weight = RepeatArray(1, len(nets))
 
