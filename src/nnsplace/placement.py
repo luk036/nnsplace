@@ -1,9 +1,15 @@
-"""
-Placement.py
+"""Placement.py
 
-This code implements a placement algorithm for electronic circuit design, specifically for Field-Programmable Gate Arrays (FPGAs). The purpose of the code is to optimize the placement of circuit components (modules) on a grid-like structure, minimizing the worst wire length between connected components.
+This code implements a placement algorithm for electronic circuit design,
+specifically for Field-Programmable Gate Arrays (FPGAs). The purpose of the code
+is to optimize the placement of circuit components (modules) on a grid-like
+structure, minimizing the worst wire length between connected components.
 
-The main input to this algorithm is a netlist, which is a description of the circuit components and their connections. It also takes configuration parameters that define the grid size and other placement constraints. The output is an optimized placement of the circuit components on the grid, represented as coordinates for each module.
+The main input to this algorithm is a netlist, which is a description of the
+circuit components and their connections. It also takes configuration parameters
+that define the grid size and other placement constraints. The output is an
+optimized placement of the circuit components on the grid, represented as
+coordinates for each module.
 
 The code achieves its purpose through several key steps:
 
@@ -54,9 +60,11 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
 
     :param hyprgraph: The `hyprgraph` parameter is of type `Netlist`. It represents a netlist, which is a
         description of the connections between different modules or cells in a circuit design. The `Netlist`
-        class likely has attributes such as `modules`, `num_modules`, `num_pads`, `
+        class likely has attributes such as `modules`, `num_modules`, `num_pads`.
     :type hyprgraph: Netlist
+    :type cfg: NnsConfig
     :return: a flow graph, which is represented as a TinyDiGraph object.
+
     """
     if isinstance(hyprgraph.modules, range):
         gr = TinyDiGraph(num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads)
@@ -96,11 +104,12 @@ class NnsPlacer:
             count[0] - how many cells on each row, including 2 I/O rows
             count[1] - how many cells on each column, including 2 I/O columns
 
-        :param hyprgraph: The `hyprgraph` parameter is a Netlist object, which represents the hypergraph of
-            the circuit design. It contains information about the modules and connections in the circuit
+        :param hyprgraph: The `hyprgraph` parameter is a Netlist object, which represents the
+            hypergraph of the circuit design. It contains information about the modules and
+            connections in the circuit.
         :type hyprgraph: Netlist
-        :param cfg: The `cfg` parameter is an instance of the `NnsConfig` class. It contains configuration
-            settings for the neural network system
+        :param cfg: The `cfg` parameter is an instance of the `NnsConfig` class. It contains
+            configuration settings for the neural network system.
         :type cfg: NnsConfig
         """
         self.hyprgraph = hyprgraph
