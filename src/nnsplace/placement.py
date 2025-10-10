@@ -156,6 +156,27 @@ class NnsPlacer:
             integer value that specifies the axis
         :type axis: int
         :return: an integer value.
+
+        >>> from unittest.mock import Mock
+        >>> cfg = Mock()
+        >>> cfg.delta = [1, 2]
+        >>> cfg.grid = [10, 10] # Add grid attribute to mock config
+        >>> class MockNetlist:
+        ...     def __init__(self):
+        ...         self.modules = range(5)
+        ...         self.num_modules = 5
+        ...         self.num_pads = 1
+        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.nets = ["net1", "net2"]
+        ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
+        ...     def __iter__(self):
+        ...         return iter(self.modules)
+        >>> netlist = MockNetlist()
+        >>> placer = NnsPlacer(netlist, cfg)
+        >>> placer.cost(5, 0)
+        5
+        >>> placer.cost(10, 1)
+        20
         """
         return length * self.cfg.delta[axis]
 
@@ -170,6 +191,28 @@ class NnsPlacer:
             is of type `int`
         :type axis: int
         :return: a `Fraction` object.
+
+        >>> from unittest.mock import Mock
+        >>> from fractions import Fraction
+        >>> cfg = Mock()
+        >>> cfg.delta = [1, 2]
+        >>> cfg.grid = [10, 10] # Add grid attribute to mock config
+        >>> class MockNetlist:
+        ...     def __init__(self):
+        ...         self.modules = range(5)
+        ...         self.num_modules = 5
+        ...         self.num_pads = 1
+        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.nets = ["net1", "net2"]
+        ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
+        ...     def __iter__(self):
+        ...         return iter(self.modules)
+        >>> netlist = MockNetlist()
+        >>> placer = NnsPlacer(netlist, cfg)
+        >>> placer.cost_inv(5, 0)
+        Fraction(5, 1)
+        >>> placer.cost_inv(10, 1)
+        Fraction(5, 1)
         """
         return Fraction(cost, self.cfg.delta[axis])
 
