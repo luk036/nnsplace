@@ -82,7 +82,9 @@ def test_placement():
         height = bbox.height() * 40
         print(
             '<rect class="net" x="{}" y="{}" width="{}" \
-height="{}"/>'.format(x, y, width, height)
+height="{}"/>'.format(
+                x, y, width, height
+            )
         )
 
     assert place[1]["a0"] == 1
