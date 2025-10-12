@@ -1,19 +1,19 @@
-# Fairness-Centric FPGA Placement Algorithm 🎯
+# Fairness-Centric Global Placement Algorithm 🎯
 
 ## Title Slide
 
-### Title: Fairness-Centric FPGA Placement Algorithm ⚖️
+### Title: Fairness-Centric Global Placement Algorithm ⚖️
 ### Speaker: [Your Name] 🎤
 ### Date: [Today's Date] 📅
 
-*   **What is FPGA Placement?** Arranging circuit components (modules) on a grid. 🧩
+*   **What is Global Placement?** Arranging circuit components (modules) on a grid. 🧩
 *   **Goal:** Optimize the placement to minimize wire lengths. 📉
 *   **Focus:** Minimizing the **worst wire length**. 🎯
 *   **Approach:** An iterative, fairness-centric method using Howard's algorithm and bipartite matching. 🔄
 
 ---
 
-## The Problem: FPGA Placement 🧩
+## The Problem: Global Placement 🧩
 
 *   **FPGA:** Field-Programmable Gate Array - a chip whose logic can be configured after manufacturing. 💻
 *   **Placement:** The step in electronic circuit design where logical components (modules like logic gates, flip-flops, DSPs, SRAMs, I/O pads) are assigned physical locations on the FPGA grid. 📍
@@ -91,6 +91,8 @@ classDiagram
 *   Special handling for column 27, which is assumed to be preserved for DSP or SRAM and skipped during this phase. ⚠️
 *   Assertions check against column 27 being used and limits being exceeded initially. ✅
 
+![Initial Placement](./outputs/initial.svg)
+
 ---
 
 ## Core Optimization: Howard's Algorithm 📈
@@ -135,6 +137,8 @@ classDiagram
 *   Positions and row/column counts (`self.count`) are updated based on the matching results. 🔢
 *   `legalize_modules` applies this process to modules, grouping them into buckets based on their coordinate on the *opposite* axis. 🪣
 
+![Placement Legalization](./outputs/after1legalize.svg)
+
 ---
 
 ## I/O Pad Assignment 📍
@@ -163,6 +167,8 @@ classDiagram
 *   The `run` function executes the `optimize` loop for `max_iters`. 🔢
 *   The algorithm keeps track of the best placement found so far (lowest worst wirelength). 🏆
 *   Stopping criteria mentioned: "until no further improvement is possible" or "a specified number of iterations", implemented by checking if the worst wirelength increased in an iteration. If it increased, the placement is reverted to the previous best. ⏹️
+
+![Final Placement](./outputs/final.svg)
 
 ---
 
@@ -196,9 +202,73 @@ classDiagram
 
 ---
 
+## Core Algorithms in Detail
+
+---
+
+### Parametric Search and Howard's Algorithm
+
+The core of the optimization is a parametric search implemented in the `min_parametric` function. This function is a generalization of Howard's algorithm for finding the minimum cycle ratio in a graph.
+
+**Problem Formulation:**
+
+The placement problem is formulated as a search for the minimum `ratio` (worst wirelength) such that there exists a placement `dist` that satisfies the following constraints for all connections `(u, v)`:
+
+`dist[v] - dist[u] <= cost(u, v, ratio)`
+
+**Algorithm:**
+
+1.  **Initialization**: Start with an initial `ratio` (e.g., the worst wirelength of the initial placement).
+2.  **Weight Calculation**: For the given `ratio`, calculate the weight of each edge in the graph using the `calc_weight` function.
+3.  **Negative Cycle Detection**: Use a negative cycle finder (`NegCycleFinder`) to find negative cycles in the graph. The `find_neg_cycle_succ` and `find_neg_cycle_pred` methods are used, which are based on the Bellman-Ford algorithm.
+4.  **Ratio Update**: If a negative cycle is found, it means the current `ratio` is too high. The `zero_cancel` function calculates a new, smaller `ratio` based on the cycle.
+5.  **Iteration**: Repeat steps 2-4 until no negative cycles are found, which means the optimal `ratio` for the current placement has been reached.
+
+The `apply_howard` function in `placement.py` orchestrates this process for each axis.
+
+---
+
+### Bipartite Matching for Legalization
+
+After each optimization step, the placement needs to be "legalized" to ensure that no two modules occupy the same grid location. This is done using a minimum weight bipartite matching algorithm.
+
+**Algorithm:**
+
+1.  **Graph Construction**: For each row or column, a bipartite graph `B` is constructed.
+    *   One set of nodes represents the modules in that row/column.
+    *   The other set of nodes represents the available grid locations.
+2.  **Edge Weights**: An edge is added between a module and a potential location with a weight equal to the change in the worst wirelength if the module is moved to that location.
+3.  **Matching**: The `bipartite.minimum_weight_full_matching` function from `networkx` is used to find a perfect matching with the minimum total weight. This matching represents the optimal assignment of modules to locations that minimizes the impact on the wirelength.
+4.  **Placement Update**: The placement is updated based on the matching result.
+
+This process is implemented in the `legalize` function in `placement.py`.
+
+---
+
+### Placement Flow
+
+The overall placement flow can be visualized as follows:
+
+```mermaid
+graph TD
+    A[Start] --> B{Initial Random Placement};
+    B --> C{Iterative Optimization};
+    C --> D{Apply Howard's Algorithm (X-axis)};
+    D --> E{Legalize Placement (Y-axis)};
+    E --> F{Assign I/O Pads};
+    F --> G{Apply Howard's Algorithm (Y-axis)};
+    G --> H{Legalize Placement (X-axis)};
+    H --> I{Assign I/O Pads};
+    I --> J{Check for Improvement};
+    J -- No Improvement --> K[End];
+    J -- Improvement --> C;
+```
+
+---
+
 ## Summary & Conclusion 📝
 
-*   The Fairness-Centric FPGA Placement Algorithm (NNS) aims to minimize the **worst wire length**. 🎯
+*   The Fairness-Centric Global Placement Algorithm (NNS) aims to minimize the **worst wire length**. 🎯
 *   It uses an iterative process involving:
     *   Initial random placement. 🎲
     *   Applying Howard's algorithm along each axis for optimization. 📈
@@ -208,7 +278,7 @@ classDiagram
 *   The core optimization relies on `min_parametric`, which uses concepts from minimum ratio cycle problems and negative cycle finding. 🔄
 *   Legalization is handled efficiently using minimum weight bipartite matching. ↔️
 *   The process iterates, tracking the best placement by monitoring the worst wirelength. 🔍
-*   This approach provides a structured way to optimize FPGA placement with a focus on ensuring fairness by bounding the maximum wire length. ✨
+*   This approach provides a structured way to optimize Global placement with a focus on ensuring fairness by bounding the maximum wire length. ✨
 
 ---
 

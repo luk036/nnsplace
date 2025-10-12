@@ -30,6 +30,22 @@ To setup develop environment:
     pip3 install git+https://github.com/luk036/physdes-py.git
     python3 setup.py develop
 
+## Output Figures
+
+Here are some sample output figures showing the placement process:
+
+### Initial Placement
+
+![Initial Placement](./outputs/initial.svg)
+
+### After Legalization
+
+![After Legalization](./outputs/after1legalize.svg)
+
+### Final Placement
+
+![Final Placement](./outputs/final.svg)
+
 ## 👀 See also
 
 [ckpttncpp](https://github.com/luk036/ckpttncpp)
