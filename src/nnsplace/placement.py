@@ -278,6 +278,26 @@ class NnsPlacer:
             a graph. Each inner list contains two integers representing the x and y coordinates of a node
         :type place: List[List[int]]
         :return: an integer, which represents the worst wirelength calculated.
+
+        >>> from unittest.mock import Mock
+        >>> cfg = Mock()
+        >>> cfg.delta = [1, 2]
+        >>> cfg.grid = [10, 10]
+        >>> class MockNetlist:
+        ...     def __init__(self):
+        ...         self.modules = range(5)
+        ...         self.num_modules = 5
+        ...         self.num_pads = 1
+        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.nets = ["net1", "net2"]
+        ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
+        ...     def __iter__(self):
+        ...         return iter(self.modules)
+        >>> netlist = MockNetlist()
+        >>> placer = NnsPlacer(netlist, cfg)
+        >>> place = [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]]
+        >>> placer.calc_worst_wirelength(place)
+        6
         """
         worst_wire = 0
         for u in self.gr:
@@ -301,6 +321,26 @@ class NnsPlacer:
             circuit. Each inner list contains the x and y coordinates of a module's position
         :type place: List[List[int]]
         :return: the worst wirelength with respect to Module v.
+
+        >>> from unittest.mock import Mock
+        >>> cfg = Mock()
+        >>> cfg.delta = [1, 2]
+        >>> cfg.grid = [10, 10]
+        >>> class MockNetlist:
+        ...     def __init__(self):
+        ...         self.modules = range(5)
+        ...         self.num_modules = 5
+        ...         self.num_pads = 1
+        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.nets = ["net1", "net2"]
+        ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
+        ...     def __iter__(self):
+        ...         return iter(self.modules)
+        >>> netlist = MockNetlist()
+        >>> placer = NnsPlacer(netlist, cfg)
+        >>> place = [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]]
+        >>> placer.calc_worst_wirelength_v(2, place)
+        6
         """
         worst_wire = 0
         for w in self.gr.neighbors(v):
@@ -367,6 +407,28 @@ class NnsPlacer:
         :type axis: int
         :return: The function `calc_total_hull_length` returns an integer value, which represents the total
             hull length multiplied by `self.cfg.delta[axis]`.
+
+        >>> from unittest.mock import Mock
+        >>> cfg = Mock()
+        >>> cfg.delta = [1, 2]
+        >>> cfg.grid = [10, 10]
+        >>> class MockNetlist:
+        ...     def __init__(self):
+        ...         self.modules = range(5)
+        ...         self.num_modules = 5
+        ...         self.num_pads = 1
+        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.nets = ["net1", "net2"]
+        ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
+        ...     def __iter__(self):
+        ...         return iter(self.modules)
+        >>> netlist = MockNetlist()
+        >>> placer = NnsPlacer(netlist, cfg)
+        >>> dist = [0, 1, 2, 3, 4]
+        >>> placer.calc_total_hull_length(dist, 0)
+        4
+        >>> placer.calc_total_hull_length(dist, 1)
+        8
         """
         total_hull_length = 0
         for net in self.hyprgraph.nets:
@@ -390,6 +452,26 @@ class NnsPlacer:
             points, and the second inner list represents the y-coordinates of the points
         :type place: List[List[int]]
         :return: the sum of the total hull length for two different lists within the `place` list.
+
+        >>> from unittest.mock import Mock
+        >>> cfg = Mock()
+        >>> cfg.delta = [1, 2]
+        >>> cfg.grid = [10, 10]
+        >>> class MockNetlist:
+        ...     def __init__(self):
+        ...         self.modules = range(5)
+        ...         self.num_modules = 5
+        ...         self.num_pads = 1
+        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.nets = ["net1", "net2"]
+        ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
+        ...     def __iter__(self):
+        ...         return iter(self.modules)
+        >>> netlist = MockNetlist()
+        >>> placer = NnsPlacer(netlist, cfg)
+        >>> place = [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]]
+        >>> placer.calc_total_HPWL(place)
+        12
         """
         return self.calc_total_hull_length(place[0], 0) + self.calc_total_hull_length(
             place[1], 1
