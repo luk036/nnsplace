@@ -69,7 +69,7 @@ periphery. (This diagram can be rendered with svgbob)
 
 from fractions import Fraction
 from random import shuffle
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import networkx as nx
 from digraphx.tiny_digraph import TinyDiGraph
@@ -164,6 +164,11 @@ class NnsPlacer:
 
         The modules are placed one by one, filling the grid row by row.
         (This diagram can be rendered with svgbob)
+
+        .. svgbob::
+            :align: center
+            :font-family: Arial
+            :font-size: 12
 
             Grid (e.g., 4x4)
             +---+---+---+---+
@@ -629,26 +634,38 @@ class NnsPlacer:
         (This diagram can be rendered with svgbob)
 
         Before legalization (M1 and M2 overlap):
-        .-------------.
-        | .--.        |
-        | |M1| .--.   |
-        | '--' |M2|   |
-        |   '--'      |
-        | .--.        |
-        | |M3|        |
-        | '--'        |
-        '-------------'
+
+        .. svgbob::
+            :align: center
+            :font-family: Arial
+            :font-size: 12
+
+                .-------------.
+                | .--.        |
+                | |M1| .--.   |
+                | '--' |M2|   |
+                |   '--'      |
+                | .--.        |
+                | |M3|        |
+                | '--'        |
+                '-------------'
 
         After legalization:
-        .-------------.
-        | .--. .--.   |
-        | |M1| |M2|   |
-        | '--' '--'   |
-        |             |
-        | .--.        |
-        | |M3|        |
-        | '--'        |
-        '-------------'
+
+        .. svgbob::
+            :align: center
+            :font-family: Arial
+            :font-size: 12
+
+                .-------------.
+                | .--. .--.   |
+                | |M1| |M2|   |
+                | '--' '--'   |
+                |             |
+                | .--.        |
+                | |M3|        |
+                | '--'        |
+                '-------------'
 
         :param lst: lst is a list of integers. It represents a set of elements that need to be matched with
             positions in the bipartite graph
@@ -851,7 +868,7 @@ class NnsPlacer:
 
     def choose_nearest_iopad_vp(
         self, place: List[List[int]], vp: int, axis: int
-    ) -> Tuple[int, int, int]:
+    ) -> Tuple[int, Optional[int], Optional[int]]:
         """
         The function `choose_nearest_iopad_vp` calculates the position and worst-case distance of the
         nearest I/O pad to a given point on a grid, based on certain conditions and calculations.
@@ -904,6 +921,8 @@ class NnsPlacer:
         worst1 = (max1 - min1 + 1) // 2
         pos1 = (max1 + min1) // (2 * dx)
 
+        pos = None
+        worst = None
         grid_x = self.cfg.grid[axis]
         full0 = self.count[axis][0] >= self.limit[axis]
         full1 = self.count[axis][grid_x + 1] >= self.limit[axis]
@@ -935,7 +954,7 @@ class NnsPlacer:
         #         worst = worst1
         #     else:
         #         choose = None  # no choice
-        return choose, pos, worst
+        return choose, pos, worst # type: ignore
 
     def choose_nearest_iopad(self, place: List[List[int]]) -> None:
         """Choose the nearest iopad in phase 2
