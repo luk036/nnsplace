@@ -1,9 +1,11 @@
-import pytest
-from unittest.mock import Mock
-from nnsplace.placement import create_flow_graph, NnsPlacer
 from fractions import Fraction
-from digraphx.tiny_digraph import TinyDiGraph
+from unittest.mock import Mock
+
 import networkx as nx
+import pytest
+from digraphx.tiny_digraph import TinyDiGraph
+
+from nnsplace.placement import NnsPlacer, create_flow_graph
 
 
 # Mock Netlist class for testing
