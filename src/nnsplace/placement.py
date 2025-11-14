@@ -92,7 +92,6 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
         description of the connections between different modules or cells in a circuit design. The `Netlist`
         class likely has attributes such as `modules`, `num_modules`, `num_pads`.
     :type hyprgraph: Netlist
-    :type cfg: NnsConfig
     :return: a flow graph, which is represented as a TinyDiGraph object.
 
     """
@@ -118,7 +117,13 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
 
 
 class NnsPlacer:
-    """No non-sense placer"""
+    """No non-sense placer (NNS Placer)
+
+    This class implements the core placement algorithm for FPGA designs.
+    It takes a netlist and configuration, then iteratively optimizes module
+    placement on a grid to minimize wire length, handles legalization,
+    and assigns I/O pads.
+    """
 
     # TODO: handle optimization aware of I/O pad, DSP, SRAM
     # TODO: handle ASIC placement
@@ -490,8 +495,8 @@ class NnsPlacer:
             algorithm will be applied. It is an integer value that determines whether the algorithm will be
             applied along the x-axis (0) or the y-axis (1)
         :type axis: int
-        :return: The function `apply_howard` returns a value of type `_type_`. The specific type and
-            description of the return value is not provided in the code snippet.
+        :return: A tuple containing two `Fraction` objects: the iteration count and the worst wirelength achieved.
+        :rtype: Tuple[Fraction, Fraction]
         """
         oppo = axis ^ 1  # opposite axis
 
