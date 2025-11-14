@@ -377,7 +377,7 @@ class NnsPlacer:
             hull = Interval(1000000000000, -1000000000000)
             for v in adjs:
                 hull = hull.hull_with(dist[v])
-            total_hull_length += hull.length()
+            total_hull_length += hull.measure()
         return total_hull_length * self.cfg.delta[axis]
 
     def calc_total_HPWL(self, place: List[List[int]]) -> int:
