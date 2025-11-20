@@ -13,31 +13,32 @@ that define the grid size and other placement constraints. The output is an
 optimized placement of the circuit components on the grid, represented as
 coordinates for each module.
 
-The code achieves its purpose through several key steps:
+The code achieves its purpose through several key steps.
+It starts by creating a flow graph from the input netlist,
+which represents the connections between modules.
+An initial random placement of modules is generated on the grid.
+The algorithm then iteratively improves this placement
+using a technique called the "fairness-centric" (NNS) placement method.
+This involves applying Howard's algorithm to optimize module positions
+along each axis, legalizing the placement to ensure modules don't overlap
+and respect grid constraints, and assigning I/O pads
+(input/output connections) to the edges of the grid.
+The optimization process continues for a specified number of
+iterations or until no further improvement is possible.
 
-1. It starts by creating a flow graph from the input netlist,
-   which represents the connections between modules.
+The code uses several important data structures and algorithms,
+including a graph representation of the circuit (using NetworkX library),
+bipartite matching for legalization, and a parametric minimum
+cost flow algorithm (Howard's algorithm).
 
-2. An initial random placement of modules is generated on the grid.
 
-3. The algorithm then iteratively improves this placement
-   using a technique called the "fairness-centric" (NNS) placement method.
-   This involves:
-    - Applying Howard's algorithm to optimize module positions along each axis.
-    - Legalizing the placement to ensure modules don't overlap
-      and respect grid constraints.
-    - Assigning I/O pads (input/output connections) to the edges of the grid.
-
-4. The optimization process continues for a specified number of iterations or until no further improvement is possible.
-
-The code uses several important data structures and algorithms:
-
-- A graph representation of the circuit (using NetworkX library)
-- Bipartite matching for legalization
-- A parametric minimum cost flow algorithm (Howard's algorithm)
 
 Throughout the process, the code calculates and tries to minimize the
-"worst wirelength" - the longest connection between any two connected modules.
+
+"worst wirelength" - the longest connection between
+
+any two connected modules.
+
 This serves as a metric for the quality of the placement.
 
 The main logic flow involves repeatedly applying optimization steps along both the x and y axes, then legalizing the placement to ensure it respects the grid constraints. This process is repeated until a satisfactory placement is achieved or the maximum number of iterations is reached.
@@ -45,7 +46,9 @@ The main logic flow involves repeatedly applying optimization steps along both t
 In simple terms, you can think of this algorithm as trying to arrange puzzle pieces (circuit modules) on a board (the grid) in a way that minimizes the total length of strings (wires) connecting related pieces, while making sure all pieces fit within the board's boundaries.
 
 The following diagram illustrates the FPGA grid structure with I/O pads on the
-periphery. (This diagram can be rendered with svgbob)
+periphery.
+
+.. svgbob::
 
         .--------------------------------.
         | I/O Pads                       |
@@ -69,7 +72,7 @@ periphery. (This diagram can be rendered with svgbob)
 
 from fractions import Fraction
 from random import shuffle
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 import networkx as nx
 from digraphx.tiny_digraph import TinyDiGraph
@@ -163,7 +166,6 @@ class NnsPlacer:
         to columns and rows in a grid.
 
         The modules are placed one by one, filling the grid row by row.
-        (This diagram can be rendered with svgbob)
 
         .. svgbob::
             :align: center
@@ -631,7 +633,6 @@ class NnsPlacer:
         """
         The `legalize` function solves the bipartite matching problem to reassign positions in a grid based
         on a given list and placement information. It moves modules to prevent overlaps.
-        (This diagram can be rendered with svgbob)
 
         Before legalization (M1 and M2 overlap):
 
@@ -954,7 +955,7 @@ class NnsPlacer:
         #         worst = worst1
         #     else:
         #         choose = None  # no choice
-        return choose, pos, worst # type: ignore
+        return choose, pos, worst
 
     def choose_nearest_iopad(self, place: List[List[int]]) -> None:
         """Choose the nearest iopad in phase 2
@@ -990,18 +991,37 @@ class NnsPlacer:
             if full_x and full_y:
                 # Not enough I/O area!!!
                 raise ValueError
-            else:
-                if (full_x, worstx) <= (full_y, worsty):
+
+            if full_x:  # choose y
+                if which_y == 0:
+                    place[1][vp] = 0
+                else:
+                    place[1][vp] = grid_y + 1
+                assert posx is not None
+                place[0][vp] = posx
+            elif full_y:  # choose x
+                if which_x == 0:
+                    place[0][vp] = 0
+                else:
+                    place[0][vp] = grid_x + 1
+                assert posy is not None
+                place[1][vp] = posy
+            else:  # both are not full
+                assert worstx is not None
+                assert worsty is not None
+                if worstx <= worsty:  # choose x
                     if which_x == 0:
                         place[0][vp] = 0
                     else:
                         place[0][vp] = grid_x + 1
+                    assert posy is not None
                     place[1][vp] = posy
-                else:
+                else:  # choose y
                     if which_y == 0:
                         place[1][vp] = 0
                     else:
                         place[1][vp] = grid_y + 1
+                    assert posx is not None
                     place[0][vp] = posx
 
             # if which_x is not None:

@@ -15,9 +15,23 @@ class TinyDiGraph(DiGraphAdapter):
     num_nodes = 0
 
     def cheat_node_dict(self):
+        """
+        The function `cheat_node_dict` returns a `MapAdapter` object that contains a list of dictionaries,
+        where the number of dictionaries is equal to the number of nodes in the graph.
+        
+        Returns:
+            A MapAdapter object.
+        """
         return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     def cheat_adjlist_outer_dict(self):
+        """
+        The function `cheat_adjlist_outer_dict` returns a `MapAdapter` object that contains a list of
+        dictionaries, where the number of dictionaries is equal to the number of nodes in the graph.
+        
+        Returns:
+            A MapAdapter object.
+        """
         return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     node_dict_factory = cheat_node_dict
