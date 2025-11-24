@@ -8,8 +8,8 @@
 # serve to show the default.
 
 import os
-import shutil
 import sys
+import shutil
 
 # -- Path setup --------------------------------------------------------------
 
@@ -28,10 +28,7 @@ sys.path.insert(0, os.path.join(__location__, "../src"))
 # setup.py install" in the RTD Advanced Settings.
 # Additionally it helps us to avoid running apidoc manually
 
-try:  # for Sphinx >= 1.7
-    from sphinx.ext import apidoc
-except ImportError:
-    from sphinx import apidoc
+from sphinx.ext import apidoc
 
 output_dir = os.path.join(__location__, "api")
 module_dir = os.path.join(__location__, "../src/nnsplace")
@@ -89,7 +86,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "nnsplace"
-copyright = "2021, Wai-Shing Luk"
+copyright = "2025, Wai-Shing Luk"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -277,7 +274,7 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
-    "setuptools": ("https://setuptools.readthedocs.io/en/stable/", None),
+    "setuptools": ("https://setuptools.pypa.io/en/stable/", None),
     "pyscaffold": ("https://pyscaffold.org/en/stable", None),
 }
 
