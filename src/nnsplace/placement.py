@@ -47,24 +47,27 @@ In simple terms, you can think of this algorithm as trying to arrange puzzle pie
 The following diagram illustrates the FPGA grid structure with I/O pads on the
 periphery. (This diagram can be rendered with svgbob)
 
-        .--------------------------------.
-        | I/O Pads                       |
-        | .--. .--. .--. .--. .--. .--. |
-        | |P | |P | |P | |P | |P | |P | |
-        | '--' '--' '--' '--' '--' '--' |
-        | .--.--------------------.--. |
-        | |P |  Core Grid         |P | |
-        | '--'--------------------'--' |
-        | .--.--------------------.--. |
-        | |P |                    |P | |
-        | '--'--------------------'--' |
-        | .--.--------------------.--. |
-        | |P |                    |P | |
-        | '--'--------------------'--' |
-        | .--. .--. .--. .--. .--. .--. |
-        | |P | |P | |P | |P | |P | |P | |
-        | '--' '--' '--' '--' '--' '--' |
-        '--------------------------------'
+.. svgbob::
+   :align: center
+
+   .--------------------------------.
+   | I/O Pads                       |
+   | .--. .--. .--. .--. .--. .--. |
+   | |P | |P | |P | |P | |P | |P | |
+   | '--' '--' '--' '--' '--' '--' |
+   | .--.--------------------.--. |
+   | |P |  Core Grid         |P | |
+   | '--'--------------------'--' |
+   | .--.--------------------.--. |
+   | |P |                    |P | |
+   | '--'--------------------'--' |
+   | .--.--------------------.--. |
+   | |P |                    |P | |
+   | '--'--------------------'--' |
+   | .--. .--. .--. .--. .--. .--. |
+   | |P | |P | |P | |P | |P | |P | |
+   | '--' '--' '--' '--' '--' '--' |
+   '--------------------------------'
 """
 
 from fractions import Fraction
@@ -162,19 +165,19 @@ class NnsPlacer:
         The `init_placement` function initializes the placement of nodes in a hypergraph by assigning them
         to columns and rows in a grid.
 
-        The modules are placed one by one, filling the grid row by row.
-        (This diagram can be rendered with svgbob)
+        .. svgbob::
+           :align: center
 
-            Grid (e.g., 4x4)
-            +---+---+---+---+
-            | M | M | M | M |
-            +---+---+---+---+
-            | M | M | M | M |
-            +---+---+---+---+
-            | M | M |...|   |
-            +---+---+---+---+
-            |   |   |   |   |
-            +---+---+---+---+
+           Grid (e.g., 4x4)
+           +---+---+---+---+
+           | M | M | M | M |
+           +---+---+---+---+
+           | M | M | M | M |
+           +---+---+---+---+
+           | M | M |...|   |
+           +---+---+---+---+
+           |   |   |   |   |
+           +---+---+---+---+
 
         :param place: The "place" parameter is a 2D list representing the placement solution. It has two
             rows and each column represents the placement of a vertex in the hypergraph. The first row
@@ -626,29 +629,31 @@ class NnsPlacer:
         """
         The `legalize` function solves the bipartite matching problem to reassign positions in a grid based
         on a given list and placement information. It moves modules to prevent overlaps.
-        (This diagram can be rendered with svgbob)
 
-        Before legalization (M1 and M2 overlap):
-        .-------------.
-        | .--.        |
-        | |M1| .--.   |
-        | '--' |M2|   |
-        |   '--'      |
-        | .--.        |
-        | |M3|        |
-        | '--'        |
-        '-------------'
+        .. svgbob::
+           :align: center
 
-        After legalization:
-        .-------------.
-        | .--. .--.   |
-        | |M1| |M2|   |
-        | '--' '--'   |
-        |             |
-        | .--.        |
-        | |M3|        |
-        | '--'        |
-        '-------------'
+           Before legalization (M1 and M2 overlap):
+           .-------------.
+           | .--.        |
+           | |M1| .--.   |
+           | '--' |M2|   |
+           |   '--'      |
+           | .--.        |
+           | |M3|        |
+           | '--'        |
+           '-------------'
+
+           After legalization:
+           .-------------.
+           | .--. .--.   |
+           | |M1| |M2|   |
+           | '--' '--'   |
+           |             |
+           | .--.        |
+           | |M3|        |
+           | '--'        |
+           '-------------'
 
         :param lst: lst is a list of integers. It represents a set of elements that need to be matched with
             positions in the bipartite graph
