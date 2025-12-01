@@ -2,7 +2,7 @@ from nnsplace.bpqueue import BPQueue
 from nnsplace.dllist import Dllink
 
 
-def test_bpqueue():
+def test_bpqueue() -> None:
     try:
         _ = BPQueue(-10.4, 10.4)
     except TypeError:

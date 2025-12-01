@@ -1,7 +1,7 @@
 import networkx as nx
 
 
-def test_Graph():
+def test_Graph() -> None:
     gra = nx.Graph()
     gra.add_nodes_from([0, 1, 2, 3])
     gra.add_edge(0, 1)

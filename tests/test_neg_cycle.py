@@ -17,7 +17,7 @@ class MockGraph:
         return iter(sorted(list(nodes)))
 
 
-def test_find_cycle_simple():
+def test_find_cycle_simple() -> None:
     edges = [("A", "B"), ("B", "C"), ("C", "A")]
     graph = MockGraph(edges)
     finder = NegCycleFinder(graph)
@@ -27,7 +27,7 @@ def test_find_cycle_simple():
     assert "A" in cycles or "B" in cycles or "C" in cycles
 
 
-def test_find_cycle_no_cycle():
+def test_find_cycle_no_cycle() -> None:
     edges = [("A", "B"), ("B", "C")]
     graph = MockGraph(edges)
     finder = NegCycleFinder(graph)
@@ -37,7 +37,7 @@ def test_find_cycle_no_cycle():
     assert not cycles
 
 
-def test_find_cycle_multiple_cycles():
+def test_find_cycle_multiple_cycles() -> None:
     edges = [("A", "B"), ("B", "A"), ("C", "D"), ("D", "C")]
     graph = MockGraph(edges)
     finder = NegCycleFinder(graph)
@@ -48,7 +48,7 @@ def test_find_cycle_multiple_cycles():
     assert ("A" in cycles and "C" in cycles) or ("B" in cycles and "D" in cycles)
 
 
-def test_cycle_list():
+def test_cycle_list() -> None:
     edges = [("A", "B"), ("B", "C"), ("C", "A")]
     graph = MockGraph(edges)
     finder = NegCycleFinder(graph)
@@ -58,7 +58,7 @@ def test_cycle_list():
     assert set(cycle) == set([("B", "A"), ("C", "B"), ("A", "C")])
 
 
-def test_relax_pred():
+def test_relax_pred() -> None:
     edges = [("A", "B"), ("B", "C"), ("C", "A")]
     graph = MockGraph(edges)
     finder = NegCycleFinder(graph)
@@ -84,7 +84,7 @@ def test_relax_pred():
     assert finder.pred == {"B": "A", "C": "B"}
 
 
-def test_relax_succ():
+def test_relax_succ() -> None:
     edges = [("A", "B"), ("B", "A")]
     graph = MockGraph(edges)
     finder = NegCycleFinder(graph)
@@ -110,7 +110,7 @@ def test_relax_succ():
     }  # Depending on edge iteration order
 
 
-def test_find_neg_cycle_pred_with_cycle():
+def test_find_neg_cycle_pred_with_cycle() -> None:
     edges = [("A", "B"), ("B", "C"), ("C", "A")]
     graph = MockGraph(edges)
     finder = NegCycleFinder(graph)
@@ -135,7 +135,7 @@ def test_find_neg_cycle_pred_with_cycle():
     assert set(cycles[0]) == set([("C", "A"), ("B", "C"), ("A", "B")])
 
 
-def test_find_neg_cycle_pred_no_cycle():
+def test_find_neg_cycle_pred_no_cycle() -> None:
     edges = [("A", "B"), ("B", "C")]
     graph = MockGraph(edges)
     finder = NegCycleFinder(graph)
@@ -157,7 +157,7 @@ def test_find_neg_cycle_pred_no_cycle():
     assert not cycles
 
 
-def test_find_neg_cycle_succ_with_cycle():
+def test_find_neg_cycle_succ_with_cycle() -> None:
     edges = [("A", "B"), ("B", "C"), ("C", "A")]
     graph = MockGraph(edges)
     finder = NegCycleFinder(graph)
@@ -182,7 +182,7 @@ def test_find_neg_cycle_succ_with_cycle():
     assert set(cycles[0]) == set([("B", "A"), ("C", "B"), ("A", "C")])
 
 
-def test_find_neg_cycle_succ_no_cycle():
+def test_find_neg_cycle_succ_no_cycle() -> None:
     edges = [("A", "B"), ("B", "C")]
     graph = MockGraph(edges)
     finder = NegCycleFinder(graph)

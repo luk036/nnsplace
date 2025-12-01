@@ -7,7 +7,7 @@ from nnsplace.netlist import read_json
 from nnsplace.placement import NnsPlacer
 from nnsplace.placement_cfg import NnsConfig
 
-# def test_drawf():
+# def test_drawf() -> None:
 #     H = create_drawf()
 #     placer = NnsPlacer(H, NnsConfig(10, 10, 40, 40))
 #     place = [dict(), dict()]
@@ -20,7 +20,7 @@ from nnsplace.placement_cfg import NnsConfig
 #     # assert place[1]["a1"] == 0
 
 
-def test_placement():
+def test_placement() -> None:
     seed(831)
     H = read_json("testcases/p1.json")
     n = H.number_of_modules()

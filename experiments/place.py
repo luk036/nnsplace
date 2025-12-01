@@ -7,7 +7,7 @@ from nnsplace.placement_cfg import NnsConfig
 # from physdes.interval import Interval
 
 
-def test_placement():
+def test_placement() -> None:
     H = read_json("testcases/p1.json")
     placer = NnsPlacer(H, NnsConfig(100, 100, 40, 40))
     place = [[], []]

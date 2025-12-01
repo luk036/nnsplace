@@ -1,7 +1,7 @@
 from nnsplace.dllist import Dllink, Dllist
 
 
-def test_dllink():
+def test_dllink() -> None:
     L1 = Dllist()
     L2 = Dllist()
     d = Dllink()

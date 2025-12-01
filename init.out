@@ -12,7 +12,7 @@ tests/test_place.py::test_placement FAILED                               [100%]
 =================================== FAILURES ===================================
 ________________________________ test_placement ________________________________
 
-    def test_placement():
+    def test_placement() -> None:
         H = read_json("testcases/p1.json")
         # count_2 = 0
         # count_3 = 0
