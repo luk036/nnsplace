@@ -18,7 +18,7 @@ class TinyDiGraph(DiGraphAdapter):
         """
         The function `cheat_node_dict` returns a `MapAdapter` object that contains a list of dictionaries,
         where the number of dictionaries is equal to the number of nodes in the graph.
-        
+
         Returns:
             A MapAdapter object.
         """
@@ -28,7 +28,7 @@ class TinyDiGraph(DiGraphAdapter):
         """
         The function `cheat_adjlist_outer_dict` returns a `MapAdapter` object that contains a list of
         dictionaries, where the number of dictionaries is equal to the number of nodes in the graph.
-        
+
         Returns:
             A MapAdapter object.
         """
