@@ -2,7 +2,7 @@
 from .neg_cycle import NegCycleFinder
 
 
-def max_parametric(gr, r, d, zero_cancel, dist,
+def max_parametric(ugraph, r, d, zero_cancel, dist,
                    update_ok, pick_one_only=False, io=False):
     """maximum parametric problem:
 
@@ -27,7 +27,7 @@ def max_parametric(gr, r, d, zero_cancel, dist,
     def get_weight(e):
         return d(r, e)
 
-    S = NegCycleFinder(gr, io)
+    S = NegCycleFinder(ugraph, io)
     r_min = r
     C = None
     reverse = False

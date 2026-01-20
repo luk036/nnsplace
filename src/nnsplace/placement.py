@@ -102,24 +102,24 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
 
     """
     if isinstance(hyprgraph.modules, range):
-        gr = TinyDiGraph(num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads)
-        gr.init_nodes(hyprgraph.num_modules)
+        ugraph = TinyDiGraph(num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads)
+        ugraph.init_nodes(hyprgraph.num_modules)
     else:
-        gr = nx.DiGraph(num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads)
-        gr.add_nodes_from(hyprgraph.modules)
+        ugraph = nx.DiGraph(num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads)
+        ugraph.add_nodes_from(hyprgraph.modules)
 
     # Assume a list of modules = a list of cells appends with a list of pads
     # num_cells = hyprgraph.num_modules - hyprgraph.num_pads
 
     for net in hyprgraph.nets:
-        for v1 in hyprgraph.gr[net]:
+        for v1 in hyprgraph.ugraph[net]:
             # assume return an integer
-            for v2 in hyprgraph.gr[net]:
+            for v2 in hyprgraph.ugraph[net]:
                 if hyprgraph.module_weight[v2] == 0:  # whatever check io pad
                     continue  # ignore pad to pad connections
-                gr.add_edge(v1, v2)
-                gr.add_edge(v2, v1)
-    return gr
+                ugraph.add_edge(v1, v2)
+                ugraph.add_edge(v2, v1)
+    return ugraph
 
 
 class NnsPlacer:
@@ -161,7 +161,7 @@ class NnsPlacer:
         ]  # two lists
         self.limit = [cfg.grid[1], cfg.grid[0] - 1]
         # assume col 27 is preserved for DSP or SRAM
-        self.gr = create_flow_graph(hyprgraph)
+        self.ugraph = create_flow_graph(hyprgraph)
 
     def init_placement(self, place: List[List[int]]) -> None:
         """
@@ -230,7 +230,7 @@ class NnsPlacer:
         ...         self.modules = range(5)
         ...         self.num_modules = 5
         ...         self.num_pads = 1
-        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.ugraph = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
         ...         self.nets = ["net1", "net2"]
         ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
         ...     def __iter__(self):
@@ -266,7 +266,7 @@ class NnsPlacer:
         ...         self.modules = range(5)
         ...         self.num_modules = 5
         ...         self.num_pads = 1
-        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.ugraph = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
         ...         self.nets = ["net1", "net2"]
         ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
         ...     def __iter__(self):
@@ -299,7 +299,7 @@ class NnsPlacer:
         ...         self.modules = range(5)
         ...         self.num_modules = 5
         ...         self.num_pads = 1
-        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.ugraph = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
         ...         self.nets = ["net1", "net2"]
         ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
         ...     def __iter__(self):
@@ -311,8 +311,8 @@ class NnsPlacer:
         6
         """
         worst_wire = 0
-        for u in self.gr:
-            for v in self.gr.neighbors(u):
+        for u in self.ugraph:
+            for v in self.ugraph.neighbors(u):
                 if u > v:  # only need to calculate one of the two edges
                     continue
                 gruv = self.cost(abs(place[0][v] - place[0][u]), 0) + self.cost(
@@ -342,7 +342,7 @@ class NnsPlacer:
         ...         self.modules = range(5)
         ...         self.num_modules = 5
         ...         self.num_pads = 1
-        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.ugraph = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
         ...         self.nets = ["net1", "net2"]
         ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
         ...     def __iter__(self):
@@ -354,7 +354,7 @@ class NnsPlacer:
         6
         """
         worst_wire = 0
-        for w in self.gr.neighbors(v):
+        for w in self.ugraph.neighbors(v):
             gruv = self.cost(abs(place[0][v] - place[0][w]), 0) + self.cost(
                 abs(place[1][v] - place[1][w]), 1
             )
@@ -373,7 +373,7 @@ class NnsPlacer:
     #         _type_: _description_
     #     """
     #     worst_wire = 0
-    #     for u, v in self.gr.edges():
+    #     for u, v in self.ugraph.edges():
     #         if u > v:  # only need to calculate one of the two edges
     #             continue
     #         gruv = abs(place[axis][v] - place[axis][u])
@@ -393,7 +393,7 @@ class NnsPlacer:
     #     total_hpwl_x = 0
     #     total_hpwl_y = 0
     #     for net in self.hyprgraph.nets:
-    #         adjs = iter(self.hyprgraph.gr[net])
+    #         adjs = iter(self.hyprgraph.ugraph[net])
     #         v = next(adjs)
     #         p = Point(place[0][v], place[1][v])
     #         bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
@@ -428,7 +428,7 @@ class NnsPlacer:
         ...         self.modules = range(5)
         ...         self.num_modules = 5
         ...         self.num_pads = 1
-        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.ugraph = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
         ...         self.nets = ["net1", "net2"]
         ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
         ...     def __iter__(self):
@@ -443,7 +443,7 @@ class NnsPlacer:
         """
         total_hull_length = 0
         for net in self.hyprgraph.nets:
-            adjs = iter(self.hyprgraph.gr[net])
+            adjs = iter(self.hyprgraph.ugraph[net])
             # v = next(adjs)
             # p = dist[v]
             # hull = Interval(p, p)
@@ -473,7 +473,7 @@ class NnsPlacer:
         ...         self.modules = range(5)
         ...         self.num_modules = 5
         ...         self.num_pads = 1
-        ...         self.gr = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
+        ...         self.ugraph = {"net1": [0, 1, 2], "net2": [2, 3, 4]}
         ...         self.nets = ["net1", "net2"]
         ...         self.module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}
         ...     def __iter__(self):
@@ -541,7 +541,7 @@ class NnsPlacer:
             :return: The function `calc_weight` returns an integer value.
             """
             u, v = edge
-            temp = self.cost_inv(beta - self.gr[u][v]["cost"], axis)
+            temp = self.cost_inv(beta - self.ugraph[u][v]["cost"], axis)
             return temp.numerator // temp.denominator
 
         def zero_cancel(cycle: List[Tuple[int, int]]) -> Fraction:
@@ -557,21 +557,21 @@ class NnsPlacer:
             :return: The function `zero_cancel` returns a `Fraction` object, which represents the ratio of the
                 total cost of the cycle to the length of the cycle.
             """
-            total_cost = sum(self.gr[u][v]["cost"] for (u, v) in cycle)
+            total_cost = sum(self.ugraph[u][v]["cost"] for (u, v) in cycle)
             return Fraction(total_cost, len(cycle))
 
         # TODO: should provide an API for calling the (monotone) wire-model
         # dt[0] * abs(p[0][i] - p[0][j]) + dt[1] * abs(p[1][i] - p[1][j]) < r
         worst = 0
-        for u in self.gr:
-            for v in self.gr.neighbors(u):
+        for u in self.ugraph:
+            for v in self.ugraph.neighbors(u):
                 gruv = abs(place[oppo][v] - place[oppo][u])
-                self.gr[u][v]["cost"] = self.cost(gruv, oppo)
+                self.ugraph[u][v]["cost"] = self.cost(gruv, oppo)
                 if worst < gruv:
                     worst = gruv
         # initial worst/2 or 0 or others?
         return min_parametric(
-            self.gr, Fraction(worst), calc_weight, zero_cancel, place[axis], update_ok
+            self.ugraph, Fraction(worst), calc_weight, zero_cancel, place[axis], update_ok
         )
 
     def add_bipartite_edge(
@@ -734,7 +734,7 @@ class NnsPlacer:
         """
         bucket: List[List[int]] = [list() for _ in range(self.cfg.grid[axis ^ 1] + 2)]
         dist = place[axis ^ 1]
-        for v in self.gr:
+        for v in self.ugraph:
             bucket[dist[v]].append(v)
         for lst in filter(lambda lst: lst, bucket):  # lst is not null or empty
             self.legalize(lst, place, axis)
@@ -752,7 +752,7 @@ class NnsPlacer:
     #     posx = 0
     #     posy = 0
     #     count = 0
-    #     for vi in self.gr[vp]:
+    #     for vi in self.ugraph[vp]:
     #         # if vi >= self.num_cells:  # only non-io modules
     #         #     continue
     #         posx += place[0][vi]
@@ -782,7 +782,7 @@ class NnsPlacer:
     #         # loop through io pad
     #         vp = self.hyprgraph.modules[i]
     #         posx, posy = self.calc_average_position(vp, place)
-    #         # nbrs = list(self.gr.neighbors(vp))
+    #         # nbrs = list(self.ugraph.neighbors(vp))
     #         # TODO: pad attached to more than one node
     #         # v = nbrs[0]  # workaround: take the first one only
     #
@@ -895,7 +895,7 @@ class NnsPlacer:
         min0 = 1000000000000
         max1 = -1000000000000
         min1 = 1000000000000
-        for vi in self.gr.neighbors(vp):
+        for vi in self.ugraph.neighbors(vp):
             li0 = dx * place[axis][vi]
             li1 = dx * (grid - place[axis][vi])
             ui = dy * place[oppo][vi]

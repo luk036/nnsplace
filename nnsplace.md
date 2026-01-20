@@ -185,7 +185,7 @@ classDiagram
 ## `digraphx` Usage Example 💻
 
 *   The `apply_howard` function calls `min_parametric`. 📞
-*   `min_parametric` takes the flow graph (`self.gr`), an initial ratio (`Fraction(worst)`), functions to calculate edge weight (`calc_weight`) and zero cancellation (`zero_cancel`), the placement on the current axis (`place[axis]`), and an update check function (`update_ok`). 📋
+*   `min_parametric` takes the flow graph (`self.ugraph`), an initial ratio (`Fraction(worst)`), functions to calculate edge weight (`calc_weight`) and zero cancellation (`zero_cancel`), the placement on the current axis (`place[axis]`), and an update check function (`update_ok`). 📋
 *   `calc_weight` uses the current beta (ratio) and edge cost to compute a weight. ⚖️
 *   `zero_cancel` calculates the ratio for a cycle based on total cost and cycle length. 🔄
 *   `update_ok` checks if moving a module to a new position is valid (e.g., not outside grid, not exceeding row/column limits) before updating the internal counts (`self.count`). ✅

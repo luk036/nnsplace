@@ -48,7 +48,7 @@ def test_placement() -> None:
 
 
 #     for net in H.nets:
-#         adjs = iter(H.gr[net])
+#         adjs = iter(H.ugraph[net])
 #         v = next(adjs)
 #         p = Point(place[0][v], place[1][v])
 #         bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))

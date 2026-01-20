@@ -70,14 +70,14 @@ ________________________________ test_placement ________________________________
                   .format(place[0][vp] * 40, place[1][vp] * 40))
         for i in range(n - H.num_pads, n):
             vp = H.modules[i]
-            nbrs = list(placer.gr.neighbors(vp))
+            nbrs = list(placer.ugraph.neighbors(vp))
             v = nbrs[0]
             print("<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\"/>".format(
                   place[0][vp] * 40 + 20, place[1][vp] * 40 + 20,
                   place[0][v] * 40 + 20, place[1][v] * 40 + 20))
 
     #     for net in H.nets:
-    #         adjs = iter(H.gr[net])
+    #         adjs = iter(H.ugraph[net])
     #         v = next(adjs)
     #         p = Point(place[0][v], place[1][v])
     #         bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))

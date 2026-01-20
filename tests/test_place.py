@@ -60,9 +60,9 @@ def test_placement() -> None:
         )
     # for i in range(num_cells, n):
     #     vp = H.modules[i]
-    #     # nbrs = list(placer.gr.neighbors(vp))
+    #     # nbrs = list(placer.ugraph.neighbors(vp))
     #     # v = nbrs[0]
-    #     for vi in placer.gr[vp]:
+    #     for vi in placer.ugraph[vp]:
     #         # if vi >= num_cells:  # only non-io modules
     #         #     continue
     #         print("<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\"/>".format(
@@ -70,7 +70,7 @@ def test_placement() -> None:
     #               place[0][vi] * 40 + 20, place[1][vi] * 40 + 20))
 
     # for net in H.nets:
-    #     adjs = iter(H.gr[net])
+    #     adjs = iter(H.ugraph[net])
     #     v = next(adjs)
     #     px = place[0][v]
     #     py = place[1][v]

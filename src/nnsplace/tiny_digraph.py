@@ -52,14 +52,14 @@ class TinyDiGraph(DiGraphAdapter):
 
 
 if __name__ == "__main__":
-    gr = TinyDiGraph()
-    gr.init_nodes(1000)
-    gr.add_edge(2, 1)
-    print(gr.number_of_nodes())
-    print(gr.number_of_edges())
+    ugraph = TinyDiGraph()
+    ugraph.init_nodes(1000)
+    ugraph.add_edge(2, 1)
+    print(ugraph.number_of_nodes())
+    print(ugraph.number_of_edges())
 
-    for utx in gr:
-        for vtx in gr.neighbors(utx):
+    for utx in ugraph:
+        for vtx in ugraph.neighbors(utx):
             print(f"{utx}, {vtx}")
 
     a = MapAdapter([0] * 8)

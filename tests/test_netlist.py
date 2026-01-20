@@ -59,7 +59,7 @@ def test_readjson() -> None:
     count_3 = 0
     count_rest = 0
     for net in hyprgraph.nets:
-        deg = hyprgraph.gr.degree(net)
+        deg = hyprgraph.ugraph.degree(net)
         if deg == 2:
             count_2 += 1
         elif deg == 3:

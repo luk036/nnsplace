@@ -25,17 +25,17 @@ def create_flow_graph(hyprgraph: Netlist):
     Returns:
         _type_: _description_
     """
-    gr = TinyDiGraph(num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads)
-    gr.init_nodes(hyprgraph.num_modules)
-    # gr.add_nodes_from(v for v in hyprgraph)
+    ugraph = TinyDiGraph(num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads)
+    ugraph.init_nodes(hyprgraph.num_modules)
+    # ugraph.add_nodes_from(v for v in hyprgraph)
     for net in hyprgraph.nets:
-        for v1 in hyprgraph.gr[net]:  # assume return an integer
-            for v2 in hyprgraph.gr[net]:
+        for v1 in hyprgraph.ugraph[net]:  # assume return an integer
+            for v2 in hyprgraph.ugraph[net]:
                 if v1 == v2:
                     continue
-                gr.add_edge(v1, v2)
-                gr.add_edge(v2, v1)
-    return gr
+                ugraph.add_edge(v1, v2)
+                ugraph.add_edge(v2, v1)
+    return ugraph
 
 
 class NnsPlacer:
@@ -54,7 +54,7 @@ class NnsPlacer:
         self.count = ([0 for _ in range(cfg.grid[0]+2)],
                       [0 for _ in range(cfg.grid[1]+2)])  # two lists
         # plus 2 I/O
-        self.gr = create_flow_graph(hyprgraph)
+        self.ugraph = create_flow_graph(hyprgraph)
         self.bucket: List[List] = [[], []]
         self.bucket[0] = [list() for _ in range(self.cfg.grid[1] + 2)]
         self.bucket[1] = [list() for _ in range(self.cfg.grid[0] + 2)]
@@ -91,7 +91,7 @@ class NnsPlacer:
             _type_: _description_
         """
         worst_wire = 0
-        for u, v in self.gr.edges():
+        for u, v in self.ugraph.edges():
             if u > v:  # only need to calculate one of the two edges
                 continue
             gruv = abs(place[0][v] - place[0][u]) * self.cfg.delta[0] \
@@ -110,7 +110,7 @@ class NnsPlacer:
             _type_: _description_
         """
         worst_wire = 0
-        for u in self.gr.neighbors(v):
+        for u in self.ugraph.neighbors(v):
             gruv = abs(place[0][v] - place[0][u]) * self.cfg.delta[0] \
                 + abs(place[1][v] - place[1][u]) * self.cfg.delta[1]
             if worst_wire < gruv:
@@ -128,7 +128,7 @@ class NnsPlacer:
     #         _type_: _description_
     #     """
     #     worst_wire = 0
-    #     for u, v in self.gr.edges():
+    #     for u, v in self.ugraph.edges():
     #         if u > v:  # only need to calculate one of the two edges
     #             continue
     #         gruv = abs(place[axis][v] - place[axis][u])
@@ -148,7 +148,7 @@ class NnsPlacer:
     #     total_hpwl_x = 0
     #     total_hpwl_y = 0
     #     for net in self.hyprgraph.nets:
-    #         adjs = iter(self.hyprgraph.gr[net])
+    #         adjs = iter(self.hyprgraph.ugraph[net])
     #         v = next(adjs)
     #         p = Point(place[0][v], place[1][v])
     #         bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
@@ -172,7 +172,7 @@ class NnsPlacer:
         """
         total_hull_length = 0
         for net in self.hyprgraph.nets:
-            adjs = iter(self.hyprgraph.gr[net])
+            adjs = iter(self.hyprgraph.ugraph[net])
             v = next(adjs)
             p = dist[v]
             hull = Interval(p, p)
@@ -218,7 +218,7 @@ class NnsPlacer:
             count[p] -= 1
             return True
 
-        # set_default(self.gr, 'time', 1.0 / self.cfg.delta[dir])
+        # set_default(self.ugraph, 'time', 1.0 / self.cfg.delta[dir])
         # time = 1.0 / self.cfg.delta[axis1]
         # TODO: should provide an API for calling the (monotone) wire-model
         # TODO: should use `Fraction` to avoid floating point arithmetic
@@ -226,17 +226,17 @@ class NnsPlacer:
         factor = self.cfg.delta[axis2] / self.cfg.delta[axis1]
         dist = place[axis2]
         worst = 0
-        for u, v in self.gr.edges():
+        for u, v in self.ugraph.edges():
             # TODO: Find out how to formulate?
             gruv = abs(dist[v] - dist[u])
-            self.gr[u][v]['weight'] = gruv
-            self.gr[u][v]['cost'] = gruv * factor
-            # self.gr[u][v]['cost'] = 0
-            # self.gr[u][v]['time'] = time
+            self.ugraph[u][v]['weight'] = gruv
+            self.ugraph[u][v]['cost'] = gruv * factor
+            # self.ugraph[u][v]['cost'] = 0
+            # self.ugraph[u][v]['time'] = time
             if worst < gruv:
                 worst = gruv
         # r0 = self.calc_worst_wirelength_axis(place, oppo)
-        return max_mean_cycle(self.gr, place[axis1], update_ok,
+        return max_mean_cycle(self.ugraph, place[axis1], update_ok,
                               0, care_io=care_io)
 
     def add_bipartite_edge(self, lst: List[int], B: nx.Graph,
@@ -384,14 +384,14 @@ class NnsPlacer:
             # place0 = 0
             # place1 = 0
             # countw = 0
-            # for w in self.gr.neighbors(vp):
+            # for w in self.ugraph.neighbors(vp):
             #     place0 += place[0][w]
             #     place1 += place[1][w]
             #     countw += 1
             # place0 //= countw
             # place1 //= countw
 
-            nbrs = list(self.gr.neighbors(vp))
+            nbrs = list(self.ugraph.neighbors(vp))
             # TODO: pad attached to more than one node
             v = nbrs[0]  # workaround: take the first one only
             if place[0][v] <= half_x and self.count[0][0] < grid_y:

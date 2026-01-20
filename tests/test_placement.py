@@ -10,11 +10,11 @@ from nnsplace.placement import NnsPlacer, create_flow_graph
 
 # Mock Netlist class for testing
 class MockNetlist:
-    def __init__(self, modules, num_modules, num_pads, gr, nets, module_weight):
+    def __init__(self, modules, num_modules, num_pads, ugraph, nets, module_weight):
         self.modules = modules
         self.num_modules = num_modules
         self.num_pads = num_pads
-        self.gr = gr
+        self.ugraph = ugraph
         self.nets = nets
         self.module_weight = module_weight
 
@@ -94,7 +94,7 @@ class TestNnsPlacer:
             [0 for _ in range(mock_nnsconfig.grid[1] + 2)],
         ]
         assert placer.limit == [10, 29]
-        assert isinstance(placer.gr, TinyDiGraph)
+        assert isinstance(placer.ugraph, TinyDiGraph)
 
     def test_cost(self, mock_netlist, mock_nnsconfig) -> None:
         placer = NnsPlacer(mock_netlist, mock_nnsconfig)
