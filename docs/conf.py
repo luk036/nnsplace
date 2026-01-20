@@ -78,6 +78,13 @@ templates_path = ["_templates"]
 # The suffix of source filenames.
 source_suffix = ".rst"
 
+# Doctest configuration
+doctest_default_flags = 0
+doctest_test_doctest_blocks = "default"
+doctest_global_setup = """
+from nnsplace.placement import NnsPlacer
+"""
+
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
