@@ -102,10 +102,14 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
 
     """
     if isinstance(hyprgraph.modules, range):
-        ugraph = TinyDiGraph(num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads)
+        ugraph = TinyDiGraph(
+            num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads
+        )
         ugraph.init_nodes(hyprgraph.num_modules)
     else:
-        ugraph = nx.DiGraph(num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads)
+        ugraph = nx.DiGraph(
+            num_modules=hyprgraph.num_modules, num_pads=hyprgraph.num_pads
+        )
         ugraph.add_nodes_from(hyprgraph.modules)
 
     # Assume a list of modules = a list of cells appends with a list of pads
@@ -571,7 +575,12 @@ class NnsPlacer:
                     worst = gruv
         # initial worst/2 or 0 or others?
         return min_parametric(
-            self.ugraph, Fraction(worst), calc_weight, zero_cancel, place[axis], update_ok
+            self.ugraph,
+            Fraction(worst),
+            calc_weight,
+            zero_cancel,
+            place[axis],
+            update_ok,
         )
 
     def add_bipartite_edge(
