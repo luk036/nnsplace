@@ -26,7 +26,7 @@ def test_placement() -> None:
     seed(831)
     H = create_inverter()
     n = H.number_of_modules()
-    placer = NnsPlacer(H, NnsConfig(32, 32, 40, 40))
+    placer = NnsPlacer(H, NnsConfig(32, 32, 40, 40))  # type: ignore[arg-type]
     place: list[dict[Any, int]] = [dict(), dict()]
     # place[0] = [0 for _ in range(n)]  # x-direction
     # place[1] = [0 for _ in range(n)]  # y-direction
@@ -76,7 +76,7 @@ def test_placement() -> None:
         bbox = Rectangle(Interval(px, px), Interval(py, py))
         for v in adjs:
             q = Point(place[0][v], place[1][v])
-            bbox = bbox.hull_with(q)
+            bbox = bbox.hull_with(q)  # type: ignore[assignment, arg-type]
         x = bbox.xcoord.lb * 40 + 10
         y = bbox.ycoord.lb * 40 + 10
         width = bbox.width() * 40

@@ -1,4 +1,5 @@
 from fractions import Fraction
+from typing import Any, Dict, Iterator, List, Union
 from unittest.mock import Mock
 
 import networkx as nx
@@ -10,7 +11,15 @@ from nnsplace.placement import NnsPlacer, create_flow_graph
 
 # Mock Netlist class for testing
 class MockNetlist:
-    def __init__(self, modules, num_modules, num_pads, ugraph, nets, module_weight):
+    def __init__(
+        self,
+        modules: Union[range, List[Any]],
+        num_modules: int,
+        num_pads: int,
+        ugraph: nx.Graph,
+        nets: Union[range, List[Any]],
+        module_weight: Dict[Any, int],
+    ):
         self.modules = modules
         self.num_modules = num_modules
         self.num_pads = num_pads
@@ -18,7 +27,7 @@ class MockNetlist:
         self.nets = nets
         self.module_weight = module_weight
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         return iter(self.modules)
 
 
@@ -32,7 +41,7 @@ def test_create_flow_graph_tiny_digraph() -> None:
     module_weight = {0: 1, 1: 1, 2: 1, 3: 1, 4: 0}  # 4 is a pad
 
     netlist = MockNetlist(modules, num_modules, num_pads, gr_mock, nets, module_weight)
-    flow_graph = create_flow_graph(netlist)
+    flow_graph = create_flow_graph(netlist)  # type: ignore[arg-type]
 
     assert isinstance(flow_graph, TinyDiGraph)
     assert flow_graph.graph["num_modules"] == num_modules
@@ -54,7 +63,7 @@ def test_create_flow_graph_networkx_digraph() -> None:
     module_weight = {"m0": 1, "m1": 1, "m2": 1, "m3": 1, "p0": 0}  # p0 is a pad
 
     netlist = MockNetlist(modules, num_modules, num_pads, gr_mock, nets, module_weight)
-    flow_graph = create_flow_graph(netlist)
+    flow_graph = create_flow_graph(netlist)  # type: ignore[arg-type]
 
     assert isinstance(flow_graph, nx.DiGraph)
     assert flow_graph.graph["num_modules"] == num_modules
@@ -108,7 +117,10 @@ class TestNnsPlacer:
 
     def test_calc_worst_wirelength(self, mock_netlist, mock_nnsconfig) -> None:
         placer = NnsPlacer(mock_netlist, mock_nnsconfig)
-        place = [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]]  # x_coords, y_coords
+        place: list[dict[Any, int]] = [
+            {0: 0, 1: 1, 2: 2, 3: 3, 4: 4},
+            {0: 0, 1: 1, 2: 2, 3: 3, 4: 4},
+        ]  # x_coords, y_coords
         # Edges in flow_graph: (0,1), (1,0), (0,2), (2,0), (1,2), (2,1), (2,3), (3,2), (2,4), (4,2), (3,4), (4,3)
         # Let's check (0,2): x_diff = 2, y_diff = 2. cost = 2*1 + 2*2 = 6
         # Let's check (2,3): x_diff = 1, y_diff = 1. cost = 1*1 + 1*2 = 3
@@ -153,7 +165,7 @@ class TestNnsPlacer:
     def test_calc_total_hull_length(self, mock_netlist, mock_nnsconfig) -> None:
         placer = NnsPlacer(mock_netlist, mock_nnsconfig)
         # dist represents coordinates along one axis
-        dist = [0, 1, 2, 3, 4]  # module 0 to 4
+        dist: dict[Any, int] = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4}  # module 0 to 4
         # net1: [0, 1, 2]. hull: [0, 2]. length = 2. cost = 2 * delta[0] = 2 * 1 = 2
         # net2: [2, 3, 4]. hull: [2, 4]. length = 2. cost = 2 * delta[0] = 2 * 1 = 2
         # Total = 2 + 2 = 4
@@ -161,7 +173,10 @@ class TestNnsPlacer:
 
     def test_calc_total_HPWL(self, mock_netlist, mock_nnsconfig) -> None:
         placer = NnsPlacer(mock_netlist, mock_nnsconfig)
-        place = [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]]  # x_coords, y_coords
+        place: list[dict[Any, int]] = [
+            {0: 0, 1: 1, 2: 2, 3: 3, 4: 4},
+            {0: 0, 1: 1, 2: 2, 3: 3, 4: 4},
+        ]  # x_coords, y_coords
         # x-axis: net1 hull length = 2, net2 hull length = 2. total_x = 2*1 + 2*1 = 4
         # y-axis: net1 hull length = 2, net2 hull length = 2. total_y = 2*2 + 2*2 = 8
         # Total HPWL = 4 + 8 = 12

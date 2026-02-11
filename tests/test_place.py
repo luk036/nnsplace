@@ -24,7 +24,7 @@ def test_placement() -> None:
     seed(831)
     H = read_json("testcases/p1.json")
     n = H.number_of_modules()
-    placer = NnsPlacer(H, NnsConfig(32, 32, 40, 40))
+    placer = NnsPlacer(H, NnsConfig(32, 32, 40, 40))  # type: ignore[arg-type]
     place: list[dict[int, int]] = [{}, {}]
     place[0] = {i: 0 for i in range(n)}  # x-direction
     place[1] = {i: 0 for i in range(n)}  # y-direction
