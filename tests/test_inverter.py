@@ -1,8 +1,9 @@
 from random import seed
+from typing import Any
 
-from physdes.interval import Interval
-from physdes.point import Point
-from physdes.recti import Rectangle
+from physdes.interval import Interval  # type: ignore[import-untyped]
+from physdes.point import Point  # type: ignore[import-untyped]
+from physdes.recti import Rectangle  # type: ignore[import-untyped]
 
 from nnsplace.netlist import create_inverter
 from nnsplace.placement import NnsPlacer
@@ -26,7 +27,7 @@ def test_placement() -> None:
     H = create_inverter()
     n = H.number_of_modules()
     placer = NnsPlacer(H, NnsConfig(32, 32, 40, 40))
-    place = [dict(), dict()]
+    place: list[dict[Any, int]] = [dict(), dict()]
     # place[0] = [0 for _ in range(n)]  # x-direction
     # place[1] = [0 for _ in range(n)]  # y-direction
     placer.init_placement(place)
@@ -82,9 +83,7 @@ def test_placement() -> None:
         height = bbox.height() * 40
         print(
             '<rect class="net" x="{}" y="{}" width="{}" \
-height="{}"/>'.format(
-                x, y, width, height
-            )
+height="{}"/>'.format(x, y, width, height)
         )
 
     assert place[1]["a0"] == 1

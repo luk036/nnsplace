@@ -25,9 +25,9 @@ def test_placement() -> None:
     H = read_json("testcases/p1.json")
     n = H.number_of_modules()
     placer = NnsPlacer(H, NnsConfig(32, 32, 40, 40))
-    place = [[], []]
-    place[0] = [0 for _ in range(n)]  # x-direction
-    place[1] = [0 for _ in range(n)]  # y-direction
+    place: list[dict[int, int]] = [{}, {}]
+    place[0] = {i: 0 for i in range(n)}  # x-direction
+    place[1] = {i: 0 for i in range(n)}  # y-direction
     placer.init_placement(place)
     placer.io_assign(place)
     hpwl_x = placer.calc_total_hull_length(place[0], 0)
