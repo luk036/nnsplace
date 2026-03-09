@@ -73,6 +73,7 @@ periphery.
    '--------------------------------'
 """
 
+import logging
 from fractions import Fraction
 from random import shuffle
 from typing import Any, Dict, List, Optional, Tuple
@@ -85,6 +86,8 @@ from physdes.interval import Interval
 
 from .min_parametric import min_parametric
 from .placement_cfg import NnsConfig
+
+logger = logging.getLogger(__name__)
 
 
 def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
@@ -164,6 +167,7 @@ class NnsPlacer:
             [0 for _ in range(cfg.grid[1] + 2)],
         ]  # two lists
         self.limit = [cfg.grid[1], cfg.grid[0] - 1]
+        self.reserved_col = cfg.reserved_col
         # assume col 27 is preserved for DSP or SRAM
         self.ugraph = create_flow_graph(hyprgraph)
 
@@ -207,9 +211,9 @@ class NnsPlacer:
                 row += 1
             else:
                 col += 1
-            if col == 27:  # assume col 27 is preserved for DSP or SRAM
+            if col == self.reserved_col:  # assume col 27 is preserved for DSP or SRAM
                 col += 1
-        assert self.count[0][27] == 0
+        assert self.count[0][self.reserved_col] == 0
         assert self.count[0][1] <= self.limit[0]  # e.g. 50
         assert self.count[1][1] <= self.limit[1]  # e.g. 49
 
@@ -326,7 +330,7 @@ class NnsPlacer:
                     worst_wire = gruv
         return worst_wire
 
-    def calc_worst_wirelength_v(self, v, place: List[Dict[Any, int]]) -> int:
+    def calc_worst_wirelength_v(self, v: Any, place: List[Dict[Any, int]]) -> int:
         """
         The function `calc_worst_wirelength_v` calculates the worst wirelength with respect to a given
         module `v` based on its placement coordinates.
@@ -365,49 +369,6 @@ class NnsPlacer:
             if worst_wire < gruv:
                 worst_wire = gruv
         return worst_wire
-
-    # def calc_worst_wirelength_axis(self, place: List[List[int]], axis):
-    #     """Calculate the worst wirelength w.r.t one axis
-
-    #     Args:
-    #         place (List[List[int]]): _description_
-    #         axis (_type_): _description_
-
-    #     Returns:
-    #         _type_: _description_
-    #     """
-    #     worst_wire = 0
-    #     for u, v in self.ugraph.edges():
-    #         if u > v:  # only need to calculate one of the two edges
-    #             continue
-    #         gruv = abs(place[axis][v] - place[axis][u])
-    #         if worst_wire < gruv:
-    #             worst_wire = gruv
-    #     return worst_wire * self.cfg.delta[axis]
-
-    # def calc_total_hpwl(self, place: List[List[int]]):
-    #     """_summary_
-    #
-    #     Args:
-    #         place (List[List[int]]): _description_
-    #
-    #     Returns:
-    #         _type_: _description_
-    #     """
-    #     total_hpwl_x = 0
-    #     total_hpwl_y = 0
-    #     for net in self.hyprgraph.nets:
-    #         adjs = iter(self.hyprgraph.ugraph[net])
-    #         v = next(adjs)
-    #         p = Point(place[0][v], place[1][v])
-    #         bbox = Rect(Interval(p.x, p.x), Interval(p.y, p.y))
-    #         for v in adjs:
-    #             q = Point(place[0][v], place[1][v])
-    #             bbox = bbox.hull_with(q)
-    #         total_hpwl_x += bbox.width()
-    #         total_hpwl_y += bbox.height()
-    #     return total_hpwl_x * self.cfg.delta[0], \
-    #         total_hpwl_y * self.cfg.delta[1]
 
     def calc_total_hull_length(self, dist: Dict[Any, int], axis: int) -> int:
         """
@@ -490,7 +451,7 @@ class NnsPlacer:
             place[1], 1
         )
 
-    def apply_howard(self, place: List[Dict[Any, int]], axis: int):
+    def apply_howard(self, place: List[Dict[Any, int]], axis: int) -> tuple[Any, Any]:
         """
         The `apply_howard` function applies Howard's algorithm to optimize the placement of elements in a
         grid along a specified axis.
@@ -588,7 +549,7 @@ class NnsPlacer:
         i: int,
         grid: int,
         axis: int,
-    ):
+    ) -> None:
         """
         The `add_bipartite_edge` function adds edges to a bipartite graph based on certain conditions and
         weights.
@@ -617,14 +578,14 @@ class NnsPlacer:
             p = place[axis][v]
             q = p + self.hyprgraph.number_of_modules()  # avoid same name
             weight0 = self.calc_worst_wirelength_v(v, place)
-            if p - i > 0 and not (axis == 0 and p - i == 27):
+            if p - i > 0 and not (axis == 0 and p - i == self.reserved_col):
                 place[axis][v] -= i  # temporily set the position
                 weight1 = self.calc_worst_wirelength_v(v, place)
                 place[axis][v] += i  # reset the position
                 B.add_node(q - i, bipartite=1)
                 # B.add_edge(v, q - i, weight=i)
                 B.add_edge(v, q - i, weight=weight1 - weight0)
-            if p + i <= grid and not (axis == 0 and p + i == 27):
+            if p + i <= grid and not (axis == 0 and p + i == self.reserved_col):
                 place[axis][v] += i  # temporily set the position
                 weight1 = self.calc_worst_wirelength_v(v, place)
                 place[axis][v] -= i  # reset the position
@@ -632,7 +593,7 @@ class NnsPlacer:
                 # B.add_edge(v, q + i, weight=i)
                 B.add_edge(v, q + i, weight=weight1 - weight0)
 
-    def legalize(self, lst: List[int], place: List[Dict[Any, int]], axis: int):
+    def legalize(self, lst: List[int], place: List[Dict[Any, int]], axis: int) -> None:
         """
         The `legalize` function solves the bipartite matching problem to reassign positions in a grid based
         on a given list and placement information. It moves modules to prevent overlaps.
@@ -686,7 +647,7 @@ class NnsPlacer:
         for v in lst:
             # construct bipartite graph
             q = dist[v] + self.hyprgraph.number_of_modules()  # avoid same name
-            if axis == 0 and dist[v] == 27:
+            if axis == 0 and dist[v] == self.reserved_col:
                 continue
             B.add_node(q, bipartite=1)
             B.add_edge(v, q, weight=0)  # closest position
@@ -694,9 +655,10 @@ class NnsPlacer:
             self.add_bipartite_edge(lst, B, place, i, grid, axis)
 
         # solve the matching problem
+        MAX_NEIGHBORHOOD = 50  # Safety limit to prevent infinite loops
         i = neighborhood
         matched = False
-        while not matched:
+        while not matched and i < MAX_NEIGHBORHOOD:
             try:
                 matches = bipartite.minimum_weight_full_matching(B)
                 for v in lst:
@@ -710,6 +672,12 @@ class NnsPlacer:
                 self.add_bipartite_edge(lst, B, place, i, grid, axis)
             i += 1  # if no match, increase the neigborhood
 
+        if not matched:
+            raise RuntimeError(
+                f"Failed to legalize modules: exceeded maximum neighborhood "
+                f"search limit ({MAX_NEIGHBORHOOD}). Grid may be too small."
+            )
+
         # reassign the results
         for v in lst:
             q = matches[v] - self.hyprgraph.number_of_modules()
@@ -721,7 +689,7 @@ class NnsPlacer:
             # Why not check limit?
             dist[v] = q
 
-    def legalize_modules(self, place: List[Dict[Any, int]], axis: int):
+    def legalize_modules(self, place: List[Dict[Any, int]], axis: int) -> None:
         """
         The `legalize_modules` function takes a `place` list and an `axis` integer as input, and it
         organizes the elements of `place` into buckets based on their distance from the `axis`. It then
@@ -742,124 +710,6 @@ class NnsPlacer:
             bucket[dist[v]].append(v)
         for lst in filter(lambda lst: lst, bucket):  # lst is not null or empty
             self.legalize(lst, place, axis)
-
-    # def calc_average_position(self, vp: int, place: List[List[int]]):
-    #     """_summary_
-    #
-    #     Args:
-    #         vp (int): _description_
-    #         place (List[List[int]]): _description_
-    #
-    #     Returns:
-    #         _type_: _description_
-    #     """
-    #     posx = 0
-    #     posy = 0
-    #     count = 0
-    #     for vi in self.ugraph[vp]:
-    #         # if vi >= self.num_cells:  # only non-io modules
-    #         #     continue
-    #         posx += place[0][vi]
-    #         posy += place[1][vi]
-    #         count += 1
-    #     posx //= count
-    #     posy //= count
-    #     return posx, posy
-
-    # def choose_nearest_iopad2(self, place: List[List[int]]):
-    #     """Choose the nearest iopad in phase 2
-    #
-    #        TODO: should apply Howard algorithm because one pad can
-    #        connect to multiple modules and one modules can connect
-    #        to multiple pad.
-    #
-    #     Args:
-    #         place (List[List[int]]): _description_
-    #     """
-    #     # choose the nearest I/O
-    #     grid_x = self.cfg.grid[0]
-    #     half_x = grid_x // 2
-    #     grid_y = self.cfg.grid[1]
-    #     half_y = grid_y // 2
-    #     n = self.hyprgraph.number_of_modules()
-    #     for i in range(n - self.hyprgraph.num_pads, n):
-    #         # loop through io pad
-    #         vp = self.hyprgraph.modules[i]
-    #         posx, posy = self.calc_average_position(vp, place)
-    #         # nbrs = list(self.ugraph.neighbors(vp))
-    #         # TODO: pad attached to more than one node
-    #         # v = nbrs[0]  # workaround: take the first one only
-    #
-    #         if self.count[0][0] < grid_y:
-    #             if self.count[0][grid_x + 1] < grid_y:
-    #                 if posx <= half_x:
-    #                     which_x = 0  # left
-    #                     len_x = posx
-    #                 else:
-    #                     which_x = 1  # right
-    #                     len_x = grid_x - posx
-    #             else:
-    #                 which_x = 0  # left
-    #                 len_x = posx
-    #         else:
-    #             if self.count[0][grid_x + 1] < grid_y:
-    #                 which_x = 1  # right
-    #                 len_x = grid_x - posx
-    #             else:
-    #                 which_x = None  # no choice
-    #
-    #         if self.count[1][0] < grid_x:
-    #             if self.count[1][grid_y + 1] < grid_x:
-    #                 if posy <= half_y:
-    #                     which_y = 0  # left
-    #                     len_y = posy
-    #                 else:
-    #                     which_y = 1  # right
-    #                     len_y = grid_y - posy
-    #             else:
-    #                 which_y = 0  # left
-    #                 len_y = posy
-    #         else:
-    #             if self.count[1][grid_y + 1] < grid_x:
-    #                 which_y = 1  # right
-    #                 len_y = grid_y - posy
-    #             else:
-    #                 which_y = None  # no choice
-    #
-    #         self.count[0][place[0][vp]] -= 1  # ???
-    #         self.count[1][place[1][vp]] -= 1  # ???
-    #         if which_x is not None:
-    #             if which_y is not None:
-    #                 if len_x * self.cfg.delta[0] < len_y * self.cfg.delta[1]:
-    #                     if which_x == 0:
-    #                         place[0][vp] = 0
-    #                     else:
-    #                         place[0][vp] = grid_x + 1
-    #                     place[1][vp] = posy
-    #                 else:
-    #                     if which_y == 0:
-    #                         place[1][vp] = 0
-    #                     else:
-    #                         place[1][vp] = grid_y + 1
-    #                     place[0][vp] = posx
-    #             else:
-    #                 if which_x == 0:
-    #                     place[0][vp] = 0
-    #                 else:
-    #                     place[0][vp] = grid_x + 1
-    #                 place[1][vp] = posy
-    #         else:
-    #             if which_y is not None:
-    #                 if which_y == 0:
-    #                     place[1][vp] = 0
-    #                 else:
-    #                     place[1][vp] = grid_y + 1
-    #                 place[0][vp] = posx
-    #             else:
-    #                 # Not enough I/O area!!!
-    #                 raise ValueError
-    #         self.count[1][place[1][vp]] += 1
-    #         self.count[0][place[0][vp]] += 1
 
     def choose_nearest_iopad_vp(
         self, place: List[Dict[Any, int]], vp: int, axis: int
@@ -1044,53 +894,6 @@ class NnsPlacer:
             self.count[1][place[1][vp]] += 1
             self.count[0][place[0][vp]] += 1
 
-    # def choose_nearest_iopad(self, place: List[List[int]]):
-    #     """_summary_
-    #
-    #     Args:
-    #         place (List[List[int]]): _description_
-    #     """
-    #     # choose the nearest I/O
-    #     n = self.hyprgraph.number_of_modules()
-    #     grid_x = self.cfg.grid[0]
-    #     half_x = grid_x // 2
-    #     grid_y = self.cfg.grid[1]
-    #     half_y = grid_y // 2
-    #     which_x = None
-    #     which_y = None
-    #     len_x = grid_x
-    #     len_y = grid_y
-    #     for i in range(n - self.hyprgraph.num_pads, n):
-    #         v = self.hyprgraph.modules[i]
-    #         if place[0][v] <= half_x and self.count[0][0] < grid_y:
-    #             which_x = 0  # left
-    #             len_x = place[0][v]
-    #         elif self.count[0][grid_x + 1] < grid_y:
-    #             which_x = 1  # right
-    #             len_x = grid_x - place[0][v]
-    #
-    #         if place[1][v] <= half_y and self.count[1][0] < grid_x:
-    #             which_y = 0  # top
-    #             len_y = place[1][v]
-    #         elif self.count[1][grid_y + 1] < grid_x:
-    #             which_y = 1  # bottom
-    #             len_y = grid_y - place[1][v]
-    #
-    #         self.count[0][place[0][v]] -= 1
-    #         self.count[1][place[1][v]] -= 1
-    #         if len_x * self.cfg.delta[0] < len_y * self.cfg.delta[1]:
-    #             if which_x == 0:
-    #                 place[0][v] = 0
-    #             else:
-    #                 place[0][v] = grid_x + 1
-    #             self.count[0][place[0][v]] += 1
-    #         else:
-    #             if which_y == 0:
-    #                 place[1][v] = 0
-    #             else:
-    #                 place[1][v] = grid_y + 1
-    #             self.count[1][place[1][v]] += 1
-
     def legalize_iopad(self, place: List[Dict[Any, int]], axis: int) -> None:
         """
         The `legalize_iopad` function takes a `place` parameter, which is a list of dictionaries, and an `axis`
@@ -1106,7 +909,7 @@ class NnsPlacer:
             are being legalized. It is used to determine the placement of the I/O pads in the `place` list
         :type axis: int
         """
-        bucket: List[List] = [list() for _ in range(2)]
+        bucket: List[List[Any]] = [list() for _ in range(2)]
         n = self.hyprgraph.number_of_modules()
         for i in range(n - self.hyprgraph.num_pads, n):
             v = self.hyprgraph.modules[i]
@@ -1131,16 +934,7 @@ class NnsPlacer:
         self.legalize_iopad(place, 0)
         self.legalize_iopad(place, 1)
 
-    # def io_reassign(self, place: List[List[int]]):
-    #     """_summary_
-    #
-    #     Args:
-    #         place (List[List[int]]): _description_
-    #     """
-    #     self.choose_nearest_iopad(place)
-    #     self.legalize_iopad(place)
-
-    def optimize(self, place: List[Dict[Any, int]], max_iters: int):
+    def optimize(self, place: List[Dict[Any, int]], max_iters: int) -> Tuple[int, int]:
         """
         The `optimize` function is used to iteratively improve the placement of modules in a circuit layout
         by applying various optimization techniques.
@@ -1167,7 +961,7 @@ class NnsPlacer:
 
             # TODO: How to utilize r1, C1, r2, C2
             worst1 = self.calc_worst_wirelength(place)
-            print(f"    x-y: {worst1}")
+            logger.debug("x-y: %d", worst1)
             # TODO: when to stop
             if worst1 >= worst0:
                 place[0] = place0[0]
@@ -1181,7 +975,9 @@ class NnsPlacer:
             count0 = [self.count[0].copy(), self.count[1].copy()]
         return max_iters, worst1
 
-    def run(self, place: List[Dict[Any, int]], max_iters=2000):
+    def run(
+        self, place: List[Dict[Any, int]], max_iters: int = 2000
+    ) -> Tuple[int, int]:
         """
         The `run` function performs an optimization algorithm on a given placement and returns the number of
         iterations and the worst wirelength achieved.
@@ -1196,19 +992,15 @@ class NnsPlacer:
         :return: a tuple containing the number of iterations performed and the worst wirelength achieved
             during the optimization process.
         """
-        # niter, worst = self.optimize(place, max_iters)
-        # self.init_placement(place)
-        # _, worst0 = self.optimize(place, max_iters)
-        # self.io_assign(place)
         worst0 = self.calc_worst_wirelength(place)
         place0 = [place[0].copy(), place[1].copy()]
         count0 = [self.count[0].copy(), self.count[1].copy()]
-        print(f"init: {worst0}")
+        logger.info("init: %d", worst0)
         for niter in range(max_iters):
             _, _ = self.optimize(place, max_iters)
             self.io_assign(place)
             worst1 = self.calc_worst_wirelength(place)
-            print(f"run {worst1}")
+            logger.info("run %d", worst1)
             if worst1 >= worst0:
                 place[0] = place0[0]
                 place[1] = place0[1]

@@ -2,10 +2,20 @@
 Generalized Howard algorithm Solve minimum parametric network problems
 """
 
+from typing import Any, Optional
+
 from .neg_cycle import NegCycleFinder
 
 
-def min_parametric(gra, ratio, cost, zero_cancel, dist, update_ok, pick_one_only=False):
+def min_parametric(
+    gra: Any,
+    ratio: Any,
+    cost: Any,
+    zero_cancel: Any,
+    dist: Any,
+    update_ok: Any,
+    pick_one_only: bool = False,
+) -> tuple[Any, Optional[list[Any]]]:
     """
     The `min_parametric` function solves a minimum parametric problem by finding the smallest value of a
     parameter that satisfies a set of constraints in a directed graph:
