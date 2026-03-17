@@ -498,19 +498,22 @@ def vdcorput(n: int, base: int = 2) -> List[float]:
 def form_graph(
     N: int, M: int, _: Any, eta: float, seed: Optional[int] = None
 ) -> nx.Graph:
-    """Form N by N grid of nodes, connect nodes within eta.
-        mu and eta are relative to 1/(N-1)
+    """Form N by M bipartite random graph and connect nodes within eta.
 
     Arguments:
-        t (float): the best-so-far optimal value
-        pos ([type]): [description]
-        eta ([type]): [description]
+        N (int): Number of nodes in first bipartite set
+        M (int): Number of nodes in second bipartite set
+        _ (Any): Unused parameter
+        eta (float): Probability of edge creation between nodes
 
     Keyword Arguments:
-        seed ([type]): [description] (default: {None})
+        seed (Optional[int]): Random seed for reproducibility (default: {None})
 
     Returns:
-        [type]: [description]
+        nx.Graph: A bipartite random graph
+
+    Examples:
+        >>> graph = form_graph(10, 5, None, 0.1, seed=42)
     """
     if seed:
         random.seed(seed)
