@@ -5,7 +5,21 @@ from mywheel.map_adapter import MapAdapter
 # The DiGraphAdapter class is a subclass of nx.DiGraph that adds a method to return the adjacency list
 # as a dictionary.
 class DiGraphAdapter(nx.DiGraph):
+    """
+    A NetworkX DiGraph adapter that provides a dict-like items() interface.
+
+    This class extends nx.DiGraph to provide an items() method that returns
+    the adjacency list as an iterable of (node, neighbors) tuples.
+    """
+
     def items(self):
+        """Return the adjacency list as an iterable of (node, neighbors) tuples.
+
+        This provides a dict-like interface to the graph's adjacency data.
+
+        :return: An iterable of tuples (node, adjacency_dict) for all nodes.
+        :rtype: iterable
+        """
         return self.adjacency()
 
 

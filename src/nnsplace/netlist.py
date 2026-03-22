@@ -294,6 +294,19 @@ def read_json(filename: str) -> Netlist:
 
 
 def create_inverter() -> Netlist:
+    """
+    Create a simple inverter netlist.
+
+    The inverter netlist consists of:
+    - 3 modules: 'a0' (main inverter cell), 'p1' (input pad), 'p2' (output pad)
+    - 2 nets: 'n0' (input net), 'n1' (output net)
+
+    The connections are:
+    - n0: p1 (input) -> a0 (inverter input)
+    - n1: a0 (output) -> p2 (output)
+
+    :return: A Netlist object representing the inverter circuit.
+    """
     graph = SimpleGraph()
     graph.add_nodes_from(["a0", "p1", "p2", "n0", "n1"])
     nets = ["n0", "n1"]
@@ -319,6 +332,16 @@ def create_inverter() -> Netlist:
 
 
 def create_inverter2() -> Netlist:
+    """
+    Create a simple inverter netlist using integer node IDs.
+
+    This is an alternative version of create_inverter() that uses integer node IDs
+    instead of string names. The netlist consists of:
+    - 3 modules: 0, 1, 2 (where 1=p1 input pad, 2=p2 output pad, 0=inverter cell)
+    - 2 nets: 3, 4 (where 3=input net, 4=output net)
+
+    :return: A Netlist object representing the inverter circuit.
+    """
     graph = SimpleGraph()
     graph.add_nodes_from([0, 1, 2, 3, 4])
     nets = range(3, 5)

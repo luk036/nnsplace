@@ -47,6 +47,11 @@ def min_parametric(
     """
 
     def get_weight(edge):
+        """Get the weight of an edge using the current ratio parameter.
+
+        :param edge: A tuple (u, v) representing an edge in the graph.
+        :return: The cost of the edge at the current ratio.
+        """
         return cost(ratio, edge)
 
     omega = NegCycleFinder(gra)
