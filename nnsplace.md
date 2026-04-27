@@ -253,11 +253,11 @@ The overall placement flow can be visualized as follows:
 graph TD
     A[Start] --> B{Initial Random Placement};
     B --> C{Iterative Optimization};
-    C --> D{Apply Howard's Algorithm (X-axis)};
-    D --> E{Legalize Placement (Y-axis)};
+    C --> D{"Apply Howard's Algorithm (X-axis)"};
+    D --> E{"Legalize Placement (Y-axis)"};
     E --> F{Assign I/O Pads};
-    F --> G{Apply Howard's Algorithm (Y-axis)};
-    G --> H{Legalize Placement (X-axis)};
+    F --> G{"Apply Howard's Algorithm (Y-axis)"};
+    G --> H{"Legalize Placement (X-axis)"};
     H --> I{Assign I/O Pads};
     I --> J{Check for Improvement};
     J -- No Improvement --> K[End];

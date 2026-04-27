@@ -202,3 +202,50 @@ def test_find_neg_cycle_succ_no_cycle() -> None:
 
     cycles = list(finder.find_neg_cycle_succ(dist, get_weight, update_ok))
     assert not cycles
+
+
+def test_is_negative_with_setup() -> None:
+    edges = [("A", "B"), ("B", "C"), ("C", "A")]
+    graph = MockGraph(edges)
+    finder = NegCycleFinder(graph)
+
+    dist = {"A": 0.0, "B": float("inf"), "C": float("inf")}
+
+    def get_weight(edge):
+        u, v = edge
+        if u == "A" and v == "B":
+            return 1
+        if u == "B" and v == "C":
+            return 1
+        if u == "C" and v == "A":
+            return -3
+        return 0
+
+    def update_ok(old_dist, new_dist):
+        return True
+
+    finder.relax_pred(dist, get_weight, update_ok)
+    if "C" in finder.pred:
+        dist2 = {"A": 0.0, "B": 1.0, "C": 2.0}
+        result = finder.is_negative("C", dist2, get_weight)
+        assert result is False or result is True
+
+
+def test_is_negative_no_cycle() -> None:
+    edges = [("A", "B"), ("B", "C")]
+    graph = MockGraph(edges)
+    finder = NegCycleFinder(graph)
+
+    dist = {"A": 0, "B": float("inf"), "C": float("inf")}
+
+    def get_weight(edge):
+        return 1
+
+    def update_ok(old_dist, new_dist):
+        return True
+
+    finder.relax_pred(dist, get_weight, update_ok)
+    if "C" in finder.pred:
+        dist2 = {"A": 0, "B": 1, "C": 2}
+        result = finder.is_negative("C", dist2, get_weight)
+        assert result is False

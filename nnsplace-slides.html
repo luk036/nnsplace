@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Presenter Name" />
+  <meta name="dcterms.date" content="2026-01-01" />
+  <title>Fairness-Centric Global Placement</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Fairness-Centric Global Placement</h1>
+<p class="author">Presenter Name</p>
+<p class="date">2026</p>
+</header>
+<h1 id="fairness-centric-global-placement">📍 Fairness-Centric Global
+Placement ⚖️</h1>
+<h2 id="overview">🎯 Overview</h2>
+<ul>
+<li><strong>FPGA Placement:</strong> Arranging circuit modules on a
+grid</li>
+<li><strong>Goal:</strong> Minimize the <strong>worst wire
+length</strong> 📏</li>
+<li><strong>Method:</strong> Fairness-centric iterative optimization
+🎯</li>
+<li><strong>Key Algorithms:</strong> Howard’s algorithm + Bipartite
+matching 🔄</li>
+</ul>
+<hr />
+<h2 id="agenda">📋 Agenda</h2>
+<ol type="1">
+<li>🎯 <strong>Introduction</strong> - Problem context &amp;
+motivation</li>
+<li>🧩 <strong>Data Structures</strong> - Netlist, flow graph, grid</li>
+<li>📊 <strong>Core Algorithm</strong> - Howard’s algorithm (parametric
+search)</li>
+<li>⚖️ <strong>Legalization</strong> - Bipartite matching</li>
+<li>📍 <strong>I/O Assignment</strong> - Peripheral placement</li>
+<li>🔄 <strong>Iterative Flow</strong> - Full optimization loop</li>
+<li>✅ <strong>Experimental Results</strong> - Performance metrics</li>
+<li>📝 <strong>Summary</strong> - Conclusions &amp; future work</li>
+</ol>
+<hr />
+<h1 id="part-1-introduction">Part 1: Introduction �</h1>
+<hr />
+<h2 id="what-is-global-placement">🧩 What is Global Placement?</h2>
+<pre class="mermaid"><code>graph LR
+    A[Netlist] --&gt; B[Global Placement]
+    B --&gt; C[Physical Layout]
+    C --&gt; D[Routing]
+    D --&gt; E[FPGA Bitstream]
+    
+    style A fill:#e1f5fe
+    style B fill:#fff3e0
+    style C fill:#e8f5e9
+    style D fill:#fce4ec
+    style E fill:#f3e5f5</code></pre>
+<ul>
+<li><strong>Input:</strong> Netlist (modules + connections)</li>
+<li><strong>Process:</strong> Assign physical locations</li>
+<li><strong>Output:</strong> Placement coordinates</li>
+</ul>
+<hr />
+<h2 id="why-fairness-centric">🎯 Why Fairness-Centric?</h2>
+<table>
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 29%" />
+<col style="width: 51%" />
+</colgroup>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Traditional</th>
+<th><strong>Fairness-Centric</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Objective</td>
+<td>Minimize total wirelength</td>
+<td>Minimize <strong>worst wire length</strong></td>
+</tr>
+<tr>
+<td>Focus</td>
+<td>Average case</td>
+<td><strong>Worst case</strong></td>
+</tr>
+<tr>
+<td>Effect</td>
+<td>Some nets very long</td>
+<td>No excessively long nets</td>
+</tr>
+<tr>
+<td>Routability</td>
+<td>May fail</td>
+<td>✅ Guaranteed</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>“Fairness ensures no single connection is excessively long”</em>
+⚖️</p>
+</blockquote>
+<hr />
+<h2 id="cost-model-manhattan-distance">📏 Cost Model: Manhattan
+Distance</h2>
+<p>For a connection between modules <span
+class="math inline"><em>u</em></span> and <span
+class="math inline"><em>v</em></span>:</p>
+<p><span
+class="math display">cost(<em>u</em>, <em>v</em>) = <em>Δ</em><sub><em>x</em></sub> ⋅ |<em>x</em><sub><em>u</em></sub> − <em>x</em><sub><em>v</em></sub>|+<em>Δ</em><sub><em>y</em></sub> ⋅ |<em>y</em><sub><em>u</em></sub> − <em>y</em><sub><em>v</em></sub>|</span></p>
+<pre class="mermaid"><code>graph LR
+    subgraph Grid
+    u[module u] --&gt; |Δx| x[ ]
+    x --&gt; v[module v]
+    end
+    
+    style u fill:#2196F3
+    style v fill:#4CAF50</code></pre>
+<ul>
+<li><span
+class="math inline"><em>Δ</em><sub><em>x</em></sub>, <em>Δ</em><sub><em>y</em></sub></span>:
+Cost scaling factors</li>
+<li><strong>Worst wire:</strong> <span
+class="math inline">max<sub>(<em>u</em>, <em>v</em>) ∈ <em>E</em></sub>cost(<em>u</em>, <em>v</em>)</span></li>
+</ul>
+<hr />
+<h2 id="problem-statement">🎯 Problem Statement</h2>
+<p><strong>Find placement <span class="math inline"><em>P</em></span>
+that minimizes:</strong></p>
+<p><span
+class="math display">min<sub><em>P</em></sub>max<sub>(<em>u</em>, <em>v</em>) ∈ <em>E</em></sub>cost(<em>u</em>, <em>v</em>)</span></p>
+<p><strong>Subject to:</strong> * No module overlap ⚠️ * Grid boundary
+constraints 🚧 * I/O pads on periphery 📍 * Reserved columns for
+DSP/SRAM ⚡</p>
+<hr />
+<h1 id="part-2-data-structures">Part 2: Data Structures 🧩</h1>
+<hr />
+<h2 id="key-data-structures">📚 Key Data Structures</h2>
+<pre class="mermaid"><code>classDiagram
+    class Netlist {
+        +modules: List
+        +nets: List
+        +num_pads: int
+    }
+    class FlowGraph {
+        +nodes
+        +edges with costs
+    }
+    class Placement {
+        +place[0]: x-coords
+        +place[1]: y-coords
+    }
+    class NnsConfig {
+        +grid: [W, H]
+        +delta: [dx, dy]
+    }
+    
+    Netlist --&gt; FlowGraph : create
+    FlowGraph --&gt; Placement : optimize
+    NnsConfig --&gt; FlowGraph : config</code></pre>
+<hr />
+<h2 id="fpga-grid-architecture">🗺️ FPGA Grid Architecture</h2>
+<pre class="mermaid"><code>grid
+rows: 6
+cols: 6
+I/O pad cells: 4
+core cells: 4x4</code></pre>
+<pre><code>╔══════════════════════════════════════╗
+║  I/O Pad Row (edge)              ║
+║ ┌──┬──┬──┬──┬──┬──┐         ║
+║ │P │P │P │P │P │P │         ║
+║ ├──┼──┼──┼──┼──┼──┤         ║
+║ │P │  │  │  │  │P │ Core    ║
+║ │  │  │  │  │  │  │ Grid   ║
+║ │P │  │  │  │  │P │         ║
+║ ├──┼──┼──┼──┼──┼──┤         ║
+║ │P │P │P │P │P │P │         ║
+║ └──┴──┴──┴──┴──┴──┘         ║
+╚══════════════════════════════════════╝</code></pre>
+<ul>
+<li><strong>Core:</strong> <span
+class="math inline"><em>W</em> × <em>H</em></span> placement sites</li>
+<li><strong>I/O:</strong> Dedicated peripheral ring</li>
+</ul>
+<hr />
+<h2 id="flow-graph-construction">📊 Flow Graph Construction</h2>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> net <span class="kw">in</span> netlist.nets:</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> v1 <span class="kw">in</span> netlist.ugraph[net]:</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> v2 <span class="kw">in</span> netlist.ugraph[net]:</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> is_pad(v2):</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                ugraph.add_edge(v1, v2)  <span class="co"># Bidirectional</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                ugraph.add_edge(v2, v1)</span></code></pre></div>
+<ul>
+<li>One edge per connection pair</li>
+<li>Edge weight = cost along <strong>opposite axis</strong></li>
+</ul>
+<hr />
+<h1 id="part-3-core-algorithm">Part 3: Core Algorithm 📊</h1>
+<hr />
+<h2 id="howards-algorithm-overview">🔄 Howard’s Algorithm Overview</h2>
+<pre class="mermaid"><code>flowchart TD
+    A[Start] --&gt; B[Initialize ratio]
+    B --&gt; C[Calc edge weights]
+    C --&gt; D[Find negative cycles]
+    D --&gt; E{Negative cycle?}
+    E --&gt;|Yes| F[Update ratio]
+    F --&gt; C
+    E --&gt;|No| G[Converged]
+    
+    style A fill:#e1f5fe
+    style G fill:#c8e6c9</code></pre>
+<ul>
+<li><strong>Purpose:</strong> Find minimum ratio (worst wire)
+placement</li>
+<li><strong>Method:</strong> Parametric search via negative cycle
+detection</li>
+</ul>
+<hr />
+<h2 id="parametric-search-formulation">📐 Parametric Search
+Formulation</h2>
+<p><strong>For a given ratio <span
+class="math inline"><em>β</em></span>, edge weight:</strong></p>
+<p><span
+class="math display"><em>w</em><sub><em>β</em></sub>(<em>u</em>, <em>v</em>) = <em>β</em> − cost(<em>u</em>, <em>v</em>)</span></p>
+<p><strong>Constraint:</strong> <span
+class="math inline"><em>x</em><sub><em>v</em></sub> − <em>x</em><sub><em>u</em></sub> ≤ <em>w</em><sub><em>β</em></sub>(<em>u</em>, <em>v</em>)</span>
+for all edges</p>
+<p><strong>Optimal ratio:</strong> Smallest <span
+class="math inline"><em>β</em></span> where solution exists</p>
+<hr />
+<h2 id="weight-calculation">📉 Weight Calculation</h2>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> calc_weight(beta, edge):</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    u, v <span class="op">=</span> edge</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    temp <span class="op">=</span> beta <span class="op">-</span> ugraph[u][v][<span class="st">&quot;cost&quot;</span>]</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> temp.numerator <span class="op">//</span> temp.denominator</span></code></pre></div>
+<ul>
+<li>Convert fractional weight to integer</li>
+<li>Negative weight → negative cycle indicator ⚠️</li>
+</ul>
+<hr />
+<h2 id="zero-cancellation">🔍 Zero Cancellation</h2>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zero_cancel(cycle):</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    total_cost <span class="op">=</span> <span class="bu">sum</span>(ugraph[u][v][<span class="st">&quot;cost&quot;</span>] <span class="cf">for</span> (u,v) <span class="kw">in</span> cycle)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Fraction(total_cost, <span class="bu">len</span>(cycle))</span></code></pre></div>
+<p><strong>New ratio:</strong> <span class="math display">$$
+\beta_{new} = \frac{\sum \text{cost}}{\# \text{edges}}
+$$</span></p>
+<hr />
+<h1 id="part-4-legalization">Part 4: Legalization ⚖️</h1>
+<hr />
+<h2 id="why-legalization">⚠️ Why Legalization?</h2>
+<pre class="mermaid"><code>grid
+rows: 4
+cols: 3
+overlap: true</code></pre>
+<p><strong>Before:</strong> Modules may overlap <strong>After:</strong>
+Each site has ≤1 module</p>
+<hr />
+<h2 id="bipartite-matching">🔗 Bipartite Matching</h2>
+<pre class="mermaid"><code>graph LR
+    subgraph Modules
+    M1[M1]
+    M2[M2]
+    M3[M3]
+    end
+    
+    subgraph Positions
+    P1[(1,1)]
+    P2[(1,2)]
+    P3[(1,3)]
+    end
+    
+    M1 --&gt; P1
+    M1 --&gt; P2
+    M2 --&gt; P2
+    M2 --&gt; P3
+    M3 --&gt; P3
+    
+    style M1 fill:#2196F3
+    style M2 fill:#4CAF50
+    style M3 fill:#FF9800</code></pre>
+<ul>
+<li><strong>Left:</strong> Modules to place</li>
+<li><strong>Right:</strong> Available grid positions</li>
+<li><strong>Weight:</strong> Change in worst wirelength</li>
+</ul>
+<hr />
+<h2 id="minimum-weight-matching">⚖️ Minimum Weight Matching</h2>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Construct bipartite graph</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>B.add_nodes_from(lst, bipartite<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> v <span class="kw">in</span> lst:</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="op">-</span>neighborhood, neighborhood):</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Add edges to nearby positions</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        weight <span class="op">=</span> calc_worst_wirelength_v(v, new_pos)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        B.add_edge(v, new_pos, weight<span class="op">=</span>weight)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Solve</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>matches <span class="op">=</span> bipartite.minimum_weight_full_matching(B)</span></code></pre></div>
+<ul>
+<li>Minimize <strong>total</strong> change in worst wirelength</li>
+<li>Greedy local search for efficiency ⚡</li>
+</ul>
+<hr />
+<h1 id="part-5-io-assignment">Part 5: I/O Assignment 📍</h1>
+<hr />
+<h2 id="io-pad-placement">📍 I/O Pad Placement</h2>
+<pre class="mermaid"><code>flowchart TD
+    A[For each I/O pad] --&gt; B[Find nearest edge]
+    B --&gt; C{Calculate worst distance}
+    C --&gt; D{Any edge full?}
+    D --&gt;|No| E[Assign to best edge]
+    D --&gt;|Yes| F[Try other edge]
+    F --&gt; E
+    E --&gt; G[Legalize if needed]
+    
+    style A fill:#e1f5fe
+    style G fill:#c8e6c9</code></pre>
+<ul>
+<li><strong>Goal:</strong> Minimize worst-case distance to connected
+modules</li>
+<li><strong>Constraints:</strong> Limited I/O sites per edge</li>
+</ul>
+<hr />
+<h2 id="edge-selection-criteria">🎯 Edge Selection Criteria</h2>
+<p>For each I/O pad, choose edge that minimizes:</p>
+<p><span
+class="math display">worst = max<sub><em>m</em> ∈ connected</sub>cost(pad, <em>m</em>)</span></p>
+<p><strong>Available edges:</strong> Top, Bottom, Left, Right</p>
+<hr />
+<h1 id="part-6-iterative-flow">Part 6: Iterative Flow 🔄</h1>
+<hr />
+<h2 id="full-optimization-loop">🔄 Full Optimization Loop</h2>
+<pre class="mermaid"><code>flowchart TD
+    A[Start] --&gt; B[Initial Random Placement]
+    B --&gt; C[Iteration]
+    C --&gt; D[Howard X]
+    D --&gt; E[Legalize Y]
+    E --&gt; F[Assign I/O]
+    F --&gt; G[Howard Y]
+    G --&gt; H[Legalize X]
+    H --&gt; I[Assign I/O]
+    I --&gt; J[Calc Worst Wire]
+    J --&gt; K{Improved?}
+    K --&gt;|Yes| L[Save Best]
+    L --&gt; C
+    K --&gt;|No| M[Restore Best]
+    M --&gt; N[End]
+    
+    style B fill:#fff3e0
+    style N fill:#c8e6c9</code></pre>
+<hr />
+<h2 id="iteration-example">📈 Iteration Example</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Worst Wire</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Initial</td>
+<td>150</td>
+</tr>
+<tr>
+<td>Howard X</td>
+<td>95</td>
+</tr>
+<tr>
+<td>Legalize Y</td>
+<td>85</td>
+</tr>
+<tr>
+<td>Howard Y</td>
+<td>72</td>
+</tr>
+<tr>
+<td>Legalize X</td>
+<td>68</td>
+</tr>
+<tr>
+<td><strong>Final</strong></td>
+<td><strong>65</strong></td>
+</tr>
+</tbody>
+</table>
+<p><em>Monotonically decreasing</em> ✅</p>
+<hr />
+<h1 id="part-7-experimental-results">Part 7: Experimental Results
+✅</h1>
+<hr />
+<h2 id="performance-metrics">📊 Performance Metrics</h2>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Initial WW</td>
+<td>150</td>
+</tr>
+<tr>
+<td>Final WW</td>
+<td>65</td>
+</tr>
+<tr>
+<td>Improvement</td>
+<td>57%</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>~2s</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="comparison">📈 Comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Worst Wire</th>
+<th>HPWL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Random</td>
+<td>150</td>
+<td>1250</td>
+</tr>
+<tr>
+<td><strong>Ours</strong></td>
+<td><strong>65</strong></td>
+<td><strong>890</strong></td>
+</tr>
+<tr>
+<td>SA</td>
+<td>72</td>
+<td>850</td>
+</tr>
+</tbody>
+</table>
+<p><em>Fairness-centric achieves best worst case</em> 🎯</p>
+<hr />
+<h2 id="visual-example">🎨 Visual Example</h2>
+<figure>
+<img src="./outputs/initial.svg" alt="Initial Placement" />
+<figcaption aria-hidden="true">Initial Placement</figcaption>
+</figure>
+<p><em>Initial: Random placement</em> <img
+src="./outputs/after1legalize.svg" alt="After Legalization" /></p>
+<p><em>After legalization</em> <img src="./outputs/final.svg"
+alt="Final Placement" /></p>
+<p><em>Final: Optimized</em></p>
+<hr />
+<h1 id="part-8-summary">Part 8: Summary 📝</h1>
+<hr />
+<h2 id="key-contributions">✅ Key Contributions</h2>
+<ol type="1">
+<li>🎯 <strong>Fairness metric:</strong> Minimize worst wire length</li>
+<li>🔄 <strong>Parametric search:</strong> Howard’s algorithm</li>
+<li>⚖️ <strong>Legalization:</strong> Bipartite matching</li>
+<li>📍 <strong>I/O assignment:</strong> Peripheral optimization</li>
+</ol>
+<hr />
+<h2 id="algorithms-used">📚 Algorithms Used</h2>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Howard’s</td>
+<td>Optimization along axis</td>
+</tr>
+<tr>
+<td>Parametric search</td>
+<td>Find minimum ratio</td>
+</tr>
+<tr>
+<td>Bipartite matching</td>
+<td>Legalization</td>
+</tr>
+<tr>
+<td>Negative cycle detection</td>
+<td>Ratio update</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="future-work">🔮 Future Work</h2>
+<ul>
+<li>🎯 Multi-objective optimization</li>
+<li>⚡ Parallel processing</li>
+<li>📱 GPU acceleration</li>
+<li>🎨 Machine learning integration</li>
+</ul>
+<hr />
+<h2 id="references">📖 References</h2>
+<ol type="1">
+<li>🔗 <a href="https://github.com/luk036/nnsplace">nnsplace
+repository</a></li>
+<li>📚 <a href="https://github.com/luk036/digraphx">digraphx</a></li>
+<li>📚 <a href="https://github.com/luk036/netlistx">netlistx</a></li>
+<li>📚 <a
+href="https://github.com/luk036/physdes-py">physdes-py</a></li>
+</ol>
+<hr />
+<h1 id="questions">❓ Questions?</h1>
+<h2 id="thank-you">🎤 Thank You!</h2>
+<p>📧 Contact: [email]</p>
+<p>🔗 Code: https://github.com/luk036/nnsplace</p>
+</body>
+</html>
