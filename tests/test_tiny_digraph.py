@@ -2,8 +2,9 @@
 Unit tests for tiny_digraph module - provides DiGraphAdapter and TinyDiGraph classes.
 """
 
-from nnsplace.tiny_digraph import DiGraphAdapter, TinyDiGraph
 from mywheel.map_adapter import MapAdapter
+
+from nnsplace.tiny_digraph import DiGraphAdapter, TinyDiGraph
 
 
 def test_digraph_adapter_items():

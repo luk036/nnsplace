@@ -280,7 +280,7 @@ search)</li>
     B --&gt; C[Physical Layout]
     C --&gt; D[Routing]
     D --&gt; E[FPGA Bitstream]
-    
+
     style A fill:#e1f5fe
     style B fill:#fff3e0
     style C fill:#e8f5e9
@@ -346,7 +346,7 @@ class="math display">cost(<em>u</em>, <em>v</em>) = <em>Δ</em><sub><em>x<
     u[module u] --&gt; |Δx| x[ ]
     x --&gt; v[module v]
     end
-    
+
     style u fill:#2196F3
     style v fill:#4CAF50</code></pre>
 <ul>
@@ -387,7 +387,7 @@ DSP/SRAM ⚡</p>
         +grid: [W, H]
         +delta: [dx, dy]
     }
-    
+
     Netlist --&gt; FlowGraph : create
     FlowGraph --&gt; Placement : optimize
     NnsConfig --&gt; FlowGraph : config</code></pre>
@@ -440,7 +440,7 @@ class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a hr
     E --&gt;|Yes| F[Update ratio]
     F --&gt; C
     E --&gt;|No| G[Converged]
-    
+
     style A fill:#e1f5fe
     style G fill:#c8e6c9</code></pre>
 <ul>
@@ -499,19 +499,19 @@ Each site has ≤1 module</p>
     M2[M2]
     M3[M3]
     end
-    
+
     subgraph Positions
     P1[(1,1)]
     P2[(1,2)]
     P3[(1,3)]
     end
-    
+
     M1 --&gt; P1
     M1 --&gt; P2
     M2 --&gt; P2
     M2 --&gt; P3
     M3 --&gt; P3
-    
+
     style M1 fill:#2196F3
     style M2 fill:#4CAF50
     style M3 fill:#FF9800</code></pre>
@@ -549,7 +549,7 @@ class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a h
     D --&gt;|Yes| F[Try other edge]
     F --&gt; E
     E --&gt; G[Legalize if needed]
-    
+
     style A fill:#e1f5fe
     style G fill:#c8e6c9</code></pre>
 <ul>
@@ -582,7 +582,7 @@ class="math display">worst = max<sub><em>m</em> ∈ connected</sub>cost(
     L --&gt; C
     K --&gt;|No| M[Restore Best]
     M --&gt; N[End]
-    
+
     style B fill:#fff3e0
     style N fill:#c8e6c9</code></pre>
 <hr />

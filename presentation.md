@@ -41,7 +41,7 @@ graph LR
     B --> C[Physical Layout]
     C --> D[Routing]
     D --> E[FPGA Bitstream]
-    
+
     style A fill:#e1f5fe
     style B fill:#fff3e0
     style C fill:#e8f5e9
@@ -82,7 +82,7 @@ graph LR
     u[module u] --> |Δx| x[ ]
     x --> v[module v]
     end
-    
+
     style u fill:#2196F3
     style v fill:#4CAF50
 ```
@@ -133,7 +133,7 @@ classDiagram
         +grid: [W, H]
         +delta: [dx, dy]
     }
-    
+
     Netlist --> FlowGraph : create
     FlowGraph --> Placement : optimize
     NnsConfig --> FlowGraph : config
@@ -202,7 +202,7 @@ flowchart TD
     E -->|Yes| F[Update ratio]
     F --> C
     E -->|No| G[Converged]
-    
+
     style A fill:#e1f5fe
     style G fill:#c8e6c9
 ```
@@ -282,19 +282,19 @@ graph LR
     M2[M2]
     M3[M3]
     end
-    
+
     subgraph Positions
     P1[(1,1)]
     P2[(1,2)]
     P3[(1,3)]
     end
-    
+
     M1 --> P1
     M1 --> P2
     M2 --> P2
     M2 --> P3
     M3 --> P3
-    
+
     style M1 fill:#2196F3
     style M2 fill:#4CAF50
     style M3 fill:#FF9800
@@ -341,7 +341,7 @@ flowchart TD
     D -->|Yes| F[Try other edge]
     F --> E
     E --> G[Legalize if needed]
-    
+
     style A fill:#e1f5fe
     style G fill:#c8e6c9
 ```
@@ -385,7 +385,7 @@ flowchart TD
     L --> C
     K -->|No| M[Restore Best]
     M --> N[End]
-    
+
     style B fill:#fff3e0
     style N fill:#c8e6c9
 ```

@@ -1,4 +1,5 @@
 import networkx as nx
+
 from nnsplace.min_parametric import min_parametric
 
 

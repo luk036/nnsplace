@@ -1,4 +1,5 @@
 import pytest
+
 from nnsplace.placement_cfg import NnsConfig
 
 
