@@ -1,5 +1,8 @@
 # The NnsConfig class represents the configuration for No-Nonsense Placement, including grid size and
 # delta values.
+from typing import Optional
+
+
 class NnsConfig:
     """No-Nonsense Placement configuration"""
 
@@ -11,7 +14,7 @@ class NnsConfig:
         y: int,
         delta_x: int,
         delta_y: int,
-        reserved_col: int | None = None,
+        reserved_col: Optional[int] = None,
     ):
         """
         Initialize the configuration for NNS placement.
