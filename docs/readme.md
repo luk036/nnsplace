@@ -1,1 +1,4 @@
-../README.md
+(readme)=
+
+```{include} ../README.md
+```

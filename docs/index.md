@@ -1,35 +1,35 @@
 # nnsplace
 
-Circuit Partitioning Python Code
+This is the documentation of **nnsplace**.
 
-## 👉 Note
+```{note}
+This is the main page of your project's Sphinx documentation.
+It is formatted in Markdown using MyST. Add additional pages
+by creating md-files in `docs` and adding them to the toctree below.
 
-> This is the main page of your project's [Sphinx] documentation. It is
-> formatted in [Markdown]. Add additional pages by creating md-files in
-> `docs` or rst-files (formated in [reStructuredText]) and adding links to
-> them in the `Contents` section below.
->
-> Please check [Sphinx], [recommonmark] and [autostructify] for more information
-> about how to document your project and how to configure your preferences.
+The pretty useful extension `autodoc` is activated by default and lets
+you include documentation from docstrings. Docstrings can be written in
+[Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings)
+(recommended!), [NumPy style](https://numpydoc.readthedocs.io/en/latest/format.html)
+and [classical style](https://www.sphinx-doc.org/en/master/domains.html#info-field-lists).
+```
 
-## 🗺️ Overview
+## Contents
 
-- [Overview](readme)
-- [License](license)
-- [Authors](authors)
-- [Changelog](changelog)
-- [Module Reference](api/modules)
+```{toctree}
+:maxdepth: 2
+
+Overview <readme>
+Contributions & Help <contributing>
+License <license>
+Authors <authors>
+Changelog <changelog>
+Module Reference <api/modules>
+```
 
 ## Indices and tables
 
-```eval_rst
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-```
+- {ref}`genindex`
+- {ref}`modindex`
+- {ref}`search`
 
-[sphinx]: http://www.sphinx-doc.org/
-[markdown]: https://daringfireball.net/projects/markdown/
-[restructuredtext]: http://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
-[recommonmark]: https://recommonmark.readthedocs.io/en/latest
-[autostructify]: https://recommonmark.readthedocs.io/en/latest/auto_structify.html
