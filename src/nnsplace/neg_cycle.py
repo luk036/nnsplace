@@ -7,8 +7,14 @@ Negative cycle detection for weighed graphs.
 from typing import Dict, Generator
 
 
-# The `NegCycleFinder` class is used to find negative cycles in a graph.
 class NegCycleFinder:
+    """
+    Negative cycle detection in weighted directed graphs.
+
+    Provides methods to find negative cycles using predecessor and successor
+    relaxation, supporting lazy evaluation.
+    """
+
     pred: Dict = {}
     succ: Dict = {}
 
