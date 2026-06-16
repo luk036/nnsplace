@@ -157,6 +157,10 @@ pygments_style = "sphinx"
 # If this is True, todo emits a warning for each TODO entries. The default is False.
 todo_emit_warnings = True
 
+# Suppress warnings for images included from README.md that are only available
+# at the project root, not relative to the docs build directory
+suppress_warnings = ["image.not_readable"]
+
 
 # -- Options for HTML output -------------------------------------------------
 
