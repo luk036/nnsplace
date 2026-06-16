@@ -115,7 +115,9 @@ class TestNnsPlacer:
         assert placer.cost_inv(5, 0) == Fraction(5, mock_nnsconfig.delta[0])
         assert placer.cost_inv(10, 1) == Fraction(10, mock_nnsconfig.delta[1])
 
-    def test_calc_worst_wirelength(self, mock_netlist: Any, mock_nnsconfig: Any) -> None:
+    def test_calc_worst_wirelength(
+        self, mock_netlist: Any, mock_nnsconfig: Any
+    ) -> None:
         placer = NnsPlacer(mock_netlist, mock_nnsconfig)
         place: list[dict[Any, int]] = [
             {0: 0, 1: 1, 2: 2, 3: 3, 4: 4},
@@ -129,7 +131,9 @@ class TestNnsPlacer:
         # Worst wirelength should be 6
         assert placer.calc_worst_wirelength(place) == 6
 
-    def test_calc_worst_wirelength_v(self, mock_netlist: Any, mock_nnsconfig: Any) -> None:
+    def test_calc_worst_wirelength_v(
+        self, mock_netlist: Any, mock_nnsconfig: Any
+    ) -> None:
         NnsPlacer(mock_netlist, mock_nnsconfig)
         # For v=0, neighbors are 1, 2
         # (0,1): x_diff = 1, y_diff = 1. cost = 1*1 + 1*2 = 3
@@ -162,7 +166,9 @@ class TestNnsPlacer:
     #     assert placer.count[0][5] == 1  # module 4 at col 5
     #     assert placer.count[1][1] == 5  # all modules at row 1
 
-    def test_calc_total_hull_length(self, mock_netlist: Any, mock_nnsconfig: Any) -> None:
+    def test_calc_total_hull_length(
+        self, mock_netlist: Any, mock_nnsconfig: Any
+    ) -> None:
         placer = NnsPlacer(mock_netlist, mock_nnsconfig)
         # dist represents coordinates along one axis
         dist: dict[Any, int] = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4}  # module 0 to 4

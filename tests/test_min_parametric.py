@@ -1,6 +1,6 @@
-import networkx as nx
-
 from typing import Any
+
+import networkx as nx
 
 from nnsplace.min_parametric import min_parametric
 

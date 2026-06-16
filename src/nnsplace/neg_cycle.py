@@ -50,7 +50,12 @@ class NegCycleFinder:
                         yield vtx_u
                     break
 
-    def relax_pred(self, dist: Any, get_weight: Callable[[Any], float], update_ok: Callable[[Any, Any], bool]) -> bool:
+    def relax_pred(
+        self,
+        dist: Any,
+        get_weight: Callable[[Any], float],
+        update_ok: Callable[[Any, Any], bool],
+    ) -> bool:
         """
         The `relax_pred` function updates the `dist` and `pred` arrays based on the weights of edges in a
         graph.
@@ -76,7 +81,12 @@ class NegCycleFinder:
                 changed = True
         return changed
 
-    def relax_succ(self, dist: Any, get_weight: Callable[[Any], float], update_ok: Callable[[Any, Any], bool]) -> bool:
+    def relax_succ(
+        self,
+        dist: Any,
+        get_weight: Callable[[Any], float],
+        update_ok: Callable[[Any, Any], bool],
+    ) -> bool:
         """
         The `relax_succ` function performs an update of the `dist` and `succ` variables.
 
@@ -97,7 +107,12 @@ class NegCycleFinder:
                 changed = True
         return changed
 
-    def find_neg_cycle_pred(self, dist: Any, get_weight: Callable[[Any], float], update_ok: Callable[[Any, Any], bool]) -> Generator:
+    def find_neg_cycle_pred(
+        self,
+        dist: Any,
+        get_weight: Callable[[Any], float],
+        update_ok: Callable[[Any, Any], bool],
+    ) -> Generator:
         """
         The function `find_neg_cycle_pred` performs an updating of `dist` and `pred` and yields a list of
         edges representing a negative cycle.
@@ -119,7 +134,12 @@ class NegCycleFinder:
                 found = True
                 yield self.cycle_list(vtx_v, self.pred)
 
-    def find_neg_cycle_succ(self, dist: Any, get_weight: Callable[[Any], float], update_ok: Callable[[Any, Any], bool]) -> Generator:
+    def find_neg_cycle_succ(
+        self,
+        dist: Any,
+        get_weight: Callable[[Any], float],
+        update_ok: Callable[[Any, Any], bool],
+    ) -> Generator:
         """
         The function `find_neg_cycle_succ` performs an updating of `dist` and `succ` and yields a list of
         edges representing a negative cycle.
@@ -161,7 +181,9 @@ class NegCycleFinder:
                 break
         return cycle
 
-    def is_negative(self, handle: Any, dist: Any, get_weight: Callable[[Any], float]) -> bool:
+    def is_negative(
+        self, handle: Any, dist: Any, get_weight: Callable[[Any], float]
+    ) -> bool:
         """
         The `is_negative` function checks if a cycle in a graph is negative by iterating through the cycle
         and comparing the distances between nodes.
