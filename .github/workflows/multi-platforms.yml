@@ -1,5 +1,5 @@
 name: Multi-Platforms
-on: [push]
+on: [ push ]
 
 jobs:
   miniconda:
