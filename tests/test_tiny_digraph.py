@@ -7,7 +7,7 @@ from mywheel.map_adapter import MapAdapter
 from nnsplace.tiny_digraph import DiGraphAdapter, TinyDiGraph
 
 
-def test_digraph_adapter_items():
+def test_digraph_adapter_items() -> None:
     """Test DiGraphAdapter.items() returns adjacency as iterable."""
     gra = DiGraphAdapter()
     gra.add_nodes_from([0, 1, 2])
@@ -26,7 +26,7 @@ def test_digraph_adapter_items():
     assert 2 in adj_dict
 
 
-def test_digraph_adapter_add_edge():
+def test_digraph_adapter_add_edge() -> None:
     """Test DiGraphAdapter edge addition."""
     gra = DiGraphAdapter()
     assert gra.number_of_edges() == 0
@@ -38,14 +38,14 @@ def test_digraph_adapter_add_edge():
     assert gra.number_of_edges() == 1
 
 
-def test_tiny_digraph_init_nodes():
+def test_tiny_digraph_init_nodes() -> None:
     """Test TinyDiGraph.init_nodes() initializes graph with n nodes."""
     gra = TinyDiGraph()
     gra.init_nodes(5)
     assert gra.number_of_nodes() == 5
 
 
-def test_tiny_digraph_node_dict_factory():
+def test_tiny_digraph_node_dict_factory() -> None:
     """Test TinyDiGraph uses custom node_dict_factory."""
     gra = TinyDiGraph()
     gra.init_nodes(3)
@@ -56,7 +56,7 @@ def test_tiny_digraph_node_dict_factory():
     assert len(node_dict) == 3
 
 
-def test_tiny_digraph_adjlist_outer_dict_factory():
+def test_tiny_digraph_adjlist_outer_dict_factory() -> None:
     """Test TinyDiGraph uses custom adjlist_outer_dict_factory."""
     gra = TinyDiGraph()
     gra.init_nodes(3)
@@ -66,7 +66,7 @@ def test_tiny_digraph_adjlist_outer_dict_factory():
     assert len(adj) == 3
 
 
-def test_tiny_digraph_add_edge():
+def test_tiny_digraph_add_edge() -> None:
     """Test TinyDiGraph edge addition."""
     gra = TinyDiGraph()
     gra.init_nodes(3)
@@ -78,7 +78,7 @@ def test_tiny_digraph_add_edge():
     assert 2 in gra.neighbors(1)
 
 
-def test_tiny_digraph_neighbors():
+def test_tiny_digraph_neighbors() -> None:
     """Test TinyDiGraph.neighbors() returns neighbor nodes."""
     gra = TinyDiGraph()
     gra.init_nodes(4)
@@ -93,7 +93,7 @@ def test_tiny_digraph_neighbors():
     assert 3 in neighbors
 
 
-def test_tiny_digraph_iteration():
+def test_tiny_digraph_iteration() -> None:
     """Test iteration over TinyDiGraph nodes."""
     gra = TinyDiGraph()
     gra.init_nodes(3)
@@ -104,14 +104,14 @@ def test_tiny_digraph_iteration():
     assert len(nodes) == 3
 
 
-def test_tiny_digraph_number_of_nodes():
+def test_tiny_digraph_number_of_nodes() -> None:
     """Test number_of_nodes() returns correct count."""
     gra = TinyDiGraph()
     gra.init_nodes(10)
     assert gra.number_of_nodes() == 10
 
 
-def test_tiny_digraph_number_of_edges():
+def test_tiny_digraph_number_of_edges() -> None:
     """Test number_of_edges() returns correct count."""
     gra = TinyDiGraph()
     gra.init_nodes(3)
@@ -122,7 +122,7 @@ def test_tiny_digraph_number_of_edges():
     assert gra.number_of_edges() == 3
 
 
-def test_tiny_digraph_in_degree():
+def test_tiny_digraph_in_degree() -> None:
     """Test in_degree() works correctly."""
     gra = TinyDiGraph()
     gra.init_nodes(3)
@@ -133,7 +133,7 @@ def test_tiny_digraph_in_degree():
     assert gra.in_degree(0) == 0
 
 
-def test_tiny_digraph_out_degree():
+def test_tiny_digraph_out_degree() -> None:
     """Test out_degree() works correctly."""
     gra = TinyDiGraph()
     gra.init_nodes(3)

@@ -3,7 +3,7 @@ import networkx as nx
 from nnsplace.min_parametric import min_parametric
 
 
-def test_min_parametric_no_cycles():
+def test_min_parametric_no_cycles() -> None:
     gra = nx.DiGraph()
     gra.add_edges_from([(0, 1), (1, 2)])
 
@@ -26,7 +26,7 @@ def test_min_parametric_no_cycles():
     assert cycle is None
 
 
-def test_min_parametric_with_cycle():
+def test_min_parametric_with_cycle() -> None:
     gra = nx.DiGraph()
     gra.add_edges_from([(0, 1), (1, 2), (2, 0)])
 
@@ -45,7 +45,7 @@ def test_min_parametric_with_cycle():
     assert ratio >= 1.0
 
 
-def test_min_parametric_pick_one_only():
+def test_min_parametric_pick_one_only() -> None:
     gra = nx.DiGraph()
     gra.add_edges_from([(0, 1), (1, 2), (2, 0)])
 
@@ -66,7 +66,7 @@ def test_min_parametric_pick_one_only():
     assert ratio >= 1.0
 
 
-def test_min_parametric_bidir():
+def test_min_parametric_bidir() -> None:
     gra = nx.DiGraph()
     gra.add_edges_from([(0, 1), (1, 0)])
 
