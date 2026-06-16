@@ -1,6 +1,6 @@
 # The NnsConfig class represents the configuration for No-Nonsense Placement, including grid size and
 # delta values.
-from typing import Optional
+from typing import Any, Optional
 
 
 class NnsConfig:
@@ -68,7 +68,7 @@ class NnsConfig:
         return self._reserved_col
 
     # Backward compatibility: allow attribute-style access
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> Any:
         # For backward compatibility with code using cfg.grid[0], cfg.delta[0], etc.
         if name == "grid":
             return self._grid

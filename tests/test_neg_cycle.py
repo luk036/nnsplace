@@ -1,15 +1,17 @@
+from typing import Any, Iterator
+
 from nnsplace.neg_cycle import NegCycleFinder
 
 
 # Mock Graph class for testing
 class MockGraph:
-    def __init__(self, edges):
+    def __init__(self, edges: Any) -> None:
         self._edges = edges
 
-    def edges(self):
+    def edges(self) -> Any:
         return self._edges
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         nodes = set()
         for u, v in self._edges:
             nodes.add(u)
@@ -65,7 +67,7 @@ def test_relax_pred() -> None:
 
     dist = {"A": 0, "B": float("inf"), "C": float("inf")}
 
-    def get_weight(edge):
+    def get_weight(edge: Any) -> int:
         u, v = edge
         if u == "A" and v == "B":
             return 1
@@ -75,7 +77,7 @@ def test_relax_pred() -> None:
             return 1
         return 0
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     changed = finder.relax_pred(dist, get_weight, update_ok)
@@ -91,7 +93,7 @@ def test_relax_succ() -> None:
 
     dist = {"A": 0, "B": 0}
 
-    def get_weight(edge):
+    def get_weight(edge: Any) -> int:
         u, v = edge
         if u == "A" and v == "B":
             return -1
@@ -99,7 +101,7 @@ def test_relax_succ() -> None:
             return -1
         return 0
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     changed = finder.relax_succ(dist, get_weight, update_ok)
@@ -117,7 +119,7 @@ def test_find_neg_cycle_pred_with_cycle() -> None:
 
     dist = {"A": 0, "B": 0, "C": 0}
 
-    def get_weight(edge):
+    def get_weight(edge: Any) -> int:
         u, v = edge
         if u == "A" and v == "B":
             return -1
@@ -127,7 +129,7 @@ def test_find_neg_cycle_pred_with_cycle() -> None:
             return -1
         return 0
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     cycles = list(finder.find_neg_cycle_pred(dist, get_weight, update_ok))
@@ -142,7 +144,7 @@ def test_find_neg_cycle_pred_no_cycle() -> None:
 
     dist = {"A": 0, "B": 0, "C": 0}
 
-    def get_weight(edge):
+    def get_weight(edge: Any) -> int:
         u, v = edge
         if u == "A" and v == "B":
             return -1
@@ -150,7 +152,7 @@ def test_find_neg_cycle_pred_no_cycle() -> None:
             return -1
         return 0
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     cycles = list(finder.find_neg_cycle_pred(dist, get_weight, update_ok))
@@ -164,7 +166,7 @@ def test_find_neg_cycle_succ_with_cycle() -> None:
 
     dist = {"A": 0, "B": 0, "C": 0}
 
-    def get_weight(edge):
+    def get_weight(edge: Any) -> int:
         u, v = edge
         if u == "A" and v == "B":
             return -1
@@ -174,7 +176,7 @@ def test_find_neg_cycle_succ_with_cycle() -> None:
             return -1
         return 0
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     cycles = list(finder.find_neg_cycle_succ(dist, get_weight, update_ok))
@@ -189,7 +191,7 @@ def test_find_neg_cycle_succ_no_cycle() -> None:
 
     dist = {"A": 0, "B": 0, "C": 0}
 
-    def get_weight(edge):
+    def get_weight(edge: Any) -> int:
         u, v = edge
         if u == "A" and v == "B":
             return -1
@@ -197,7 +199,7 @@ def test_find_neg_cycle_succ_no_cycle() -> None:
             return -1
         return 0
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     cycles = list(finder.find_neg_cycle_succ(dist, get_weight, update_ok))
@@ -211,7 +213,7 @@ def test_is_negative_with_setup() -> None:
 
     dist = {"A": 0.0, "B": float("inf"), "C": float("inf")}
 
-    def get_weight(edge):
+    def get_weight(edge: Any) -> int:
         u, v = edge
         if u == "A" and v == "B":
             return 1
@@ -221,7 +223,7 @@ def test_is_negative_with_setup() -> None:
             return -3
         return 0
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     finder.relax_pred(dist, get_weight, update_ok)
@@ -238,10 +240,10 @@ def test_is_negative_no_cycle() -> None:
 
     dist = {"A": 0, "B": float("inf"), "C": float("inf")}
 
-    def get_weight(edge):
+    def get_weight(edge: Any) -> int:
         return 1
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     finder.relax_pred(dist, get_weight, update_ok)

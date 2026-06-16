@@ -46,7 +46,7 @@ def min_parametric(
     :return: The function `min_parametric` returns three values: `ratio`, `cycle`, and `dist`.
     """
 
-    def get_weight(edge):
+    def get_weight(edge: Any) -> Any:
         """Get the weight of an edge using the current ratio parameter.
 
         :param edge: A tuple (u, v) representing an edge in the graph.

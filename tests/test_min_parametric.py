@@ -1,5 +1,7 @@
 import networkx as nx
 
+from typing import Any
+
 from nnsplace.min_parametric import min_parametric
 
 
@@ -7,13 +9,13 @@ def test_min_parametric_no_cycles() -> None:
     gra = nx.DiGraph()
     gra.add_edges_from([(0, 1), (1, 2)])
 
-    def cost(ratio, edge):
+    def cost(ratio: Any, edge: Any) -> int:
         return 1
 
-    def zero_cancel(cycle):
+    def zero_cancel(cycle: Any) -> float:
         return 0.0
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     dist = [float("inf")] * 3
@@ -30,13 +32,13 @@ def test_min_parametric_with_cycle() -> None:
     gra = nx.DiGraph()
     gra.add_edges_from([(0, 1), (1, 2), (2, 0)])
 
-    def cost(ratio, edge):
+    def cost(ratio: Any, edge: Any) -> float:
         return ratio - 1
 
-    def zero_cancel(cycle):
+    def zero_cancel(cycle: Any) -> float:
         return 2.0
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     dist = [0.0, 0.0, 0.0]
@@ -49,13 +51,13 @@ def test_min_parametric_pick_one_only() -> None:
     gra = nx.DiGraph()
     gra.add_edges_from([(0, 1), (1, 2), (2, 0)])
 
-    def cost(ratio, edge):
+    def cost(ratio: Any, edge: Any) -> float:
         return ratio - 1
 
-    def zero_cancel(cycle):
+    def zero_cancel(cycle: Any) -> float:
         return 2.0
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     dist = [0.0, 0.0, 0.0]
@@ -70,14 +72,14 @@ def test_min_parametric_bidir() -> None:
     gra = nx.DiGraph()
     gra.add_edges_from([(0, 1), (1, 0)])
 
-    def cost(ratio, edge):
+    def cost(ratio: Any, edge: Any) -> float:
         u, v = edge
         return 0.5 if u == 0 else 0
 
-    def zero_cancel(cycle):
+    def zero_cancel(cycle: Any) -> float:
         return 0.5
 
-    def update_ok(old_dist, new_dist):
+    def update_ok(old_dist: Any, new_dist: Any) -> bool:
         return True
 
     dist = [0.0, 0.0]
