@@ -6,6 +6,19 @@ The purpose of the code
 is to optimize the placement of circuit components (modules) on a grid-like
 structure, minimizing the worst wire length between connected components.
 
+.. svgbob::
+   :align: center
+
+      ┌────┬────┬────┬────┐
+      │ M1 │    │ M2 │    │
+      ├────┼────┼────┼────┤
+      │    │ M3 │    │ M4 │
+      ├────┼────┼────┼────┤
+      │ M5 │    │ M6 │    │
+      ├────┼────┼────┼────┤
+      │    │ M7 │    │ M8 │
+      └────┴────┴────┴────┘
+
 The main input to this algorithm is a netlist,
 which is a description of the
 circuit components and their connections. It also takes configuration parameters
