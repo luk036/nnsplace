@@ -1,6 +1,7 @@
 """Additional tests for nnsplace netlist module covering edge cases."""
 
 from mywheel.array_like import RepeatArray
+
 from nnsplace.netlist import (
     Netlist,
     SimpleGraph,
