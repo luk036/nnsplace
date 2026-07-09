@@ -127,3 +127,15 @@ def test_create_random_hgraph_default() -> None:
     netlist = create_random_hgraph()
     assert netlist.number_of_modules() == 30
     assert netlist.number_of_nets() == 26
+
+
+def test_get_module_weight_range_modules() -> None:
+    """Test get_module_weight when modules is a range (line 222)."""
+    graph = SimpleGraph()
+    graph.add_nodes_from([0, 1, 2, 3])
+    modules = range(2)
+    nets = [2, 3]
+    netlist = Netlist(graph, modules, nets)
+    netlist.module_weight = {0: 10, 1: 20}
+    assert netlist.get_module_weight(0) == 10
+    assert netlist.get_module_weight(1) == 20

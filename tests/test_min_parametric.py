@@ -52,7 +52,7 @@ def test_min_parametric_pick_one_only() -> None:
     gra.add_edges_from([(0, 1), (1, 2), (2, 0)])
 
     def cost(ratio: Any, edge: Any) -> float:
-        return ratio - 1
+        return ratio - 2  # negative when ratio < 2, guarantees cycles
 
     def zero_cancel(cycle: Any) -> float:
         return 2.0
@@ -63,9 +63,9 @@ def test_min_parametric_pick_one_only() -> None:
     dist = [0.0, 0.0, 0.0]
 
     ratio, cycle = min_parametric(
-        gra, 1.0, cost, zero_cancel, dist, update_ok, pick_one_only=True
+        gra, 0.0, cost, zero_cancel, dist, update_ok, pick_one_only=True
     )
-    assert ratio >= 1.0
+    assert ratio >= 0.0
 
 
 def test_min_parametric_bidir() -> None:
