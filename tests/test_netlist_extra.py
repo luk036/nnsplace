@@ -66,7 +66,7 @@ def test_get_module_weight_unknown() -> None:
     modules = [0, 1]
     nets = [2, 3]
     netlist = Netlist(graph, modules, nets)
-    netlist.module_weight = "invalid"
+    netlist.module_weight = "invalid"  # type: ignore[assignment]
     assert netlist.get_module_weight(0) == 1
 
 
