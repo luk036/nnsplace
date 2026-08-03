@@ -54,17 +54,14 @@ class NnsConfig:
 
     @property
     def grid(self) -> tuple[int, int]:
-        """Get the grid dimensions (width, height)."""
         return self._grid
 
     @property
     def delta(self) -> tuple[int, int]:
-        """Get the delta values (delta_x, delta_y)."""
         return self._delta
 
     @property
     def reserved_col(self) -> int:
-        """Get the column reserved for DSP/SRAM."""
         return self._reserved_col
 
     # Backward compatibility: allow attribute-style access

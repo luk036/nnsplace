@@ -15,13 +15,8 @@ class DiGraphAdapter(nx.DiGraph):
     """
 
     def items(self) -> Iterator[tuple[Any, Any]]:
-        """Return the adjacency list as an iterable of (node, neighbors) tuples.
 
-        This provides a dict-like interface to the graph's adjacency data.
 
-        :return: An iterable of tuples (node, adjacency_dict) for all nodes.
-        :rtype: iterable
-        """
         return self.adjacency()
 
 
@@ -31,36 +26,18 @@ class TinyDiGraph(DiGraphAdapter):
     num_nodes = 0
 
     def cheat_node_dict(self) -> MapAdapter:
-        """
-        The function `cheat_node_dict` returns a `MapAdapter` object that contains a list of dictionaries,
-        where the number of dictionaries is equal to the number of nodes in the graph.
 
-        Returns:
-            A MapAdapter object.
-        """
         return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     def cheat_adjlist_outer_dict(self) -> MapAdapter:
-        """
-        The function `cheat_adjlist_outer_dict` returns a `MapAdapter` object that contains a list of
-        dictionaries, where the number of dictionaries is equal to the number of nodes in the graph.
 
-        Returns:
-            A MapAdapter object.
-        """
         return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     node_dict_factory = cheat_node_dict
     adjlist_outer_dict_factory = cheat_adjlist_outer_dict
 
     def init_nodes(self, n: int) -> None:
-        """
-        The function initializes the number of nodes, a dictionary for nodes, and dictionaries for
-        adjacency and predecessor lists.
 
-        :param n: The parameter `n` represents the number of nodes in the graph
-        :type n: int
-        """
         self.num_nodes = n
         self._node = self.cheat_node_dict()
         self._adj = self.cheat_adjlist_outer_dict()

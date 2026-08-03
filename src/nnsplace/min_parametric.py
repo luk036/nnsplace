@@ -79,29 +79,3 @@ def min_parametric(
         ratio = r_max
         reverse = not reverse
     return ratio, cycle
-
-
-# if __name__ == "__main__":
-#     from __future__ import print_function
-#     from pprint import pprint
-#     import networkx as nx
-#     from neg_cycle import *
-#     from networkx.utils import generate_unique_node
-
-#     gra = create_test_case1()
-#     gra[1][2]['cost'] = 5
-#     r, c, dist = max_cycle_ratio(gra)
-#     assert c != None
-#     print(r)
-#     print(c)
-#     print(dist.items())
-
-#     gra = nx.cycle_graph(5, create_using=nx.DiGraph())
-#     gra[1][2]['cost'] = -6.
-#     newnode = generate_unique_node()
-#     gra.add_edges_from([(newnode, n) for n in gra])
-#     r, c, dist = max_cycle_ratio(gra)
-#     assert c != None
-#     print(r)
-#     print(c)
-#     print(dist.items())

@@ -17,7 +17,6 @@ from networkx.algorithms import bipartite
 from networkx.readwrite import json_graph
 
 
-# The class SimpleGraph is a subclass of nx.Graph and defines default attributes for edges and nodes.
 class SimpleGraph(nx.Graph):
     r"""
     The `SimpleGraph` class is a subclass of `nx.Graph` that defines default attributes for edges and
@@ -36,7 +35,6 @@ class SimpleGraph(nx.Graph):
     all_edge_dict = {"weight": 1}
 
     def single_edge_dict(self) -> Dict:
-        """Returns the default edge attribute dictionary."""
         return self.all_edge_dict
 
     edge_attr_dict_factory = single_edge_dict
@@ -62,11 +60,9 @@ class TinyGraph(nx.Graph):
     num_nodes = 0
 
     def cheat_node_dict(self) -> "MapAdapter":
-        """Returns a MapAdapter for node dictionaries."""
         return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     def cheat_adjlist_outer_dict(self) -> "MapAdapter":
-        """Returns a MapAdapter for adjacency list outer dictionaries."""
         return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     node_dict_factory = cheat_node_dict
@@ -84,7 +80,6 @@ class TinyGraph(nx.Graph):
         self.num_nodes = n
         self._node = self.cheat_node_dict()
         self._adj = self.cheat_adjlist_outer_dict()
-        # self._pred = self.cheat_adjlist_outer_dict()
 
 
 # The `Netlist` class represents a netlist, which is a collection of modules and nets in a graph
@@ -144,59 +139,27 @@ class Netlist:
 
         self.num_modules = len(modules)
         self.num_nets = len(nets)
-        # self.net_weight: Optional[Union[Dict, List[int]]] = None
         self.module_weight: Union[RepeatArray, Dict, List[int]] = RepeatArray(
             1, self.num_modules
         )
         self.module_fixed: set = set()
         self.net_weight: Optional[Union[Dict, List[int]]] = None
 
-        # self.module_dict = {}
-        # for v in enumerate(self.module_list):
-        #     self.module_dict[v] = v
-
-        # self.net_dict = {}
-        # for i_net, net in enumerate(self.net_list):
-        #     self.net_dict[net] = i_net
-
-        # self.module_fixed = module_fixed
-        # self.has_fixed_modules = (self.module_fixed != [])
         self.max_degree = max(self.ugraph.degree[cell] for cell in modules)
-        # self.max_net_degree = max(self.ugraph.degree[net] for net in nets)
 
     def number_of_modules(self) -> int:
-        """
-        The function "number_of_modules" returns the number of modules.
-        :return: The method is returning the value of the attribute `num_modules`.
-        """
         return self.num_modules
 
     def number_of_nets(self) -> int:
-        """
-        The function "number_of_nets" returns the number of nets.
-        :return: The number of nets.
-        """
         return self.num_nets
 
     def number_of_nodes(self) -> int:
-        """
-        The function "number_of_nodes" returns the number of nodes in a graph.
-        :return: The number of nodes in the graph.
-        """
         return self.ugraph.number_of_nodes()
 
     def number_of_pins(self) -> int:
-        """
-        The function `number_of_pins` returns the number of edges in a graph.
-        :return: The number of edges in the graph.
-        """
         return self.ugraph.number_of_edges()
 
     def get_max_degree(self) -> int:
-        """
-        The function `get_max_degree` returns the maximum degree of nodes in a graph.
-        :return: the maximum degree of the nodes in the graph.
-        """
         return max(self.ugraph.degree[cell] for cell in self.modules)
 
     def get_module_weight(self, v: int) -> int:
@@ -238,22 +201,10 @@ class Netlist:
     #         else self.module_weight[v]
 
     def get_net_weight(self, _: Any) -> int:
-        """
-        The function `get_net_weight` returns an integer value.
 
-        :param _: The underscore (_) in the function signature is a convention in Python to indicate that
-            the parameter is not used within the function. It is often used when a parameter is required by the
-            function signature but not actually used within the function's implementation. In this case, the
-            underscore (_) is used as a placeholder for
-        :return: An integer value of 1 is being returned.
-        """
         return 1
 
     def __iter__(self) -> Iterator:
-        """
-        The function returns an iterator over all modules in the Netlist.
-        :return: The `iter(self.modules)` is being returned.
-        """
         return iter(self.modules)
 
 
@@ -269,10 +220,6 @@ def read_json(filename: str) -> Netlist:
     with open(filename, "r") as fr:
         data = json.load(fr)
 
-    # Convert 'links' to 'edges' for NetworkX compatibility
-    # if "links" in data and "edges" not in data:
-    #     data["edges"] = data.pop("links")
-
     ugraph = json_graph.node_link_graph(data, edges="edges")
     num_modules = ugraph.graph["num_modules"]
     num_nets = ugraph.graph["num_nets"]
@@ -281,9 +228,6 @@ def read_json(filename: str) -> Netlist:
         ugraph, range(num_modules), range(num_modules, num_modules + num_nets)
     )
     hyprgraph.num_pads = num_pads
-    # hyprgraph.module_weight = RepeatArray(1, num_modules)
-    # hyprgraph.net_weight = ShiftArray(1 for _ in range(num_nets))
-    # hyprgraph.net_weight.set_start(num_modules)
     return hyprgraph
 
 
@@ -394,10 +338,7 @@ def create_drawf() -> Netlist:
         "n4",
         "n5",
     ]
-    # net_map = {net: i_net for i_net, net in enumerate(nets)}
     modules = ["a0", "a1", "a2", "a3", "p1", "p2", "p3"]
-    # module_map = {v: i_v for i_v, v in enumerate(modules)}
-    # module_weight = [1, 3, 4, 2, 0, 0, 0]
     module_weight = {"a0": 1, "a1": 3, "a2": 4, "a3": 2, "p1": 0, "p2": 0, "p3": 0}
 
     ugraph.add_edges_from(
@@ -436,7 +377,6 @@ def create_test_netlist() -> Netlist:
     """
     ugraph = SimpleGraph()
     ugraph.add_nodes_from(["a0", "a1", "a2", "a3", "a4", "a5"])
-    # module_weight = [533, 543, 532]
     module_weight = {"a0": 533, "a1": 543, "a2": 532}
     ugraph.add_edges_from(
         [
@@ -452,9 +392,7 @@ def create_test_netlist() -> Netlist:
     ugraph.graph["num_modules"] = 3
     ugraph.graph["num_nets"] = 3
     modules = ["a0", "a1", "a2"]
-    # module_map = {v: i_v for i_v, v in enumerate(modules)}
     nets = ["a3", "a4", "a5"]
-    # net_weight = {net: 1 for net in nets}
     net_weight = RepeatArray(1, len(nets))
 
     hyprgraph = Netlist(ugraph, modules, nets)
@@ -538,7 +476,6 @@ def form_graph(
 
     # connect nodes with edges
     ugraph = bipartite.random_graph(N, M, eta)
-    # ugraph = nx.DiGraph(ugraph)
     return ugraph
 
 
@@ -571,6 +508,4 @@ def create_random_hgraph(N: int = 30, M: int = 26, eta: float = 0.1) -> Netlist:
     hyprgraph = Netlist(ugraph, range(N), range(N, N + M))
     hyprgraph.module_weight = RepeatArray(1, N)  # type: ignore[assignment]
     hyprgraph.net_weight = RepeatArray(1, M)  # type: ignore[assignment]
-    # hyprgraph.net_weight = ShiftArray(1 for _ in range(M))
-    # hyprgraph.net_weight.set_start(N)
     return hyprgraph

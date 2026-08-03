@@ -19,14 +19,6 @@ class NegCycleFinder:
     succ: Dict = {}
 
     def __init__(self, gra: Any) -> None:
-        """
-        The above function is the initialization method for a class, which takes a graph as an argument and
-        initializes various attributes and data structures.
-
-        :param gra: The parameter `gra` is a graph object. It is used to represent a graph and store
-            information about the graph's nodes, edges, and weights. The `gra` object is used in the
-            initialization of the class and is stored as an instance variable (`self.gra`) for later use in
-        """
         self.gra = gra
 
     def find_cycle(self, point_to: Dict[Any, Any]) -> Generator[Any, None, None]:

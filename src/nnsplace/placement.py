@@ -129,7 +129,6 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
         ugraph.add_nodes_from(hyprgraph.modules)
 
     # Assume a list of modules = a list of cells appends with a list of pads
-    # num_cells = hyprgraph.num_modules - hyprgraph.num_pads
 
     for net in hyprgraph.nets:
         for v1 in hyprgraph.ugraph[net]:
@@ -421,9 +420,6 @@ class NnsPlacer:
         total_hull_length = 0
         for net in self.hyprgraph.nets:
             adjs = iter(self.hyprgraph.ugraph[net])
-            # v = next(adjs)
-            # p = dist[v]
-            # hull = Interval(p, p)
             hull = Interval(1000000000000, -1000000000000)
             for v in adjs:
                 hull = hull.hull_with(dist[v])
@@ -596,14 +592,12 @@ class NnsPlacer:
                 weight1 = self.calc_worst_wirelength_v(v, place)
                 place[axis][v] += i  # reset the position
                 B.add_node(q - i, bipartite=1)
-                # B.add_edge(v, q - i, weight=i)
                 B.add_edge(v, q - i, weight=weight1 - weight0)
             if p + i <= grid and not (axis == 0 and p + i == self.reserved_col):
                 place[axis][v] += i  # temporily set the position
                 weight1 = self.calc_worst_wirelength_v(v, place)
                 place[axis][v] -= i  # reset the position
                 B.add_node(q + i, bipartite=1)
-                # B.add_edge(v, q + i, weight=i)
                 B.add_edge(v, q + i, weight=weight1 - weight0)
 
     def legalize(self, lst: List[int], place: List[Dict[Any, int]], axis: int) -> None:
@@ -796,22 +790,6 @@ class NnsPlacer:
                 pos = pos1
                 worst = worst1
 
-        # if self.count[axis][0] < grid_y:
-        #     if self.count[axis][grid_x + 1] < grid_y and worst0 > worst1:
-        #         choose = 1  # right (or bottom)
-        #         pos = pos1
-        #         worst = worst1
-        #     else:
-        #         choose = 0  # left (or top)
-        #         pos = pos0
-        #         worst = worst0
-        # else:
-        #     if self.count[axis][grid_x + 1] < grid_y:
-        #         choose = 1  # right (or bottom)
-        #         pos = pos1
-        #         worst = worst1
-        #     else:
-        #         choose = None  # no choice
         return choose, pos, worst
 
     def choose_nearest_iopad(self, place: List[Dict[Any, int]]) -> None:
@@ -879,30 +857,6 @@ class NnsPlacer:
                         place[1][vp] = grid_y + 1
                     assert posx is not None
                     place[0][vp] = posx
-
-            # if which_x is not None:
-            #     if which_y is not None and worstx >= worsty:
-            #         if which_y == 0:
-            #             place[1][vp] = 0
-            #         else:
-            #             place[1][vp] = grid_y + 1
-            #         place[0][vp] = posx
-            #     else:
-            #         if which_x == 0:
-            #             place[0][vp] = 0
-            #         else:
-            #             place[0][vp] = grid_x + 1
-            #         place[1][vp] = posy
-            # else:
-            #     if which_y is not None:
-            #         if which_y == 0:
-            #             place[1][vp] = 0
-            #         else:
-            #             place[1][vp] = grid_y + 1
-            #         place[0][vp] = posx
-            #     else:
-            #         # Not enough I/O area!!!
-            #         raise ValueError
 
             self.count[1][place[1][vp]] += 1
             self.count[0][place[0][vp]] += 1
