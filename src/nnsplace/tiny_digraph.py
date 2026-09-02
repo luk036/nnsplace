@@ -15,8 +15,6 @@ class DiGraphAdapter(nx.DiGraph):
     """
 
     def items(self) -> Iterator[tuple[Any, Any]]:
-
-
         return self.adjacency()
 
 
@@ -26,18 +24,15 @@ class TinyDiGraph(DiGraphAdapter):
     num_nodes = 0
 
     def cheat_node_dict(self) -> MapAdapter:
-
         return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     def cheat_adjlist_outer_dict(self) -> MapAdapter:
-
         return MapAdapter([dict() for _ in range(self.num_nodes)])
 
     node_dict_factory = cheat_node_dict
     adjlist_outer_dict_factory = cheat_adjlist_outer_dict
 
     def init_nodes(self, n: int) -> None:
-
         self.num_nodes = n
         self._node = self.cheat_node_dict()
         self._adj = self.cheat_adjlist_outer_dict()

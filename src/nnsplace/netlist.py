@@ -201,7 +201,6 @@ class Netlist:
     #         else self.module_weight[v]
 
     def get_net_weight(self, _: Any) -> int:
-
         return 1
 
     def __iter__(self) -> Iterator:
