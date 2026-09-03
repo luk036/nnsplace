@@ -1,4 +1,5 @@
-from nnsplace.netlist import read_json
+from netlistx.readwrite import read_json
+
 from nnsplace.placement import NnsPlacer
 from nnsplace.placement_cfg import NnsConfig
 
@@ -9,10 +10,11 @@ from nnsplace.placement_cfg import NnsConfig
 
 def test_placement() -> None:
     H = read_json("testcases/p1.json")
+    n = H.number_of_modules()
     placer = NnsPlacer(H, NnsConfig(100, 100, 40, 40))
-    place = [[], []]
-    place[0] = [0 for _ in range(H.number_of_modules())]  # x-direction
-    place[1] = [0 for _ in range(H.number_of_modules())]  # y-direction
+    place: list[dict[int, int]] = [{}, {}]
+    place[0] = {i: 0 for i in range(n)}  # x-direction
+    place[1] = {i: 0 for i in range(n)}  # y-direction
     placer.init_placement(place)
     # assert place[0][1] == 1
     # assert place[1][1] == 0

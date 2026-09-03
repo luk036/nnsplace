@@ -92,12 +92,12 @@ from random import shuffle
 from typing import Any, Dict, List, Optional, Tuple
 
 import networkx as nx
+from digraphx.min_parametric_q import MinParametricAPI, MinParametricSolver
 from digraphx.tiny_digraph import TinyDiGraph
 from netlistx.netlist import Netlist
 from networkx.algorithms import bipartite
 from physdes.interval import Interval
 
-from .min_parametric import min_parametric
 from .placement_cfg import NnsConfig
 
 logger = logging.getLogger(__name__)
@@ -139,6 +139,26 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
                 ugraph.add_edge(v1, v2)
                 ugraph.add_edge(v2, v1)
     return ugraph
+
+
+class _HowardsCost(MinParametricAPI[Any, Any, Fraction]):
+    """Cost model bridging NnsPlacer edge costs to MinParametricSolver.
+
+    Each arc is a NetworkX edge attribute dict (e.g. ``{"cost": ...}``) from
+    the flow graph, so the per-edge cost is read straight off the arc object.
+    """
+
+    def __init__(self, placer: "NnsPlacer", axis: int) -> None:
+        self._placer = placer
+        self._axis = axis
+
+    def distance(self, ratio: Fraction, arc: Dict[Any, Any]) -> Fraction:
+        temp = self._placer.cost_inv(ratio - arc["cost"], self._axis)
+        return Fraction(temp.numerator // temp.denominator)
+
+    def zero_cancel(self, cycle: List[Any]) -> Fraction:
+        total_cost = sum(arc["cost"] for arc in cycle)
+        return Fraction(total_cost, len(cycle))
 
 
 class NnsPlacer:
@@ -500,37 +520,6 @@ class NnsPlacer:
             self.count[axis][from_where] -= 1
             return True
 
-        def calc_weight(beta: Fraction, edge: Tuple[int, int]) -> int:
-            """
-            The function `calc_weight` calculates the weight based on the given beta value and edge.
-
-            :param beta: The beta parameter represents a fraction value. It is used in the calculation of the weight
-            :type beta: Fraction
-            :param edge: The `edge` parameter is a tuple of two integers representing the nodes in a graph. It
-                represents an edge between the two nodes `u` and `v`
-            :type edge: Tuple[int, int]
-            :return: The function `calc_weight` returns an integer value.
-            """
-            u, v = edge
-            temp = self.cost_inv(beta - self.ugraph[u][v]["cost"], axis)
-            return temp.numerator // temp.denominator
-
-        def zero_cancel(cycle: List[Tuple[int, int]]) -> Fraction:
-            """
-            The function calculates the zero cancellation of a cycle by summing the costs of the edges in the
-            cycle and dividing by the number of edges.
-
-            Note: Assume linear cost here
-
-            :param cycle: The `cycle` parameter is a list of tuples representing a cycle. Each tuple contains
-                two integers `u` and `v`, representing the nodes in the cycle
-            :type cycle: List[Tuple[int, int]]
-            :return: The function `zero_cancel` returns a `Fraction` object, which represents the ratio of the
-                total cost of the cycle to the length of the cycle.
-            """
-            total_cost = sum(self.ugraph[u][v]["cost"] for (u, v) in cycle)
-            return Fraction(total_cost, len(cycle))
-
         # TODO: should provide an API for calling the (monotone) wire-model
         # dt[0] * abs(p[0][i] - p[0][j]) + dt[1] * abs(p[1][i] - p[1][j]) < r
         worst = 0
@@ -540,15 +529,12 @@ class NnsPlacer:
                 self.ugraph[u][v]["cost"] = self.cost(gruv, oppo)
                 if worst < gruv:
                     worst = gruv
-        # initial worst/2 or 0 or others?
-        return min_parametric(
-            self.ugraph,
-            Fraction(worst),
-            calc_weight,
-            zero_cancel,
-            place[axis],
-            update_ok,
+        # digraphx requires a dict adjacency whose arc objects are the edge attr dicts
+        solver = MinParametricSolver(
+            {u: dict(self.ugraph[u]) for u in self.ugraph},
+            _HowardsCost(self, axis),
         )
+        return solver.run(place[axis], Fraction(worst), update_ok)
 
     def add_bipartite_edge(
         self,

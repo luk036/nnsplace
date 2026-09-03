@@ -78,7 +78,7 @@ tox -e linkcheck              # Check for broken links
 
 ### Imports
 - **Order**: stdlib → third-party → local (isort with Black profile)
-- Local imports use relative form: `from .min_parametric import min_parametric`
+- Local imports use relative form: `from .placement_cfg import NnsConfig`
 - Third-party: `networkx`, `digraphx`, `netlistx`, `physdes`, `mywheel`
 
 ### Error Handling
@@ -123,6 +123,6 @@ tox -e linkcheck              # Check for broken links
 
 nnsplace is an affordable placement library for FPGA designs:
 - **Placement**: "No-nonsense" (NNS) iterative placer optimizing module positions on a grid to minimize worst wirelength (HPWL)
-- **Optimization**: Uses Howard's algorithm (parametric minimum-cost flow via `min_parametric`) and bipartite matching for legalization
-- **Netlists**: Netlist data structures with JSON I/O (`read_json`), test fixtures (`create_inverter`, `create_drawf`, `create_random_hgraph`)
-- **Key dependencies**: `networkx` (graphs, bipartite matching), `mywheel` (RepeatArray, MapAdapter), `digraphx` (TinyDiGraph), `netlistx` (Netlist), `physdes-py` (Interval for hulls)
+- **Optimization**: Uses Howard's algorithm (parametric minimum-cost flow via digraphx's `MinParametricSolver`/`neg_cycle_q`) and bipartite matching for legalization
+- **Netlists**: Provided by netlistx (`read_json`, `create_inverter`, `create_drawf`, `create_random_hgraph`); infrastructure (TinyDiGraph, Netlist, Interval) lives in sibling repos digraphx/netlistx/physdes-py — do not re-implement locally
+- **Key dependencies**: `networkx` (graphs, bipartite matching), `mywheel` (RepeatArray, MapAdapter), `digraphx` (TinyDiGraph, MinParametricSolver), `netlistx` (Netlist), `physdes-py` (Interval for hulls)

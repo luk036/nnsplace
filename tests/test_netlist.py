@@ -1,8 +1,8 @@
 import json
 
+from netlistx.netlist import create_drawf, create_test_netlist
+from netlistx.readwrite import read_json
 from networkx.readwrite import json_graph
-
-from nnsplace.netlist import create_drawf, create_test_netlist, read_json
 
 
 def test_netlist() -> None:

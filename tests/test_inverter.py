@@ -1,11 +1,11 @@
 from random import seed
 from typing import Any
 
+from netlistx.netlist import create_inverter
 from physdes.interval import Interval  # type: ignore[import-untyped]
 from physdes.point import Point  # type: ignore[import-untyped]
 from physdes.recti import Rectangle  # type: ignore[import-untyped]
 
-from nnsplace.netlist import create_inverter
 from nnsplace.placement import NnsPlacer
 from nnsplace.placement_cfg import NnsConfig
 

@@ -3,7 +3,8 @@
 # from physdes.recti import Rectangle
 from random import seed
 
-from nnsplace.netlist import read_json
+from netlistx.readwrite import read_json
+
 from nnsplace.placement import NnsPlacer
 from nnsplace.placement_cfg import NnsConfig
 
