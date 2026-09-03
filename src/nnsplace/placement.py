@@ -87,6 +87,7 @@ periphery.
 """
 
 import logging
+from abc import ABC, abstractmethod
 from fractions import Fraction
 from random import shuffle
 from typing import Any, Dict, List, Optional, Tuple
@@ -161,6 +162,115 @@ class _HowardsCost(MinParametricAPI[Any, Any, Fraction]):
         return Fraction(total_cost, len(cycle))
 
 
+class PlacerState:
+    """Memento capturing a placement (coordinates + occupancy counts).
+
+    ``optimize``/``run`` snapshot the working state before each iteration
+    and restore it when the objective does not improve.
+    """
+
+    def __init__(self, place: List[Dict[Any, int]], count: List[List[int]]) -> None:
+        self._place = [place[0].copy(), place[1].copy()]
+        self._count = [count[0].copy(), count[1].copy()]
+
+    def restore(self, place: List[Dict[Any, int]], count: List[List[int]]) -> None:
+        """Roll ``place`` and ``count`` back to the captured state."""
+        place[0] = self._place[0]
+        place[1] = self._place[1]
+        count[0] = self._count[0]
+        count[1] = self._count[1]
+
+
+class Legalizer(ABC):
+    """Strategy proposing candidate slots to legalize a bucket of modules.
+
+    A policy adds module -> slot edges to the shared bipartite graph ``B``
+    and returns a full matching, or ``None`` when its search space cannot
+    produce one.  The placer tries the local-window policy first and falls
+    back to the global-slot policy on the very same graph, so results are
+    deterministic and behaviour-preserving.
+    """
+
+    def __init__(self, placer: "NnsPlacer") -> None:
+        self._placer = placer
+
+    @abstractmethod
+    def solve(
+        self,
+        lst: List[int],
+        B: nx.Graph,
+        place: List[Dict[Any, int]],
+        axis: int,
+    ) -> Optional[Dict[Any, int]]:
+        """Add candidate edges to ``B`` and return a matching, else ``None``."""
+
+
+class LocalWindowLegalizer(Legalizer):
+    """Add slots reachable within a growing +/-radius window.
+
+    Widens the window (up to ``MAX_NEIGHBORHOOD``) and retries the full
+    matching until a legal assignment exists or the window is exhausted.
+    This is the cheap, quality-preserving path.
+    """
+
+    neighborhood = 11  # magic number for defining the neigborhood
+    MAX_NEIGHBORHOOD = 50  # Safety limit to prevent infinite loops
+
+    def solve(
+        self,
+        lst: List[int],
+        B: nx.Graph,
+        place: List[Dict[Any, int]],
+        axis: int,
+    ) -> Optional[Dict[Any, int]]:
+        placer = self._placer
+        grid = placer.cfg.grid[axis]
+
+        for i in range(1, self.neighborhood):
+            placer.add_bipartite_edge(lst, B, place, i, grid, axis)
+
+        i = self.neighborhood
+        while i < self.MAX_NEIGHBORHOOD:
+            try:
+                matches = bipartite.minimum_weight_full_matching(B)
+                for v in lst:
+                    _ = matches[v]  # test if it is ok
+                return matches
+            except ValueError:
+                placer.add_bipartite_edge(lst, B, place, i, grid, axis)
+            except KeyError:
+                placer.add_bipartite_edge(lst, B, place, i, grid, axis)
+            except nx.exception.AmbiguousSolution:
+                placer.add_bipartite_edge(lst, B, place, i, grid, axis)
+            i += 1  # if no match, increase the neigborhood
+        return None
+
+
+class GlobalSlotLegalizer(Legalizer):
+    """Add every free slot along the axis.
+
+    Guaranteed fallback: offers all slots so legalization succeeds whenever
+    the grid has enough capacity.  Only fails if the grid genuinely lacks
+    enough free slots for the bucket.
+    """
+
+    def solve(
+        self,
+        lst: List[int],
+        B: nx.Graph,
+        place: List[Dict[Any, int]],
+        axis: int,
+    ) -> Optional[Dict[Any, int]]:
+        self._placer._add_all_slots(lst, B, place, axis)
+        try:
+            matches = bipartite.minimum_weight_full_matching(B)
+            for v in lst:
+                _ = matches[v]  # test if it is ok
+            return matches
+        except (ValueError, KeyError, nx.exception.AmbiguousSolution):
+            return None
+
+
 class NnsPlacer:
     """No non-sense placer (NNS Placer)
 
@@ -202,6 +312,8 @@ class NnsPlacer:
         self.reserved_col = cfg.reserved_col
         # assume col 27 is preserved for DSP or SRAM
         self.ugraph = create_flow_graph(hyprgraph)
+        self._local_legalizer = LocalWindowLegalizer(self)
+        self._global_legalizer = GlobalSlotLegalizer(self)
 
     def init_placement(self, place: List[Dict[Any, int]]) -> None:
         """
@@ -653,57 +765,28 @@ class NnsPlacer:
         :type axis: int
         """
         dist = place[axis]
-        grid = self.cfg.grid[axis]
 
-        # construct bipartite graph
+        # base graph shared by both slot policies: modules + closest-position
+        # nodes (weight-0 self edges), mirroring the original construction
         B = nx.Graph()
-        # Add nodes with the node attribute "bipartite"
         B.add_nodes_from(lst, bipartite=0)
-
-        neighborhood = 11  # magic number for defining the neigborhood
         for v in lst:
-            # construct bipartite graph
             q = dist[v] + self.hyprgraph.number_of_modules()  # avoid same name
             if axis == 0 and dist[v] == self.reserved_col:
                 continue
             B.add_node(q, bipartite=1)
             B.add_edge(v, q, weight=0)  # closest position
-        for i in range(1, neighborhood):
-            self.add_bipartite_edge(lst, B, place, i, grid, axis)
 
-        # solve the matching problem
-        MAX_NEIGHBORHOOD = 50  # Safety limit to prevent infinite loops
-        i = neighborhood
-        matched = False
-        while not matched and i < MAX_NEIGHBORHOOD:
-            try:
-                matches = bipartite.minimum_weight_full_matching(B)
-                for v in lst:
-                    _ = matches[v]  # test if it is ok
-                matched = True
-            except ValueError:
-                self.add_bipartite_edge(lst, B, place, i, grid, axis)
-            except KeyError:
-                self.add_bipartite_edge(lst, B, place, i, grid, axis)
-            except nx.exception.AmbiguousSolution:
-                self.add_bipartite_edge(lst, B, place, i, grid, axis)
-            i += 1  # if no match, increase the neigborhood
-
-        if not matched:
-            # The local search window ran out (e.g. too many modules crowded
-            # into one line). Retry over every free slot along this axis so
-            # legalization succeeds whenever the grid has enough capacity.
-            self._add_all_slots(lst, B, place, axis)
-            try:
-                matches = bipartite.minimum_weight_full_matching(B)
-                for v in lst:
-                    _ = matches[v]  # test if it is ok
-            except (ValueError, KeyError, nx.exception.AmbiguousSolution):
-                raise RuntimeError(
-                    f"Failed to legalize {len(lst)} modules on axis {axis} of "
-                    f"grid {self.cfg.grid}: not enough free slots for the "
-                    f"bucket (reserved_col={self.reserved_col})."
-                )
+        # primary strategy: local neighborhood window; fallback: all slots
+        matches = self._local_legalizer.solve(lst, B, place, axis)
+        if matches is None:
+            matches = self._global_legalizer.solve(lst, B, place, axis)
+        if matches is None:
+            raise RuntimeError(
+                f"Failed to legalize {len(lst)} modules on axis {axis} of "
+                f"grid {self.cfg.grid}: not enough free slots for the "
+                f"bucket (reserved_col={self.reserved_col})."
+            )
 
         # reassign the results
         for v in lst:
@@ -936,8 +1019,7 @@ class NnsPlacer:
         :return: the number of iterations performed and the worst wirelength achieved.
         """
         worst0 = self.calc_worst_wirelength(place)
-        place0 = [place[0].copy(), place[1].copy()]
-        count0 = [self.count[0].copy(), self.count[1].copy()]
+        state = PlacerState(place, self.count)
         for niter in range(max_iters):
             _, _ = self.apply_howard(place, 0)
             self.legalize_modules(place, 1)
@@ -951,15 +1033,11 @@ class NnsPlacer:
             logger.debug("x-y: %d", worst1)
             # TODO: when to stop
             if worst1 >= worst0:
-                place[0] = place0[0]
-                place[1] = place0[1]
-                self.count[0] = count0[0]
-                self.count[1] = count0[1]
+                state.restore(place, self.count)
                 # TODO: update self.count etc.
                 return niter, worst0
             worst0 = worst1
-            place0 = [place[0].copy(), place[1].copy()]
-            count0 = [self.count[0].copy(), self.count[1].copy()]
+            state = PlacerState(place, self.count)
         return max_iters, worst1
 
     def run(
@@ -980,8 +1058,7 @@ class NnsPlacer:
             during the optimization process.
         """
         worst0 = self.calc_worst_wirelength(place)
-        place0 = [place[0].copy(), place[1].copy()]
-        count0 = [self.count[0].copy(), self.count[1].copy()]
+        state = PlacerState(place, self.count)
         logger.info("init: %d", worst0)
         for niter in range(max_iters):
             _, _ = self.optimize(place, max_iters)
@@ -989,13 +1066,9 @@ class NnsPlacer:
             worst1 = self.calc_worst_wirelength(place)
             logger.info("run %d", worst1)
             if worst1 >= worst0:
-                place[0] = place0[0]
-                place[1] = place0[1]
-                self.count[0] = count0[0]
-                self.count[1] = count0[1]
+                state.restore(place, self.count)
                 # TODO: update self.count etc.
                 return niter, worst0
             worst0 = worst1
-            place0 = [place[0].copy(), place[1].copy()]
-            count0 = [self.count[0].copy(), self.count[1].copy()]
+            state = PlacerState(place, self.count)
         return max_iters, worst0
