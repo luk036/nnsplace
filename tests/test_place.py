@@ -3,10 +3,46 @@
 # from physdes.recti import Rectangle
 from random import seed
 
+from mywheel.array_like import RepeatArray  # type: ignore
 from netlistx.readwrite import read_json
 
 from nnsplace.placement import NnsPlacer
 from nnsplace.placement_cfg import NnsConfig
+
+
+class TinyNetlist:
+    """Minimal netlist: 70 modules, no nets/pads."""
+
+    modules = range(70)
+    num_modules = 70
+    num_pads = 0
+    nets: list = []
+    ugraph: dict = {}
+    module_weight = RepeatArray(1, 70)
+
+    def __iter__(self):  # type: ignore[no-untyped-def]
+        return iter(self.modules)
+
+    def number_of_modules(self) -> int:
+        return self.num_modules
+
+
+def test_legalize_global_fallback() -> None:
+    """70 modules crowded into one column must still legalize.
+
+    Regression: the local ±MAX_NEIGHBORHOOD window cannot spread a bucket
+    larger than the reachable row span, so legalize used to raise
+    RuntimeError. The global free-slot fallback must kick in instead.
+    """
+    placer = NnsPlacer(TinyNetlist(), NnsConfig(100, 100, 40, 40))
+    place: list[dict[int, int]] = [
+        {i: 20 for i in range(70)},
+        {i: i % 10 for i in range(70)},
+    ]
+    placer.legalize(list(range(70)), place, 1)
+    rows = [place[1][v] for v in range(70)]
+    assert len(set(rows)) == 70  # no overlaps remain
+
 
 # def test_drawf() -> None:
 #     H = create_drawf()

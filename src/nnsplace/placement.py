@@ -586,6 +586,30 @@ class NnsPlacer:
                 B.add_node(q + i, bipartite=1)
                 B.add_edge(v, q + i, weight=weight1 - weight0)
 
+    def _add_all_slots(
+        self, lst: List[int], B: nx.Graph, place: List[Dict[Any, int]], axis: int
+    ) -> None:
+        """Connect every module to every free slot along `axis`.
+
+        Fallback for when the local neighborhood search cannot spread `lst`
+        (e.g. more than MAX_NEIGHBORHOOD modules crowded onto one line).
+        As long as the grid offers at least as many slots along `axis` as
+        there are modules, a full matching is then guaranteed to exist.
+        """
+        grid = self.cfg.grid[axis]
+        nmod = self.hyprgraph.number_of_modules()
+        for v in lst:
+            p0 = place[axis][v]
+            w0 = self.calc_worst_wirelength_v(v, place)
+            for pos in range(1, grid + 1):
+                if axis == 0 and pos == self.reserved_col:
+                    continue
+                place[axis][v] = pos
+                w1 = self.calc_worst_wirelength_v(v, place)
+                B.add_node(pos + nmod, bipartite=1)
+                B.add_edge(v, pos + nmod, weight=w1 - w0)
+            place[axis][v] = p0  # restore the original position
+
     def legalize(self, lst: List[int], place: List[Dict[Any, int]], axis: int) -> None:
         """
         The `legalize` function solves the bipartite matching problem to reassign positions in a grid based
@@ -666,10 +690,20 @@ class NnsPlacer:
             i += 1  # if no match, increase the neigborhood
 
         if not matched:
-            raise RuntimeError(
-                f"Failed to legalize modules: exceeded maximum neighborhood "
-                f"search limit ({MAX_NEIGHBORHOOD}). Grid may be too small."
-            )
+            # The local search window ran out (e.g. too many modules crowded
+            # into one line). Retry over every free slot along this axis so
+            # legalization succeeds whenever the grid has enough capacity.
+            self._add_all_slots(lst, B, place, axis)
+            try:
+                matches = bipartite.minimum_weight_full_matching(B)
+                for v in lst:
+                    _ = matches[v]  # test if it is ok
+            except (ValueError, KeyError, nx.exception.AmbiguousSolution):
+                raise RuntimeError(
+                    f"Failed to legalize {len(lst)} modules on axis {axis} of "
+                    f"grid {self.cfg.grid}: not enough free slots for the "
+                    f"bucket (reserved_col={self.reserved_col})."
+                )
 
         # reassign the results
         for v in lst:
