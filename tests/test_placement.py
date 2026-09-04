@@ -7,6 +7,7 @@ import pytest
 from digraphx.tiny_digraph import TinyDiGraph
 
 from nnsplace.placement import NnsPlacer, create_flow_graph
+from nnsplace.placement_cfg import NnsConfig
 
 
 # Mock Netlist class for testing
@@ -26,6 +27,9 @@ class MockNetlist:
         self.ugraph = ugraph
         self.nets = nets
         self.module_weight = module_weight
+
+    def number_of_modules(self) -> int:
+        return self.num_modules
 
     def __iter__(self) -> Iterator:
         return iter(self.modules)
@@ -187,3 +191,21 @@ class TestNnsPlacer:
         # y-axis: net1 hull length = 2, net2 hull length = 2. total_y = 2*2 + 2*2 = 8
         # Total HPWL = 4 + 8 = 12
         assert placer.calc_total_HPWL(place) == 12
+
+    def test_line_cap_ratio_caps_limit(self, mock_netlist: Any) -> None:
+        """line_cap_ratio must cap the per-line limit from sqrt(num_cells)."""
+        # num_cells = 5 - 1 = 4 -> ceil(sqrt(4) * 1.2) = ceil(2.4) = 3
+        cfg = NnsConfig(100, 100, 40, 40, line_cap_ratio=1.2)
+        placer = NnsPlacer(mock_netlist, cfg)  # type: ignore[arg-type]
+        assert placer.grid_limit == [100, 99]
+        assert placer.limit == [3, 3]
+        # io ring keeps its own pad-based capacity, not the sqrt-capped core limit
+        assert placer.io_limit == [1, 1]  # ceil(num_pads / 2) = ceil(1 / 2)
+
+    def test_io_limit_half_pads(self, mock_netlist: Any) -> None:
+        """I/O ring cap = ceil(num_pads/2), so two opposite edges always suffice."""
+        cfg = NnsConfig(100, 100, 40, 40)
+        placer = NnsPlacer(mock_netlist, cfg)  # type: ignore[arg-type]
+        assert placer.grid_limit == [100, 99]
+        assert placer.limit == [100, 99]  # no ratio -> grid capacity
+        assert placer.io_limit == [1, 1]

@@ -87,6 +87,7 @@ periphery.
 """
 
 import logging
+import math
 from abc import ABC, abstractmethod
 from fractions import Fraction
 from random import shuffle
@@ -291,8 +292,11 @@ class NnsPlacer:
         Notes:
             0 - x-axis
             1 - y-axis
-            count[0] - how many cells on each row, including 2 I/O rows
-            count[1] - how many cells on each column, including 2 I/O columns
+            count[0][col] - how many cells are at column col (x-coordinate)
+            count[1][row] - how many cells are at row row (y-coordinate)
+            grid_limit[axis] - physical per-line capacity of the core grid
+            limit[axis] - per-line flow cap (capped by line_cap_ratio)
+            io_limit[axis] - per-edge capacity of the I/O ring
 
         :param hyprgraph: The `hyprgraph` parameter is a Netlist object, which represents the
             hypergraph of the circuit design. It contains information about the modules and
@@ -308,7 +312,23 @@ class NnsPlacer:
             [0 for _ in range(cfg.grid[0] + 2)],  # plus 2 I/O
             [0 for _ in range(cfg.grid[1] + 2)],
         ]  # two lists
-        self.limit = [cfg.grid[1], cfg.grid[0] - 1]
+        # physical per-line capacity of the core grid (col 27 is reserved)
+        self.grid_limit = [cfg.grid[1], cfg.grid[0] - 1]
+        ratio = getattr(cfg, "line_cap_ratio", None)
+        if isinstance(ratio, (int, float)) and not isinstance(ratio, bool):
+            num_cells = hyprgraph.number_of_modules() - hyprgraph.num_pads
+            cap = math.ceil(math.sqrt(num_cells) * ratio)
+            self.limit = [min(self.grid_limit[0], cap), min(self.grid_limit[1], cap)]
+        else:
+            self.limit = list(self.grid_limit)
+        # I/O edge capacity: an edge needs at most half the pads (two opposite
+        # edges then always suffice), bounded by the grid capacity
+        num_pads = getattr(hyprgraph, "num_pads", 0)
+        io_cap = math.ceil(num_pads / 2) if num_pads else max(self.grid_limit)
+        self.io_limit = [
+            min(self.grid_limit[0], io_cap),
+            min(self.grid_limit[1], io_cap),
+        ]
         self.reserved_col = cfg.reserved_col
         # assume col 27 is preserved for DSP or SRAM
         self.ugraph = create_flow_graph(hyprgraph)
@@ -358,8 +378,8 @@ class NnsPlacer:
             if col == self.reserved_col:  # assume col 27 is preserved for DSP or SRAM
                 col += 1
         assert self.count[0][self.reserved_col] == 0
-        assert self.count[0][1] <= self.limit[0]  # e.g. 50
-        assert self.count[1][1] <= self.limit[1]  # e.g. 49
+        assert self.count[0][1] <= self.grid_limit[0]  # e.g. 50
+        assert self.count[1][1] <= self.grid_limit[1]  # e.g. 49
 
     def cost(self, length: int, axis: int) -> int:
         """
@@ -879,8 +899,8 @@ class NnsPlacer:
         pos = None
         worst = None
         grid_x = self.cfg.grid[axis]
-        full0 = self.count[axis][0] >= self.limit[axis]
-        full1 = self.count[axis][grid_x + 1] >= self.limit[axis]
+        full0 = self.count[axis][0] >= self.io_limit[axis]
+        full1 = self.count[axis][grid_x + 1] >= self.io_limit[axis]
         if full0 and full1:
             choose = 2  # no choice
         else:

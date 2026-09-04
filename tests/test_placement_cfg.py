@@ -61,5 +61,20 @@ def test_config_default_reserved_col() -> None:
     assert cfg.reserved_col == 27
 
 
+def test_config_default_line_cap_ratio() -> None:
+    cfg = NnsConfig(x=10, y=8, delta_x=2, delta_y=3)
+    assert cfg.line_cap_ratio is None
+
+
+def test_config_line_cap_ratio_property() -> None:
+    cfg = NnsConfig(x=10, y=8, delta_x=2, delta_y=3, line_cap_ratio=1.2)
+    assert cfg.line_cap_ratio == 1.2
+
+
+def test_config_line_cap_ratio_non_positive() -> None:
+    with pytest.raises(ValueError, match="line_cap_ratio must be positive"):
+        NnsConfig(x=10, y=8, delta_x=2, delta_y=3, line_cap_ratio=0)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

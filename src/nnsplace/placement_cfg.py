@@ -15,6 +15,7 @@ class NnsConfig:
         delta_x: int,
         delta_y: int,
         reserved_col: Optional[int] = None,
+        line_cap_ratio: Optional[float] = None,
     ):
         """
         Initialize the configuration for NNS placement.
@@ -29,6 +30,13 @@ class NnsConfig:
         :type delta_y: int
         :param reserved_col: Column index reserved for DSP/SRAM (default: 27)
         :type reserved_col: int | None
+        :param line_cap_ratio: If set, cap the per-line limit of the core to
+            ``ceil(sqrt(num_cells) * line_cap_ratio)``.  This keeps small
+            netlists from crowding too many cells onto a single line on a
+            large grid.  Leave ``None`` (default) to use the grid size as the
+            per-line limit.  The I/O ring keeps its own capacity, derived
+            from the number of pads, independent of this value.
+        :type line_cap_ratio: float | None
 
         :raises ValueError: If grid dimensions or delta values are invalid
         """
@@ -45,12 +53,15 @@ class NnsConfig:
             raise ValueError(
                 f"reserved_col must be between 1 and {x}, got {reserved_col}"
             )
+        if line_cap_ratio is not None and line_cap_ratio <= 0:
+            raise ValueError(f"line_cap_ratio must be positive, got {line_cap_ratio}")
 
         self._grid = (x, y)
         self._delta = (delta_x, delta_y)
         self._reserved_col = (
             reserved_col if reserved_col is not None else self.DEFAULT_RESERVED_COL
         )
+        self._line_cap_ratio = line_cap_ratio
 
     @property
     def grid(self) -> tuple[int, int]:
@@ -63,6 +74,10 @@ class NnsConfig:
     @property
     def reserved_col(self) -> int:
         return self._reserved_col
+
+    @property
+    def line_cap_ratio(self) -> Optional[float]:
+        return self._line_cap_ratio
 
     # Backward compatibility: allow attribute-style access
     def __getattr__(self, name: str) -> Any:
