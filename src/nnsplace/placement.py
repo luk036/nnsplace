@@ -277,6 +277,64 @@ class GlobalSlotLegalizer(Legalizer):
             return None
 
 
+class WireLengthModel:
+    """Strategy computing the linear (delta-scaled) wire-length metrics.
+
+    Owns the objective functions so the placer can be configured with a
+    different cost model (e.g. timing/congestion aware) without touching
+    the optimizer.  Kept integer-exact: every metric is an integer.
+    """
+
+    def __init__(self, delta: Tuple[int, int]) -> None:
+        self.delta = delta
+
+    def cost(self, length: int, axis: int) -> int:
+        return length * self.delta[axis]
+
+    def cost_inv(self, cost: int, axis: int) -> Fraction:
+        return Fraction(cost, self.delta[axis])
+
+    def worst_wirelength(self, ugraph: nx.DiGraph, place: List[Dict[Any, int]]) -> int:
+        worst_wire = 0
+        for u in ugraph:
+            for v in ugraph.neighbors(u):
+                if u > v:  # only need to calculate one of the two edges
+                    continue
+                gruv = self.cost(abs(place[0][v] - place[0][u]), 0) + self.cost(
+                    abs(place[1][v] - place[1][u]), 1
+                )
+                if worst_wire < gruv:
+                    worst_wire = gruv
+        return worst_wire
+
+    def worst_wirelength_of(
+        self, ugraph: nx.DiGraph, v: Any, place: List[Dict[Any, int]]
+    ) -> int:
+        worst_wire = 0
+        for w in ugraph.neighbors(v):
+            gruv = self.cost(abs(place[0][v] - place[0][w]), 0) + self.cost(
+                abs(place[1][v] - place[1][w]), 1
+            )
+            if worst_wire < gruv:
+                worst_wire = gruv
+        return worst_wire
+
+    def hull_length(self, hyprgraph: Netlist, dist: Dict[Any, int], axis: int) -> int:
+        total_hull_length = 0
+        for net in hyprgraph.nets:
+            adjs = iter(hyprgraph.ugraph[net])
+            hull = Interval(1000000000000, -1000000000000)
+            for v in adjs:
+                hull = hull.hull_with(dist[v])
+            total_hull_length += hull.measure()
+        return total_hull_length * self.delta[axis]
+
+    def total_hpwl(self, hyprgraph: Netlist, place: List[Dict[Any, int]]) -> int:
+        return self.hull_length(hyprgraph, place[0], 0) + self.hull_length(
+            hyprgraph, place[1], 1
+        )
+
+
 class NnsPlacer:
     """No non-sense placer (NNS Placer)
 
@@ -313,6 +371,7 @@ class NnsPlacer:
         """
         self.hyprgraph = hyprgraph
         self.cfg = cfg
+        self._wlm = WireLengthModel(cfg.delta)
         self.count = [
             [0 for _ in range(cfg.grid[0] + 2)],  # plus 2 I/O
             [0 for _ in range(cfg.grid[1] + 2)],
@@ -428,7 +487,7 @@ class NnsPlacer:
         >>> placer.cost(10, 1)
         20
         """
-        return length * self.cfg.delta[axis]
+        return self._wlm.cost(length, axis)
 
     def cost_inv(self, cost: int, axis: int) -> Fraction:
         """
@@ -464,7 +523,7 @@ class NnsPlacer:
         >>> placer.cost_inv(10, 1)
         Fraction(5, 1)
         """
-        return Fraction(cost, self.cfg.delta[axis])
+        return self._wlm.cost_inv(cost, axis)
 
     def calc_worst_wirelength(self, place: List[Dict[Any, int]]) -> int:
         """
@@ -496,17 +555,7 @@ class NnsPlacer:
         >>> placer.calc_worst_wirelength(place)
         6
         """
-        worst_wire = 0
-        for u in self.ugraph:
-            for v in self.ugraph.neighbors(u):
-                if u > v:  # only need to calculate one of the two edges
-                    continue
-                gruv = self.cost(abs(place[0][v] - place[0][u]), 0) + self.cost(
-                    abs(place[1][v] - place[1][u]), 1
-                )
-                if worst_wire < gruv:
-                    worst_wire = gruv
-        return worst_wire
+        return self._wlm.worst_wirelength(self.ugraph, place)
 
     def calc_worst_wirelength_v(self, v: Any, place: List[Dict[Any, int]]) -> int:
         """
@@ -539,14 +588,7 @@ class NnsPlacer:
         >>> placer.calc_worst_wirelength_v(2, place)
         6
         """
-        worst_wire = 0
-        for w in self.ugraph.neighbors(v):
-            gruv = self.cost(abs(place[0][v] - place[0][w]), 0) + self.cost(
-                abs(place[1][v] - place[1][w]), 1
-            )
-            if worst_wire < gruv:
-                worst_wire = gruv
-        return worst_wire
+        return self._wlm.worst_wirelength_of(self.ugraph, v, place)
 
     def calc_total_hull_length(self, dist: Dict[Any, int], axis: int) -> int:
         """
@@ -583,14 +625,7 @@ class NnsPlacer:
         >>> placer.calc_total_hull_length(dist, 1)
         8
         """
-        total_hull_length = 0
-        for net in self.hyprgraph.nets:
-            adjs = iter(self.hyprgraph.ugraph[net])
-            hull = Interval(1000000000000, -1000000000000)
-            for v in adjs:
-                hull = hull.hull_with(dist[v])
-            total_hull_length += hull.measure()
-        return total_hull_length * self.cfg.delta[axis]
+        return self._wlm.hull_length(self.hyprgraph, dist, axis)
 
     def calc_total_HPWL(self, place: List[Dict[Any, int]]) -> int:
         """
@@ -622,9 +657,7 @@ class NnsPlacer:
         >>> placer.calc_total_HPWL(place)
         12
         """
-        return self.calc_total_hull_length(place[0], 0) + self.calc_total_hull_length(
-            place[1], 1
-        )
+        return self._wlm.total_hpwl(self.hyprgraph, place)
 
     def apply_howard(self, place: List[Dict[Any, int]], axis: int) -> tuple[Any, Any]:
         """
@@ -1099,6 +1132,11 @@ class NnsPlacer:
         self.legalize_iopad(place, 0)
         self.legalize_iopad(place, 1)
 
+    def _optimize_axis(self, place: List[Dict[Any, int]], axis: int) -> None:
+        self.apply_howard(place, axis)
+        self.legalize_modules(place, axis ^ 1)
+        self.choose_nearest_iopad(place)
+
     def optimize(self, place: List[Dict[Any, int]], max_iters: int) -> Tuple[int, int]:
         """
         The `optimize` function is used to iteratively improve the placement of modules in a circuit layout
@@ -1116,12 +1154,8 @@ class NnsPlacer:
         worst0 = self.calc_worst_wirelength(place)
         state = PlacerState(place, self.count)
         for niter in range(max_iters):
-            _, _ = self.apply_howard(place, 0)
-            self.legalize_modules(place, 1)
-            self.choose_nearest_iopad(place)
-            _, _ = self.apply_howard(place, 1)
-            self.legalize_modules(place, 0)
-            self.choose_nearest_iopad(place)
+            self._optimize_axis(place, 0)
+            self._optimize_axis(place, 1)
 
             # TODO: How to utilize r1, C1, r2, C2
             worst1 = self.calc_worst_wirelength(place)
