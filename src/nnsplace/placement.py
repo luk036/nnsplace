@@ -86,6 +86,7 @@ periphery.
    '--------------------------------'
 """
 
+import bisect
 import logging
 import math
 from abc import ABC, abstractmethod
@@ -143,7 +144,7 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
     return ugraph
 
 
-class _HowardsCost(MinParametricAPI[Any, Any, Fraction]):
+class _HowardsCost(MinParametricAPI[Any, Any, Any]):
     """Cost model bridging NnsPlacer edge costs to MinParametricSolver.
 
     Each arc is a NetworkX edge attribute dict (e.g. ``{"cost": ...}``) from
@@ -153,10 +154,12 @@ class _HowardsCost(MinParametricAPI[Any, Any, Fraction]):
     def __init__(self, placer: "NnsPlacer", axis: int) -> None:
         self._placer = placer
         self._axis = axis
+        self._delta = placer.cfg.delta[axis]
 
-    def distance(self, ratio: Fraction, arc: Dict[Any, Any]) -> Fraction:
-        temp = self._placer.cost_inv(ratio - arc["cost"], self._axis)
-        return Fraction(temp.numerator // temp.denominator)
+    def distance(self, ratio: Fraction, arc: Dict[Any, Any]) -> int:
+        n, d = ratio.numerator, ratio.denominator
+        c = arc["cost"] * d
+        return (n - c) // (self._delta * d)
 
     def zero_cancel(self, cycle: List[Any]) -> Fraction:
         total_cost = sum(arc["cost"] for arc in cycle)
@@ -225,25 +228,27 @@ class LocalWindowLegalizer(Legalizer):
         axis: int,
     ) -> Optional[Dict[Any, int]]:
         placer = self._placer
-        grid = placer.cfg.grid[axis]
+        m = len(lst)
+        data = {v: placer._module_slot_data(v, place, axis) for v in lst}
 
-        for i in range(1, self.neighborhood):
-            placer.add_bipartite_edge(lst, B, place, i, grid, axis)
+        placer._add_radius_edges(lst, B, data, axis, 1, self.neighborhood - 1)
 
         i = self.neighborhood
         while i < self.MAX_NEIGHBORHOOD:
-            try:
-                matches = bipartite.minimum_weight_full_matching(B)
-                for v in lst:
-                    _ = matches[v]  # test if it is ok
-                return matches
-            except ValueError:
-                placer.add_bipartite_edge(lst, B, place, i, grid, axis)
-            except KeyError:
-                placer.add_bipartite_edge(lst, B, place, i, grid, axis)
-            except nx.exception.AmbiguousSolution:
-                placer.add_bipartite_edge(lst, B, place, i, grid, axis)
-            i += 1  # if no match, increase the neigborhood
+            # minimum_weight_full_matching is guaranteed to raise on a
+            # disconnected graph (bipartite.sets) or with fewer slots than
+            # modules (unmatched modules); probe those cheaply and skip the
+            # expensive scipy assignment, widening the window instead.
+            if nx.is_connected(B) and B.number_of_nodes() - m >= m:
+                try:
+                    matches = bipartite.minimum_weight_full_matching(B)
+                    for v in lst:
+                        _ = matches[v]  # test if it is ok
+                    return matches
+                except (ValueError, KeyError, nx.exception.AmbiguousSolution):
+                    pass  # connected but still infeasible; widen the window
+            placer._add_radius_edges(lst, B, data, axis, i, i)
+            i += 1  # if no match, increase the neighborhood
         return None
 
 
@@ -332,8 +337,17 @@ class NnsPlacer:
         self.reserved_col = cfg.reserved_col
         # assume col 27 is preserved for DSP or SRAM
         self.ugraph = create_flow_graph(hyprgraph)
+        self._adj: Optional[Dict[Any, Any]] = None
+        self._nbrs: Dict[Any, List[Any]] = {}
         self._local_legalizer = LocalWindowLegalizer(self)
         self._global_legalizer = GlobalSlotLegalizer(self)
+
+    def _neighbors_of(self, v: Any) -> List[Any]:
+        nbrs = self._nbrs.get(v)
+        if nbrs is None:
+            nbrs = list(self.ugraph.neighbors(v))
+            self._nbrs[v] = nbrs
+        return nbrs
 
     def init_placement(self, place: List[Dict[Any, int]]) -> None:
         """
@@ -661,11 +675,13 @@ class NnsPlacer:
                 self.ugraph[u][v]["cost"] = self.cost(gruv, oppo)
                 if worst < gruv:
                     worst = gruv
-        # digraphx requires a dict adjacency whose arc objects are the edge attr dicts
-        solver = MinParametricSolver(
-            {u: dict(self.ugraph[u]) for u in self.ugraph},
-            _HowardsCost(self, axis),
-        )
+        # digraphx requires a dict adjacency whose arc objects are the edge
+        # attr dicts; only the "cost" attrs mutate, so build it once.
+        adj = self._adj
+        if adj is None:
+            adj = {u: dict(self.ugraph[u]) for u in self.ugraph}
+            self._adj = adj
+        solver = MinParametricSolver(adj, _HowardsCost(self, axis))
         return solver.run(place[axis], Fraction(worst), update_ok)
 
     def add_bipartite_edge(
@@ -677,46 +693,105 @@ class NnsPlacer:
         grid: int,
         axis: int,
     ) -> None:
-        """
-        The `add_bipartite_edge` function adds edges to a bipartite graph based on certain conditions and
-        weights.
+        """Add module -> slot edges for window radius ``i`` (legacy API).
 
-        :param lst: A list of integers representing the vertices in the bipartite graph
-        :type lst: List[int]
-        :param B: `B` is a graph object of type `nx.Graph`. It represents a bipartite graph
-        :type B: nx.Graph
-        :param place: The `place` parameter is a list of dictionaries representing the positions of the modules in a
-            grid. place[0] maps module keys to x-coordinates, place[1] maps module keys to y-coordinates
-        :type place: List[Dict[Any, int]]
-        :param i: The parameter `i` represents the distance by which the position of a vertex is shifted in
-            the bipartite graph. It is used to create edges between the original vertex and its shifted
-            positions in the bipartite graph
-        :type i: int
-        :param grid: The `grid` parameter represents the size of the grid. It is an integer value that
-            determines the maximum position value for each axis in the grid
-        :type grid: int
-        :param axis: The `axis` parameter represents the axis along which the bipartite edges are being
-            added. It is an integer value that indicates the axis direction
-        :type axis: int
+        Computes the module slot data from scratch on every call; prefer the
+        hoisted ``_add_radius_edges`` when adding several radii.
         """
-        # increase the number of edges if no sol'n
-        for v in lst:
-            # construct bipartite graph
-            p = place[axis][v]
-            q = p + self.hyprgraph.number_of_modules()  # avoid same name
-            weight0 = self.calc_worst_wirelength_v(v, place)
-            if p - i > 0 and not (axis == 0 and p - i == self.reserved_col):
-                place[axis][v] -= i  # temporily set the position
-                weight1 = self.calc_worst_wirelength_v(v, place)
-                place[axis][v] += i  # reset the position
-                B.add_node(q - i, bipartite=1)
-                B.add_edge(v, q - i, weight=weight1 - weight0)
-            if p + i <= grid and not (axis == 0 and p + i == self.reserved_col):
-                place[axis][v] += i  # temporily set the position
-                weight1 = self.calc_worst_wirelength_v(v, place)
-                place[axis][v] -= i  # reset the position
-                B.add_node(q + i, bipartite=1)
-                B.add_edge(v, q + i, weight=weight1 - weight0)
+        data = {v: self._module_slot_data(v, place, axis) for v in lst}
+        self._add_radius_edges(lst, B, data, axis, i, i)
+
+    def _module_slot_data(
+        self, v: Any, place: List[Dict[Any, int]], axis: int
+    ) -> Tuple[int, List[int], List[int], List[int], int]:
+        """Return ``(p0, as_, pref, suff, w0)`` so a lateral move of ``v``
+        along ``axis`` can be scored in O(log deg) per candidate slot.
+
+        ``p0`` is the current coordinate.  For each neighbor with moving-axis
+        coordinate ``a`` and fixed-axis cost ``c``, the worst wire length of
+        ``v`` at coordinate ``q`` is ``max(c + delta*|q - a|)``.  Sorting the
+        neighbors by ``a`` and tabulating prefix/suffix maxima of the two
+        linear forms makes each ``q`` an O(log deg) evaluation; ``w0`` is the
+        value at ``p0``.
+        """
+        p0 = place[axis][v]
+        nbrs = [w for w in self._neighbors_of(v) if w != v]
+        if not nbrs:
+            return p0, [], [], [], 0
+        oppo = axis ^ 1
+        pos_ax = place[axis]
+        pos_op = place[oppo]
+        o0 = pos_op[v]
+        d_ax = self.cfg.delta[axis]
+        d_op = self.cfg.delta[oppo]
+        pairs = sorted((pos_ax[w], d_op * abs(o0 - pos_op[w])) for w in nbrs)
+        m = len(pairs)
+        as_ = [a for a, _ in pairs]
+        pref = [0] * (m + 1)
+        mx = pairs[0][1] - d_ax * pairs[0][0]
+        pref[1] = mx
+        for t in range(2, m + 1):
+            c = pairs[t - 1][1] - d_ax * pairs[t - 1][0]
+            if c > mx:
+                mx = c
+            pref[t] = mx
+        suff = [0] * (m + 1)
+        mx = pairs[m - 1][1] + d_ax * pairs[m - 1][0]
+        suff[m - 1] = mx
+        for t in range(m - 2, -1, -1):
+            c = pairs[t][1] + d_ax * pairs[t][0]
+            if c > mx:
+                mx = c
+            suff[t] = mx
+        return p0, as_, pref, suff, self._worst_at(p0, as_, pref, suff, d_ax)
+
+    @staticmethod
+    def _worst_at(
+        q: int,
+        as_: List[int],
+        pref: List[int],
+        suff: List[int],
+        d_ax: int,
+    ) -> int:
+        m = len(as_)
+        t = bisect.bisect_right(as_, q)
+        best = 0
+        if t:
+            best = d_ax * q + pref[t]
+        if t < m:
+            cand = suff[t] - d_ax * q
+            if cand > best:
+                best = cand
+        return best
+
+    def _add_radius_edges(
+        self,
+        lst: List[int],
+        B: nx.Graph,
+        data: Dict[Any, Tuple[int, List[int], List[int], List[int], int]],
+        axis: int,
+        r_start: int,
+        r_stop: int,
+    ) -> None:
+        grid = self.cfg.grid[axis]
+        nmod = self.hyprgraph.number_of_modules()
+        d_ax = self.cfg.delta[axis]
+        reserved = axis == 0
+        worst_at = self._worst_at
+        for i in range(r_start, r_stop + 1):
+            for v in lst:
+                p0, as_, pref, suff, w0 = data[v]
+                q0 = p0 + nmod
+                q = p0 - i
+                if q > 0 and not (reserved and q == self.reserved_col):
+                    w1 = 0 if not as_ else worst_at(q, as_, pref, suff, d_ax)
+                    B.add_node(q0 - i, bipartite=1)
+                    B.add_edge(v, q0 - i, weight=w1 - w0)
+                q = p0 + i
+                if q <= grid and not (reserved and q == self.reserved_col):
+                    w1 = 0 if not as_ else worst_at(q, as_, pref, suff, d_ax)
+                    B.add_node(q0 + i, bipartite=1)
+                    B.add_edge(v, q0 + i, weight=w1 - w0)
 
     def _add_all_slots(
         self, lst: List[int], B: nx.Graph, place: List[Dict[Any, int]], axis: int
