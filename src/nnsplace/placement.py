@@ -708,11 +708,13 @@ class NnsPlacer:
                 self.ugraph[u][v]["cost"] = self.cost(gruv, oppo)
                 if worst < gruv:
                     worst = gruv
-        # digraphx requires a dict adjacency whose arc objects are the edge
-        # attr dicts; only the "cost" attrs mutate, so build it once.
+        # digraphx needs a {u: {v: attr}} adjacency whose arc objects are the
+        # edge attr dicts.  The flow graph's per-node adjacency dicts are live
+        # and never grow after construction (only "cost" attrs mutate), so
+        # reference them directly instead of copying the graph.
         adj = self._adj
         if adj is None:
-            adj = {u: dict(self.ugraph[u]) for u in self.ugraph}
+            adj = {u: self.ugraph[u] for u in self.ugraph}
             self._adj = adj
         solver = MinParametricSolver(adj, _HowardsCost(self, axis))
         return solver.run(place[axis], Fraction(worst), update_ok)
