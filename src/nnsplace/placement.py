@@ -111,7 +111,12 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
     The function `create_flow_graph` takes a netlist and creates a flow graph by adding edges between
     modules based on their connections in the netlist.
 
-    TODO: Utilize pin directions of a net (in-to-out)
+    When the netlist carries pin directions (``hyprgraph.net_driver``, see the
+    direction-aware Yosys reader in netlistx) only the **driver -> sink**
+    connections of every net are added: a net's driver module is linked to each
+    of its sinks and nothing else, so the worst wire length is measured on
+    source-to-sink wires only.  Undirected netlists fall back to the all-pairs
+    clique so results for legacy inputs are unchanged.
 
     :param hyprgraph: The `hyprgraph` parameter is of type `Netlist`. It represents a netlist, which is a
         description of the connections between different modules or cells in a circuit design. The `Netlist`
@@ -132,11 +137,26 @@ def create_flow_graph(hyprgraph: Netlist) -> TinyDiGraph:
         ugraph.add_nodes_from(hyprgraph.modules)
 
     # Assume a list of modules = a list of cells appends with a list of pads
+    net_driver = getattr(hyprgraph, "net_driver", None)
 
     for net in hyprgraph.nets:
-        for v1 in hyprgraph.ugraph[net]:
-            # assume return an integer
-            for v2 in hyprgraph.ugraph[net]:
+        members = list(hyprgraph.ugraph[net])
+        if net_driver is not None:
+            driver = net_driver.get(net)
+            if driver is not None and driver in members:
+                for sink in members:
+                    if sink == driver:
+                        continue
+                    if (
+                        hyprgraph.module_weight[sink] == 0
+                        and hyprgraph.module_weight[driver] == 0
+                    ):
+                        continue  # ignore pad to pad connections
+                    ugraph.add_edge(driver, sink)
+                    ugraph.add_edge(sink, driver)
+                continue
+        for v1 in members:
+            for v2 in members:
                 if hyprgraph.module_weight[v2] == 0:  # whatever check io pad
                     continue  # ignore pad to pad connections
                 ugraph.add_edge(v1, v2)
