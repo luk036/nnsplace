@@ -66,6 +66,7 @@ def analyse(netlist, place, gx: int, gy: int):
             driver = pads[0] if pads else members[0]
         if len(members) < 2 or driver not in members:
             continue
+        pad_driver = driver >= netlist.number_of_modules() - netlist.num_pads
         tree = route_net(members, driver, place, gx, gy)
         total_wl += tree.calculate_total_wirelength()
         stack = [tree.source]
@@ -79,25 +80,29 @@ def analyse(netlist, place, gx: int, gy: int):
                 if x1 == x2:
                     for r in range(min(y1, y2), max(y1, y2)):
                         v[x1][r] += 1
-                    vseg.append((x1, y1, x2, y2))
+                    if pad_driver:
+                        vseg.append((x1, y1, x2, y2))
                 elif y1 == y2:
                     for c in range(min(x1, x2), max(x1, x2)):
                         h[y1][c] += 1
-                    hseg.append((x1, y1, x2, y2))
+                    if pad_driver:
+                        hseg.append((x1, y1, x2, y2))
                 elif tree.vertical_first:
                     for r in range(min(y1, y2), max(y1, y2)):
                         v[x1][r] += 1
                     for c in range(min(x1, x2), max(x1, x2)):
                         h[y2][c] += 1
-                    vseg.append((x1, y1, x1, y2))
-                    hseg.append((x1, y2, x2, y2))
+                    if pad_driver:
+                        vseg.append((x1, y1, x1, y2))
+                        hseg.append((x1, y2, x2, y2))
                 else:
                     for c in range(min(x1, x2), max(x1, x2)):
                         h[y1][c] += 1
                     for r in range(min(y1, y2), max(y1, y2)):
                         v[x2][r] += 1
-                    hseg.append((x1, y1, x2, y1))
-                    vseg.append((x2, y1, x2, y2))
+                    if pad_driver:
+                        hseg.append((x1, y1, x2, y1))
+                        vseg.append((x2, y1, x2, y2))
                 stack.append(child)
     return h, v, hseg, vseg, total_wl
 
@@ -123,8 +128,8 @@ def to_percent(grid):
 
 def color_at(value: int) -> str:
     if value <= 50:
-        return f"#{int(255 * value / 50):02x}ff00"
-    return f"#ff{int(255 * (100 - value) / 50):02x}00"
+        return f"{int(255 * value / 50):02x}ff00"
+    return f"ff{int(255 * (100 - value) / 50):02x}00"
 
 
 def congestion_svg(title, grid, peak) -> str:
