@@ -95,11 +95,12 @@ from random import shuffle
 from typing import Any, Dict, List, Optional, Tuple
 
 import networkx as nx
+import numpy as np
 from digraphx.min_parametric_q import MinParametricAPI, MinParametricSolver
 from digraphx.tiny_digraph import TinyDiGraph
 from netlistx.netlist import Netlist
-from networkx.algorithms import bipartite
 from physdes.interval import Interval
+from scipy.optimize import linear_sum_assignment
 
 from .placement_cfg import NnsConfig
 
@@ -175,11 +176,19 @@ class _HowardsCost(MinParametricAPI[Any, Any, Any]):
         self._placer = placer
         self._axis = axis
         self._delta = placer.cfg.delta[axis]
+        self._ratio: Optional[Fraction] = None
+        self._num = 0
+        self._den = 1
+        self._scale = 1
 
     def distance(self, ratio: Fraction, arc: Dict[Any, Any]) -> int:
-        n, d = ratio.numerator, ratio.denominator
-        c = arc["cost"] * d
-        return (n - c) // (self._delta * d)
+        if ratio is not self._ratio:
+            self._ratio = ratio
+            self._num = ratio.numerator
+            d = ratio.denominator
+            self._den = self._delta * d
+            self._scale = d
+        return (self._num - arc["cost"] * self._scale) // self._den
 
     def zero_cancel(self, cycle: List[Any]) -> Fraction:
         total_cost = sum(arc["cost"] for arc in cycle)
@@ -205,14 +214,75 @@ class PlacerState:
         count[1] = self._count[1]
 
 
+def _min_weight_full_matching(
+    lst: List[Any],
+    edges: Dict[Any, Dict[int, int]],
+    slot_adj: Dict[int, List[Any]],
+) -> Optional[Dict[Any, int]]:
+    """Return a minimum-weight full module -> slot matching, else ``None``.
+
+    ``edges[v]`` maps every candidate slot of module ``v`` to its weight (the
+    change in worst wire length when ``v`` moves there); slots absent from a
+    module's map are forbidden.  ``slot_adj`` maps each slot to the modules
+    that offer it, in edge-insertion order.
+
+    This is the direct SciPy equivalent of NetworkX's
+    ``minimum_weight_full_matching``.  It deliberately reproduces NetworkX's
+    matrix layout -- the two-coloring ``bipartite.sets`` produces, including
+    the set-iteration order of each partition -- so that ties between
+    equally-weighted matchings break identically and the placer's trajectory
+    is unchanged.  Returns ``None`` when the structure is disconnected, a
+    module is isolated, or no full matching exists (the caller then widens the
+    window), matching the old exception contract.
+    """
+    color: Dict[Any, int] = {}
+    roots = 0
+    for n in list(lst) + list(slot_adj):
+        if n in color:
+            continue
+        nbrs = edges[n] if n in edges else slot_adj[n]
+        if not nbrs:
+            continue
+        roots += 1
+        stack = [n]
+        color[n] = 1
+        while stack:
+            v = stack.pop()
+            c = 1 - color[v]
+            vn = edges[v] if v in edges else slot_adj[v]
+            for w in vn:
+                if w not in color:
+                    color[w] = c
+                    stack.append(w)
+    if roots != 1 or len(color) != len(lst) + len(slot_adj):
+        return None
+    left = list({n for n, is_top in color.items() if is_top})
+    right = list({n for n, is_top in color.items() if not is_top})
+    if len(right) < len(left):
+        return None
+    col = {s: j for j, s in enumerate(right)}
+    cost = np.full((len(left), len(right)), np.inf)
+    for i, v in enumerate(left):
+        for s, w in edges[v].items():
+            cost[i, col[s]] = w
+    try:
+        rows, cols = linear_sum_assignment(cost)
+    except ValueError:
+        return None
+    if len(rows) != len(left):
+        return None
+    matches = {left[u]: right[v] for u, v in zip(rows, cols)}
+    matches.update({v: u for u, v in matches.items()})
+    return matches
+
+
 class Legalizer(ABC):
     """Strategy proposing candidate slots to legalize a bucket of modules.
 
-    A policy adds module -> slot edges to the shared bipartite graph ``B``
-    and returns a full matching, or ``None`` when its search space cannot
-    produce one.  The placer tries the local-window policy first and falls
-    back to the global-slot policy on the very same graph, so results are
-    deterministic and behaviour-preserving.
+    A policy adds module -> slot edges to the shared ``edges`` mapping and
+    returns a full matching, or ``None`` when its search space cannot produce
+    one.  The placer tries the local-window policy first and falls back to the
+    global-slot policy on the very same mapping.
     """
 
     def __init__(self, placer: "NnsPlacer") -> None:
@@ -222,11 +292,12 @@ class Legalizer(ABC):
     def solve(
         self,
         lst: List[int],
-        B: nx.Graph,
+        edges: Dict[Any, Dict[int, int]],
+        slot_adj: Dict[int, List[Any]],
         place: List[Dict[Any, int]],
         axis: int,
     ) -> Optional[Dict[Any, int]]:
-        """Add candidate edges to ``B`` and return a matching, else ``None``."""
+        """Add candidate slots to ``edges`` and return a matching, else ``None``."""
 
 
 class LocalWindowLegalizer(Legalizer):
@@ -243,31 +314,24 @@ class LocalWindowLegalizer(Legalizer):
     def solve(
         self,
         lst: List[int],
-        B: nx.Graph,
+        edges: Dict[Any, Dict[int, int]],
+        slot_adj: Dict[int, List[Any]],
         place: List[Dict[Any, int]],
         axis: int,
     ) -> Optional[Dict[Any, int]]:
         placer = self._placer
-        m = len(lst)
         data = {v: placer._module_slot_data(v, place, axis) for v in lst}
 
-        placer._add_radius_edges(lst, B, data, axis, 1, self.neighborhood - 1)
+        placer._add_radius_edges(
+            lst, edges, slot_adj, data, axis, 1, self.neighborhood - 1
+        )
 
         i = self.neighborhood
         while i < self.MAX_NEIGHBORHOOD:
-            # minimum_weight_full_matching is guaranteed to raise on a
-            # disconnected graph (bipartite.sets) or with fewer slots than
-            # modules (unmatched modules); probe those cheaply and skip the
-            # expensive scipy assignment, widening the window instead.
-            if nx.is_connected(B) and B.number_of_nodes() - m >= m:
-                try:
-                    matches = bipartite.minimum_weight_full_matching(B)
-                    for v in lst:
-                        _ = matches[v]  # test if it is ok
-                    return matches
-                except (ValueError, KeyError, nx.exception.AmbiguousSolution):
-                    pass  # connected but still infeasible; widen the window
-            placer._add_radius_edges(lst, B, data, axis, i, i)
+            matches = _min_weight_full_matching(lst, edges, slot_adj)
+            if matches is not None:
+                return matches
+            placer._add_radius_edges(lst, edges, slot_adj, data, axis, i, i)
             i += 1  # if no match, increase the neighborhood
         return None
 
@@ -283,18 +347,13 @@ class GlobalSlotLegalizer(Legalizer):
     def solve(
         self,
         lst: List[int],
-        B: nx.Graph,
+        edges: Dict[Any, Dict[int, int]],
+        slot_adj: Dict[int, List[Any]],
         place: List[Dict[Any, int]],
         axis: int,
     ) -> Optional[Dict[Any, int]]:
-        self._placer._add_all_slots(lst, B, place, axis)
-        try:
-            matches = bipartite.minimum_weight_full_matching(B)
-            for v in lst:
-                _ = matches[v]  # test if it is ok
-            return matches
-        except (ValueError, KeyError, nx.exception.AmbiguousSolution):
-            return None
+        self._placer._add_all_slots(lst, edges, slot_adj, place, axis)
+        return _min_weight_full_matching(lst, edges, slot_adj)
 
 
 class WireLengthModel:
@@ -742,7 +801,8 @@ class NnsPlacer:
     def add_bipartite_edge(
         self,
         lst: List[int],
-        B: nx.Graph,
+        edges: Dict[Any, Dict[int, int]],
+        slot_adj: Dict[int, List[Any]],
         place: List[Dict[Any, int]],
         i: int,
         grid: int,
@@ -754,7 +814,7 @@ class NnsPlacer:
         hoisted ``_add_radius_edges`` when adding several radii.
         """
         data = {v: self._module_slot_data(v, place, axis) for v in lst}
-        self._add_radius_edges(lst, B, data, axis, i, i)
+        self._add_radius_edges(lst, edges, slot_adj, data, axis, i, i)
 
     def _module_slot_data(
         self, v: Any, place: List[Dict[Any, int]], axis: int
@@ -822,7 +882,8 @@ class NnsPlacer:
     def _add_radius_edges(
         self,
         lst: List[int],
-        B: nx.Graph,
+        edges: Dict[Any, Dict[int, int]],
+        slot_adj: Dict[int, List[Any]],
         data: Dict[Any, Tuple[int, List[int], List[int], List[int], int]],
         axis: int,
         r_start: int,
@@ -836,20 +897,26 @@ class NnsPlacer:
         for i in range(r_start, r_stop + 1):
             for v in lst:
                 p0, as_, pref, suff, w0 = data[v]
+                ev = edges[v]
                 q0 = p0 + nmod
                 q = p0 - i
                 if q > 0 and not (reserved and q == self.reserved_col):
                     w1 = 0 if not as_ else worst_at(q, as_, pref, suff, d_ax)
-                    B.add_node(q0 - i, bipartite=1)
-                    B.add_edge(v, q0 - i, weight=w1 - w0)
+                    ev[q0 - i] = w1 - w0
+                    slot_adj.setdefault(q0 - i, []).append(v)
                 q = p0 + i
                 if q <= grid and not (reserved and q == self.reserved_col):
                     w1 = 0 if not as_ else worst_at(q, as_, pref, suff, d_ax)
-                    B.add_node(q0 + i, bipartite=1)
-                    B.add_edge(v, q0 + i, weight=w1 - w0)
+                    ev[q0 + i] = w1 - w0
+                    slot_adj.setdefault(q0 + i, []).append(v)
 
     def _add_all_slots(
-        self, lst: List[int], B: nx.Graph, place: List[Dict[Any, int]], axis: int
+        self,
+        lst: List[int],
+        edges: Dict[Any, Dict[int, int]],
+        slot_adj: Dict[int, List[Any]],
+        place: List[Dict[Any, int]],
+        axis: int,
     ) -> None:
         """Connect every module to every free slot along `axis`.
 
@@ -863,13 +930,14 @@ class NnsPlacer:
         for v in lst:
             p0 = place[axis][v]
             w0 = self.calc_worst_wirelength_v(v, place)
+            ev = edges[v]
             for pos in range(1, grid + 1):
                 if axis == 0 and pos == self.reserved_col:
                     continue
                 place[axis][v] = pos
                 w1 = self.calc_worst_wirelength_v(v, place)
-                B.add_node(pos + nmod, bipartite=1)
-                B.add_edge(v, pos + nmod, weight=w1 - w0)
+                ev[pos + nmod] = w1 - w0
+                slot_adj.setdefault(pos + nmod, []).append(v)
             place[axis][v] = p0  # restore the original position
 
     def legalize(self, lst: List[int], place: List[Dict[Any, int]], axis: int) -> None:
@@ -916,21 +984,23 @@ class NnsPlacer:
         """
         dist = place[axis]
 
-        # base graph shared by both slot policies: modules + closest-position
-        # nodes (weight-0 self edges), mirroring the original construction
-        B = nx.Graph()
-        B.add_nodes_from(lst, bipartite=0)
+        # shared by both slot policies: each module starts with a weight-0 edge
+        # to its current slot (its closest position), mirroring the original
+        # bipartite construction
+        nmod = self.hyprgraph.number_of_modules()
+        edges: Dict[Any, Dict[int, int]] = {v: {} for v in lst}
+        slot_adj: Dict[int, List[Any]] = {}
         for v in lst:
-            q = dist[v] + self.hyprgraph.number_of_modules()  # avoid same name
             if axis == 0 and dist[v] == self.reserved_col:
                 continue
-            B.add_node(q, bipartite=1)
-            B.add_edge(v, q, weight=0)  # closest position
+            s = dist[v] + nmod  # avoid same name
+            edges[v][s] = 0
+            slot_adj.setdefault(s, []).append(v)
 
         # primary strategy: local neighborhood window; fallback: all slots
-        matches = self._local_legalizer.solve(lst, B, place, axis)
+        matches = self._local_legalizer.solve(lst, edges, slot_adj, place, axis)
         if matches is None:
-            matches = self._global_legalizer.solve(lst, B, place, axis)
+            matches = self._global_legalizer.solve(lst, edges, slot_adj, place, axis)
         if matches is None:
             raise RuntimeError(
                 f"Failed to legalize {len(lst)} modules on axis {axis} of "
@@ -940,7 +1010,7 @@ class NnsPlacer:
 
         # reassign the results
         for v in lst:
-            q = matches[v] - self.hyprgraph.number_of_modules()
+            q = matches[v] - nmod
             if dist[v] == q:
                 continue
             # Update position and self.count
