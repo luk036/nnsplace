@@ -1,0 +1,48 @@
+% -*- coding: utf-8 -*-
+% Beamer preamble for the fairness talk (fairness-talk.md).
+%
+% Loaded via a COMMAND-LINE flag, never from YAML metadata
+% (pandoc parses `header-includes` as Markdown and mangles raw LaTeX):
+%
+%   pandoc -t beamer -s --include-in-header=preamble.tex \
+%     beamer.yaml fairness-talk.md -o fairness-talk.tex
+%   lualatex fairness-talk.tex && lualatex fairness-talk.tex
+%
+% LuaLaTeX + a font fallback are required so that literal emoji render;
+% pdflatex/xelatex would drop them as missing glyphs.
+
+\usepackage{fontspec}
+\directlua{luaotfload.add_fallback("emojifb", {"Segoe UI Emoji:mode=harf"})}
+\setsansfont{Latin Modern Sans}[RawFeature={fallback=emojifb}]
+\setmainfont{Latin Modern Roman}[RawFeature={fallback=emojifb}]
+\setmonofont{Latin Modern Mono}[RawFeature={fallback=emojifb},Scale=0.86]
+
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\definecolor{nordred}{HTML}{BF616A}
+\definecolor{nordblue}{HTML}{5E81AC}
+\definecolor{nordgreen}{HTML}{A3BE8C}
+\definecolor{nordpurple}{HTML}{B48EAD}
+
+\usepackage{pgf,tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc,fit,backgrounds}
+\tikzset{
+  nb/.style={draw, rounded corners, align=center, font=\scriptsize,
+             inner sep=4pt, minimum height=7mm},
+  nblue/.style={nb, fill=blue!12, draw=nordblue, line width=1pt},
+  nyellow/.style={nb, fill=yellow!35, draw=orange!80!black, line width=1pt},
+  nred/.style={nb, fill=red!12, draw=nordred, line width=1.5pt},
+  ngreen/.style={nb, fill=green!16, draw=green!45!black, line width=1pt},
+  ar/.style={-{Stealth[length=2mm]}, draw=black!55, line width=0.8pt},
+}
+
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\scriptsize, breaklines=true,
+        showstringspaces=false, columns=fullflexible, frame=single}
+
+\usetheme{Frankfurt}
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{structure}{fg=nordblue}
+\newcommand{\columnsbegin}{\begin{columns}}
+\newcommand{\columnsend}{\end{columns}}
+\newcommand{\col}[1]{\column{#1}}
