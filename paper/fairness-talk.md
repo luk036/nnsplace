@@ -2,6 +2,36 @@
 
 \tableofcontents
 
+# Background
+
+## A Four-Decade History of Placement
+
+```{=latex}
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[node distance=6mm]
+\node[nyellow, text width=26mm] (a) {\textbf{1970s--80s}\\min-cut\\partitioning\\Breuer, K--L, FM};
+\node[nblue, text width=24mm, right=8mm of a] (b) {\textbf{1980s}\\simulated\\annealing\\TimberWolf};
+\node[ngreen, text width=28mm, right=8mm of b] (c) {\textbf{1990s--2010s}\\analytical: quadratic\\and force-directed\\GORDIAN, FastPlace,\\SimPL, ePlace, RePlAce};
+\node[nred, text width=26mm, right=8mm of c] (d) {\textbf{2020s}\\GPU + ML\\DREAMPlace, AlphaChip\\RLPlace; VPR/VTR};
+\draw[ar] (a) -- (b); \draw[ar] (b) -- (c); \draw[ar] (c) -- (d);
+\end{tikzpicture}}
+\end{center}
+```
+
+- Four waves, one constant: each optimized an **aggregate** -- total cut, total wirelength, total overflow.
+
+## Wirelength Models
+
+- **Quadratic**: sum of squared distances $\Rightarrow$ sparse linear system (GORDIAN, NTUplace3).
+  - Mismatches Manhattan routing and the **concave** wire costs of FPGA fabrics.
+  - Needs pseudo-nets / pseudo-IO $\Rightarrow$ *accidental* complexity.
+- **HPWL**: bounding-box half-perimeter; a tight Manhattan lower bound.
+  - Piecewise linear $\Rightarrow$ **non-differentiable** where two pins tie for an edge.
+- **Smooth surrogates** -- log-sum-exp (LSE) and weighted average (WA):
+  - Used by FastPlace, SimPL, ePlace, RePlAce.
+  - Still a **sum over nets** $\Rightarrow$ blind to *where* the demand is spent.
+
 # Placement
 
 ## Why Global Placement Is Hard
@@ -46,6 +76,16 @@ $$\min_{\text{placement}}\ \max_{(u,v)\in E}\ \bigl(c_x\,|x_u-x_v| + c_y\,|y_u-y
 - Convex (a maximum of linear terms) yet **non-smooth**.
 - The linear terms may be replaced by any **monotone** (even concave) cost $m(\cdot)$,
   matching the concave wire costs of real FPGA fabrics.
+
+## Fairness Is Not Equality
+
+$$\min_{\text{placement}}\ \max_{e\in E}\ \frac{\operatorname{worst}(e)}{\omega_e}$$
+
+- Weight net $e$ by $\omega_e$: its timing criticality, or switching activity for power.
+- A critical net may spend a larger wire budget before it binds the objective.
+- The weights enter the **per-arc costs** only -- Howard's algorithm is unchanged.
+- Weighted max-min fairness **reconciles** fairness with timing/power instead of trading them off.
+- A lexicographic variant (critical nets first, then equalize the rest) is a further option.
 
 ## One Axis at a Time
 
@@ -244,6 +284,36 @@ Roomy 50x50 (31 percent)
 
 - Every change was validated against a **bit-identical** placement oracle.
 
+## Preliminary Comparison: NNS vs Aggregate
+
+| Benchmark | Placer | Worst | HPWL (M) | Peak cut |
+|:----------|:-------|------:|---------:|---------:|
+| p1 (32x32) | NNS | **1600** | **0.57** | **26** |
+| p1 (32x32) | quadratic | 2120 | 0.58 | 33 |
+| ibm01 (120x120) | NNS | 8320 | 50.4 | **117** |
+| ibm01 (120x120) | quadratic | **7920** | **42.1** | 143 |
+
+- `p1`: min-max dominates on every metric.
+- `ibm01`: lower **peak cut**, but higher worst/HPWL at roughly $4\times$ the time.
+- That is the **coordinate-descent stall**, not a capacity limit.
+- Preliminary only: one seed, a simple quadratic baseline, proxy routing (no sign-off). ✅
+
+## Scaling to Large Designs
+
+- The outer loop is a **block coordinate descent** with monotone acceptance.
+- On roomy grids the *search*, not the grid, limits quality ($100\times100$ worst 2120).
+- Remedies: **multilevel** (clustering) placement, restarts, a joint two-axis step.
+- Exact flow and matching are heavier per node than FFT / linear-system engines.
+- Directions: exploit sparsity, warm-start the flow, parallel negative-cycle detection, a GPU port.
+
+## Limitations
+
+- **Benchmark scale**: one synthetic `p1`; `ibm01` only preliminary.
+- **No SOTA head-to-head**: a quadratic baseline only; no sign-off router.
+- **Narrow metrics**: worst wire length, HPWL, peak cut -- no timing or power.
+- **Physical abstraction**: 2D uniform grid; no macros, no multi-layer metal.
+- **Scalability**: exact flow and matching vs GPU-accelerated analytical engines.
+
 # Routing and Conclusion
 
 ## Routed Placement
@@ -257,8 +327,9 @@ A global router builds one Steiner tree per net, rooted at the driver pin.
 - Optimize the **worst** connection, not the total: fairness over aggregation.
 - NNS solves it exactly with **Howard's** parametric min-cost flow.
 - **Bipartite matching** legalizes; the outer loop is monotone.
+- A **weighted** objective extends fairness to timing and power.
 - Congestion maps make the fairness/routability trade-off **visible**.
-- The exact objective is affordable. ✅
+- Preliminary comparison: **lower peak**, but scaling is the open problem. ✅
 
 ## Thank You
 
