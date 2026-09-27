@@ -8,8 +8,11 @@
 #     IEEE layout and the I/II/... section numbering.
 #   * `--shift-heading-level-by=-1` maps the body's `##` headings to \section
 #     (the title is metadata, so no `\section` would be emitted otherwise).
-#   * The source carries no citation keys, so `--citeproc` is a no-op; it is
-#     kept only for parity with the other paper builds in this project.
+#   * `--citeproc` resolves the `[@key]` citations and builds the reference
+#     list from `fairness.bib`, using the vendored, self-contained `ieee.csl`
+#     (numeric IEEE style) so the build needs no network access.  Both files
+#     are named in the .md front matter (`bibliography:` / `csl:`), so the
+#     build stays a single-input recipe and the paper is the source of truth.
 #
 # Figures are authored as self-contained SVG and converted to PDF, because
 # pdflatex cannot read SVG.  The PDF twins are committed, so a normal build
@@ -27,7 +30,7 @@ FIG_PDF := $(FIG_SVG:.svg=.pdf)
 
 fairness-paper: fairness-paper.pdf
 
-fairness-paper.pdf: fairness-paper.md $(FIG_PDF)
+fairness-paper.pdf: fairness-paper.md fairness.bib ieee.csl $(FIG_PDF)
 	$(PANDOC) $(FLAGS) fairness-paper.md -o $@
 
 # Fairness talk: Pandoc-Markdown -> Beamer -> PDF.

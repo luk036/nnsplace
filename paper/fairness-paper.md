@@ -11,6 +11,10 @@ keywords:
   - routing congestion
   - max-min fairness
 figPrefix: "Fig."
+bibliography: fairness.bib
+csl: ieee.csl
+link-citations: true
+nocite: "@*"
 abstract: |
   Routing congestion has become the dominant concern in modern VLSI physical
   design, yet traditional global placement objectives such as total wirelength
@@ -50,19 +54,43 @@ Beyond surveying the motivation and principles, this paper grounds the discussio
 
 ### VLSI Physical Design Flow and Placement
 
-The physical design of a VLSI circuit is a complex process that transforms a circuit netlist into a geometric layout ready for fabrication. This process is typically broken down into several stages, including floorplanning, placement, routing, and physical verification. **Placement** is the stage where physical locations are determined for all the components (standard cells, macros, IP blocks) of the circuit within the defined core area of the chip. The quality of the placement lays the foundation for the subsequent routing stage and significantly influences the overall performance and manufacturability of the final chip.
+The physical design of a VLSI circuit is a complex process that transforms a circuit netlist into a geometric layout ready for fabrication [@sherwani1999; @kahng2011vlsi]. This process is typically broken down into several stages, including floorplanning, placement, routing, and physical verification. **Placement** is the stage where physical locations are determined for all the components (standard cells, macros, IP blocks) of the circuit within the defined core area of the chip. The quality of the placement lays the foundation for the subsequent routing stage and significantly influences the overall performance and manufacturability of the final chip.
 
 Placement is often performed in two phases: **global placement** and **detailed placement**. Global placement aims to find approximate locations for all cells, optimizing a given objective function (e.g., wirelength, congestion) while considering overall chip dimensions and potential placement blockages. During this phase, cells may overlap. **Detailed placement** then refines the global placement by removing cell overlaps and assigning cells to legal locations on the placement grid, often involving further optimization steps like cell swapping or shifting.
 
 ### Traditional Global Placement Objectives and Limitations
 
-Historically, global placement has primarily focused on minimizing **total wirelength**, which is often estimated using metrics like half-perimeter wirelength (HPWL). The rationale behind this objective is that shorter wires generally lead to lower interconnect delay, reduced power consumption, and potentially smaller chip area. Various analytical and combinatorial techniques have been developed for wirelength-driven global placement, including quadratic programming, simulated annealing, and partitioning-based methods.
+Historically, global placement has primarily focused on minimizing **total wirelength**, which is often estimated using metrics like half-perimeter wirelength (HPWL) [@sherwani1999; @kahng2011vlsi]. The rationale behind this objective is that shorter wires generally lead to lower interconnect delay, reduced power consumption, and potentially smaller chip area. Various analytical and combinatorial techniques have been developed for wirelength-driven global placement, including quadratic programming, simulated annealing, and partitioning-based methods.
 
-Another traditional objective is minimizing **net-cut**, particularly in partitioning-based placement algorithms. Net-cut refers to the number of signal nets that cross the boundaries of partitions during the placement process. Minimizing net-cut aims to reduce the number of long interconnections and improve locality.
+Another traditional objective is minimizing **net-cut**, particularly in partitioning-based placement algorithms. Net-cut refers to the number of signal nets that cross the boundaries of partitions during the placement process. Minimizing net-cut aims to reduce the number of long interconnections and improve locality [@fiduccia1982].
 
 However, as VLSI design complexity has escalated, the limitations of solely relying on wirelength or net-cut minimization have become increasingly apparent, especially concerning **routing congestion**. While reducing global wirelength can help minimize the total wiring demand on the chip, it does not guarantee a uniform distribution of this demand. An algorithm optimizing for total wirelength might cluster highly interconnected cells together in a small region, leading to a high density of routing demand in that area, even if the overall wirelength is minimized. Conversely, other regions might have abundant routing resources that remain underutilized.
 
 As highlighted in the sources, "**minimizing wirelength may (and in general, will) create locally congested regions**". It is entirely possible for a minimum wirelength solution to require more routing resources through a particular region than are physically available. This excessive congestion can severely hinder the subsequent routing stage, potentially leading to a larger final routed wirelength due to detours around congested areas, increased routing complexity, longer design cycle times due to iterations between placement and routing, and even unroutable designs in fixed-die regimes.
+
+### Wirelength Models: Quadratic Placement and HPWL
+
+The cost model, not the optimizer, is where much of the accidental complexity of placement lives. The **quadratic model** expresses a net's cost as a sum of squared pin-to-pin distances and turns placement into a sparse linear system [@hall1970]; it is the engine inside GORDIAN and its analytic descendants [@kleinhans1991; @chen2008ntuplace3]. Squared Euclidean distance, however, matches neither the Manhattan geometry in which wires are actually routed nor the concave wire costs of a fixed FPGA fabric [@betz1997vpr; @gort2012]. Quadratic placers therefore add pseudo-nets and pseudo-IO points to correct the model's artifacts, exchanging mathematical simplicity for implementation complexity [@viswanathan2005]. Separating this *accidental* complexity from the *essential* complexity of placement -- the non-convex non-overlap constraints and the wirelength-versus-congestion trade-off -- is the central design skill [@brooks1987].
+
+The standard physical metric is the **half-perimeter wirelength (HPWL)**. For a net $e$, it is half the perimeter of the smallest axis-aligned bounding box that encloses the net's pins [@sherwani1999; @kahng2011vlsi]:
+
+$$\mathrm{HPWL}(e) = \bigl(\max_{v\in e} x_v - \min_{v\in e} x_v\bigr) + \bigl(\max_{v\in e} y_v - \min_{v\in e} y_v\bigr).$$
+
+In Manhattan routing this is a cheap and tight lower bound on the routed wire length, and unlike squared distance it is linear in the coordinates. It is, however, piecewise linear and therefore **non-differentiable** wherever two pins tie for a bounding-box edge -- exactly the regime in which gradient-based analytic placers operate [@kim2012simpl].
+
+To restore differentiability, modern placers replace the $\max$ and $\min$ in HPWL with smooth surrogates: the **log-sum-exp (LSE)** function introduced for placement by Naylor et al. [@naylor2001], and the **weighted-average (WA)** form used by APlace and ePlace [@kahng2005aplacer; @lu2015eplace]. Both approach HPWL as their smoothing parameter is tightened, and both appear in the leading analytical placers -- FastPlace, SimPL, NTUplace3, and RePlAce [@viswanathan2005; @kim2012simpl; @chen2008ntuplace3; @cheng2019replace]; multilevel mixed-size placers such as mPL6 use the same smoothed objective together with explicit congestion control [@chan2006mpl6].
+
+HPWL and its smooth approximations remain **sums over nets**. They estimate how much wire exists, but not where it is spent: a placement with a small total HPWL can still route most of that demand through a single crowded region. The gap between a good aggregate and a good distribution is precisely what the fairness objective of this paper is designed to close.
+
+### A Four-Decade History of Global Placement
+
+Global placement has been studied for more than forty years, and its objectives and algorithms have evolved in several distinct waves. The first wave was **partitioning- and min-cut-based placement**: Breuer's min-cut placer [@breuer1977] and the graph-partitioning heuristics of Kernighan and Lin [@kernighan1970] and Fiduccia and Mattheyses [@fiduccia1982] cut a circuit into halves that were assigned to opposite sides of the die, an idea later extended to full standard-cell placement by Dunlop and Kernighan [@dunlop1985]; the survey of Alpert and Kahng [@alpert1995] collects this line of work. A second wave applied **simulated annealing** to placement, trading runtime for solution quality: the canonical annealing formulation [@kirkpatrick1983] and its influential circuit implementation, TimberWolf [@sechen1985], made annealing the reference placer of the late 1980s.
+
+A third, ultimately dominant, wave is **analytical placement**, which models placement as continuous optimization and rounds the continuous result. Hall's quadratic placement [@hall1970] minimized squared wirelength; Goto's method [@goto1981] and GORDIAN [@kleinhans1991] combined quadratic programming with partitioning or slicing; the force-directed formulation of Quinn and Breuer [@quinn1979] belongs to the same family; and Eisenmann and Johannes [@eisenmann1998] showed that a generic analytic engine can handle placement and floorplanning together. Early timing-driven methods tuned these engines toward critical paths [@donath1990], and recursive bisection was shown to be competitive for routability as well [@caldwell2000]. Today's analytical placers continue this lineage: FastPlace [@viswanathan2005], APlace [@kahng2005aplacer], NTUplace3 [@chen2008ntuplace3], SimPL [@kim2012simpl], the electrostatics-based ePlace [@lu2015eplace], and RePlAce [@cheng2019replace], while a parallel effort replaced the exponential-time annealing engine with efficient linear-wirelength solvers [@alpert1998wirelength].
+
+The most recent wave is **GPU acceleration and machine learning**. DREAMPlace [@lin2021dreamplace] recasts analytic placement as a deep-learning training problem in order to run on GPUs, and ABCDPlace [@lin2020abcdplace] accelerates the detailed-placement stage in the same way. Reinforcement learning has been applied to chip and macro placement [@mirhoseini2021], and hierarchical macro placers now handle large IP blocks [@kahng2024hierrtlmp]; recent surveys map the broader machine-learning-for-EDA landscape [@huang2021ml4eda; @kahng2023ml]. **Field-programmable gate arrays**, with their fixed routing fabric and irregular columns, have driven a parallel line of placement research: from the annealing-based VPR [@betz1997vpr] and its timing-driven extension [@marquardt2000], through analytic placers for heterogeneous FPGAs [@gort2012; @abuowaimer2018gplace3] and routability-driven FPGA placement [@li2018utplacef] within the open VTR flow [@murray2020vtr8], to reinforcement-learning placers [@elgammal2022rlplace].
+
+Across these four decades the objective has almost always been an aggregate -- total wirelength, total cut, or total overflow. That choice is what leaves room for a fairness-centric formulation.
 
 ### Defining and Measuring Congestion
 
@@ -71,6 +99,8 @@ As highlighted in the sources, "**minimizing wirelength may (and in general, wil
 The **routing demand** ($d_e$) on a global edge ($e$) is defined as the number of routed nets that cross that edge. This demand is estimated based on the cell placement using a global router or even a simpler model like a bounding box router. The **routing supply** ($s_e$) of a global edge is the physical routing capacity available across that edge, which is determined by the length of the edge and the technology parameters (e.g., number of routing layers, wire pitch).
 
 A global edge is considered **congested** if the routing demand exceeds the routing supply ($d_e > s_e$). The **overflow** ($overflow_e$) of a congested edge is the amount by which the demand exceeds the supply: $overflow_e = d_e - s_e$ if $d_e > s_e$, and $0$ otherwise. The **total overflow** of a placement is the summation of the overflows across all global edges and serves as a global measure of congestion. A placement with a lower total overflow is generally considered less congested. Industry experience suggests that total overflow is a good indicator of overall routability. Congestion maps generated by CAD vendors often visualize this overflow information, highlighting congested regions.
+
+Congestion has long been attacked at placement time. Classical frameworks penalize estimated overflow during analytical placement [@brenner2002], reserve or redistribute white space to relieve dense regions [@li2007whitespace], or move cells to relieve hotspots after an initial placement [@he2013ripple]; routability-driven contests subsequently made overflow a standard, comparable benchmark metric [@ispd2011contest].
 
 ### Relationship Between Wirelength and Congestion
 
@@ -122,7 +152,7 @@ One source aptly captures this challenge by citing a Chinese proverb: "**we do n
 
 ### Max-Min Fairness Principle
 
-To address this issue of unequal resource distribution, the principle of **max-min fairness** offers a promising paradigm for global placement. This principle, originating from the field of communication networks and network traffic management, aims to **maximize the minimum resources allocated to each agent**, ensuring a baseline level of service while allowing for flexible allocation beyond that minimum. In the context of bandwidth allocation in networks, max-min fairness ensures that no flow can have its rate increased without decreasing the rate of another flow that has an equal or smaller rate. This concept provides a perfect parallel to the problem of routing resource allocation in chip design.
+To address this issue of unequal resource distribution, the principle of **max-min fairness** offers a promising paradigm for global placement. This principle, originating from the field of communication networks and network traffic management [@bertsekas1992; @hahne1991], aims to **maximize the minimum resources allocated to each agent**, ensuring a baseline level of service while allowing for flexible allocation beyond that minimum. In the context of bandwidth allocation in networks, max-min fairness ensures that no flow can have its rate increased without decreasing the rate of another flow that has an equal or smaller rate. This concept provides a perfect parallel to the problem of routing resource allocation in chip design.
 
 ### Application to Placement
 
@@ -171,7 +201,7 @@ The experimental results presented in some sources indicate that a two-step appr
 
 ## A Fairness-Centric Placer: The NNS Approach
 
-The preceding sections argued that global placement should optimize the *worst* connection rather than the total, and that doing so is a fairness property. This section shows that the principle is realizable in a compact, exact algorithm, following the open-source *No-Nonsense* (NNS) placer [9]. NNS deliberately avoids the smooth convex approximations that dominate analytical placement: it keeps a linear, non-smooth wire-length cost and solves the resulting min-max problem exactly with a parametric minimum-cost-flow engine. The resulting optimizer needs no floating-point arithmetic when a linear cost model is assumed, and it accommodates monotone (in particular concave) cost models that better match fixed FPGA fabrics.
+The preceding sections argued that global placement should optimize the *worst* connection rather than the total, and that doing so is a fairness property. This section shows that the principle is realizable in a compact, exact algorithm, following the open-source *No-Nonsense* (NNS) placer [@nnsplace]. NNS deliberately avoids the smooth convex approximations that dominate analytical placement: it keeps a linear, non-smooth wire-length cost and solves the resulting min-max problem exactly with a parametric minimum-cost-flow engine. The resulting optimizer needs no floating-point arithmetic when a linear cost model is assumed, and it accommodates monotone (in particular concave) cost models that better match fixed FPGA fabrics.
 
 ### Objective: Minimize the Worst Wire Length
 
@@ -183,7 +213,7 @@ where $c_x$ and $c_y$ scale the per-axis wire costs. This is a min-max (bottlene
 
 ### Per-Axis Optimization and Difference Constraints
 
-NNS optimizes one axis at a time while the other axis is frozen, an alternating-direction scheme [3, 7]. Let $q_v$ denote the coordinate of $v$ on the axis under optimization, and treat the perpendicular coordinates as constants. For a trial *radius* $r$, the wire-length budget allowed on this axis, the placement is feasible on this axis if and only if every arc meets its budget:
+NNS optimizes one axis at a time while the other axis is frozen, an alternating-direction scheme [@kahng2002minmax; @cong1992]. Let $q_v$ denote the coordinate of $v$ on the axis under optimization, and treat the perpendicular coordinates as constants. For a trial *radius* $r$, the wire-length budget allowed on this axis, the placement is feasible on this axis if and only if every arc meets its budget:
 
 $$q_v - q_u \le \operatorname{cost}\bigl((u,v), r\bigr), \qquad \forall (u,v) \in E .$$
 
@@ -191,11 +221,11 @@ These are difference constraints; the system is feasible exactly when its constr
 
 $$r^{*} = \max_{\text{cycles } \kappa}\ \frac{\sum_{(u,v)\in\kappa} c_{uv}}{\lvert \kappa \rvert},$$
 
-which is the maximum cycle mean of the graph. The worst-wire-length bottleneck therefore reduces exactly to a minimum-cycle-ratio / parametric minimum-cost-flow problem.
+which is the maximum cycle mean of the graph. The worst-wire-length bottleneck therefore reduces exactly to a minimum-cycle-ratio / parametric minimum-cost-flow problem, for which efficient optimum-cycle-mean algorithms are well studied [@karp1978; @dasdan1999].
 
 ### Howard's Algorithm and the Minimum Cycle Ratio
 
-NNS solves the parametric problem by Howard's policy-iteration method [4, 6], as provided by the `digraphx` library [8]. In its parametric form the constraints become
+NNS solves the parametric problem by Howard's policy-iteration method [@howard1960; @dasdan2004], as provided by the `digraphx` library [@digraphx]. In its parametric form the constraints become
 
 $$q_v - q_u \le \operatorname{cost}(u,v) - r\,\tau_{uv},$$
 
@@ -213,7 +243,7 @@ Optimization alone lets several modules drift to the same coordinate. Legalizati
 
 $$\min_{\mu}\ \sum_{v} \Delta \operatorname{worst}\bigl(v \to \mu(v)\bigr).$$
 
-If no full matching exists within the local window, the window grows; a global fallback offers every free site on the line, so legalization fails only when the grid genuinely lacks capacity. The matching is solved directly with a linear-assignment routine (Hungarian method) [8], preserving the reference tie-breaking order so the placer's trajectory, and therefore its result, is deterministic.
+If no full matching exists within the local window, the window grows; a global fallback offers every free site on the line, so legalization fails only when the grid genuinely lacks capacity. The matching is solved directly with a linear-assignment routine (Hungarian method) [@digraphx], preserving the reference tie-breaking order so the placer's trajectory, and therefore its result, is deterministic. This is an instance of minimum-total-movement legalization, which can also be formulated as a minimum-cost flow [@brenner2004legal]; here it is specialized to the min-max objective.
 
 ### I/O Pad Ring Assignment
 
@@ -227,7 +257,7 @@ One round of NNS runs Howard's algorithm on $x$, legalizes on $y$, and snaps the
 
 ### Implementation
 
-NNS is implemented as a thin Python library on top of the sibling packages `digraphx` (parametric flow and negative-cycle detection), `netlistx` (netlist I/O), `physdes` (rectilinear geometry and routing), and `mywheel` [8, 9]. Its structure is organized around a few classic design patterns: a *Strategy* for the legalizer, a *Memento* for snapshot and rollback, an *Adapter* bridging the graph cost model to the solver, and a *Facade* for the top-level run. Treating bit-identical output on a fixed seed-grid matrix as a regression oracle allowed later refactorings to remove roughly 2,400 lines of duplicated infrastructure without changing a single placement.
+NNS is implemented as a thin Python library on top of the sibling packages `digraphx` (parametric flow and negative-cycle detection), `netlistx` (netlist I/O), `physdes` (rectilinear geometry and routing), and `mywheel` [@digraphx; @netlistx; @physdes; @nnsplace]. Its structure is organized around a few classic design patterns: a *Strategy* for the legalizer, a *Memento* for snapshot and rollback, an *Adapter* bridging the graph cost model to the solver, and a *Facade* for the top-level run. Treating bit-identical output on a fixed seed-grid matrix as a regression oracle allowed later refactorings to remove roughly 2,400 lines of duplicated infrastructure without changing a single placement.
 
 ## Visualizing Fairness with Congestion Maps
 
@@ -281,21 +311,22 @@ Grid & Usable slots & Cell density & Rounds & Worst \\
 
 ### Computational Cost
 
-The min-max objective and the exact rational arithmetic come at a cost, but a modest one. Profiling attributed most of the runtime to the Howard cost model and to legalization, and targeted, behavior-preserving optimizations reduced the total CPU time over a 30-scenario seed-grid matrix by a factor of roughly 4.6 without changing a single placement. Table II lists the headline figures; the same optimization was subsequently ported to C++ with further speed-ups.
+The min-max objective and the exact rational arithmetic come at a cost, but a modest one. Profiling attributed most of the runtime to the Howard cost model and to legalization, and targeted, behavior-preserving optimizations reduced the total CPU time over a 30-scenario seed-grid matrix by a factor of roughly 4.6 without changing a single placement. Table II lists the headline figures; the same optimization was subsequently ported to C++ with further speed-ups. These figures are for `p1` only; scaling to larger designs is discussed under Limitations below.
 
 ```{=latex}
 \begin{table}[t]
 \centering
-\caption{Runtime of the fairness-centric placer before and after behavior-preserving optimization. Every change was validated against a bit-identical placement oracle.}
+\footnotesize
+\caption{Runtime of the fairness-centric placer before and after behavior-preserving optimization. Every change was validated against a bit-identical placement oracle, so the placement result is unchanged.}
 \label{tbl:speedup}
-\begin{tabular}{lrl}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.60\columnwidth}@{\hspace{1em}}>{\raggedright\arraybackslash}p{0.30\columnwidth}@{}}
 \hline
-Optimization & Effect & Result unchanged \\
+Optimization & Speed-up \\
 \hline
-Integer floor-division in the cost model & 1.85x on hot callback & yes \\
-Direct linear-assignment solver (no graph) & 2.6x per legalization & yes \\
-Gating infeasible assignment calls & 7x per matching & yes \\
-Whole seed-grid matrix & 4.57x total CPU & yes \\
+Integer floor-division in the cost model & 1.85x on hot callback \\
+Direct linear-assignment solver (no graph) & 2.6x per legalization \\
+Gating infeasible assignment calls & 7x per matching \\
+Whole seed-grid matrix & 4.57x total CPU \\
 \hline
 \end{tabular}
 \end{table}
@@ -303,7 +334,7 @@ Whole seed-grid matrix & 4.57x total CPU & yes \\
 
 ## From Placement to Global Routing
 
-Placement optimizes a proxy; routing decides the actual wires. To close the loop, each net of the final placement is passed to a rectilinear global router [8] that builds one tree per net, rooted at the net's driver pin, and connects each sink within an allowed wire-length budget, inserting Steiner points to share trunks and save wire. @fig:routed shows the routed version of the 50x50 placement: the straight proxy lines of @fig:placement are replaced by orthogonal routing trees, and the cut crossings of those trees are precisely what the congestion maps of the previous section count.
+Placement optimizes a proxy; routing decides the actual wires. To close the loop, each net of the final placement is passed to a rectilinear global router [@physdes] that builds one tree per net, rooted at the net's driver pin, and connects each sink within an allowed wire-length budget, inserting Steiner points to share trunks and save wire. @fig:routed shows the routed version of the 50x50 placement: the straight proxy lines of @fig:placement are replaced by orthogonal routing trees, and the cut crossings of those trees are precisely what the congestion maps of the previous section count.
 
 ![Routed placement on the 50x50 grid: orthogonal routing trees replace the straight proxy connections.](figures/routed-50x50.pdf){#fig:routed width=100%}
 
@@ -321,6 +352,12 @@ As discussed earlier, minimizing total wirelength and minimizing local congestio
 
 Timing-driven placement aims to optimize circuit performance by minimizing critical path delays. This is often achieved by assigning weights to critical nets and encouraging the placer to shorten these nets. Incorporating fairness into timing-driven placement requires careful consideration. An aggressive focus on reducing congestion might inadvertently increase the length of critical paths, leading to timing violations. Conversely, solely focusing on timing might create or exacerbate congestion issues. Therefore, a successful approach might involve a multi-objective optimization that considers both timing criticality and congestion (or fairness in routing demand). This could involve assigning higher congestion penalties in regions containing critical nets or using timing-aware congestion estimation.
 
+A fairness objective need not treat every net equally, which resolves much of the apparent conflict with timing-driven design. Max-min fairness is most naturally stated for *unweighted* agents, but weighted generalizations are standard in networking: generalized processor sharing allocates bandwidth in proportion to per-flow weights [@parekh1993], and the same idea applies here. Give each net $e$ a weight $\omega_e$ reflecting its timing criticality (or its switching activity, for power) and minimize the *weighted* bottleneck
+
+$$\min_{\text{placement}}\ \max_{e\in E}\ \frac{\operatorname{worst}(e)}{\omega_e},$$
+
+so that a critical net may consume a larger wire budget before it binds the objective. Because the per-axis subproblem is again a parametric minimum-cycle-ratio problem, the weights enter only through the per-arc costs and Howard's algorithm needs no structural change. A lexicographic variant, which optimizes the critical nets first and equalizes the remainder afterwards, is an alternative that trades one objective for a small hierarchy of them. Weighted max-min fairness therefore *reconciles* the fairness principle with timing- and power-driven placement rather than competing with it.
+
 ### Impact on Power-Driven Placement
 
 Power-driven placement aims to minimize power consumption, often by reducing wirelength (to decrease dynamic power) or by strategically placing cells with different power characteristics (e.g., in multi-voltage designs). A fairer distribution of cells achieved through a fairness-centric placement could potentially benefit power consumption by avoiding highly dense regions, which might lead to increased temperature and leakage power. Furthermore, shorter routed wirelengths (due to better routability) can also contribute to lower dynamic power consumption. In multi-voltage designs, the interaction between fairness in cell distribution and the placement of cells near their respective voltage sources would need to be carefully managed.
@@ -335,13 +372,17 @@ While fairness-centric global placement offers a promising direction for address
 
 Directly optimizing for fairness metrics, such as minimizing the maximum congestion, can be computationally more complex than minimizing the sum of costs like total wirelength. Algorithms need to efficiently estimate congestion, identify the most congested regions, and make placement decisions that effectively reduce peak congestion without significantly degrading other objectives. Developing scalable and efficient algorithms for fairness-centric global placement, especially for very large-scale designs, is a significant challenge.
 
+### Scaling to Large Designs
+
+Two ingredients limit NNS as designs grow. First, the outer loop is a block coordinate descent: each pass solves one axis exactly while the other is frozen, and a round is accepted only if the worst wirelength improves. On roomy grids this monotone acceptance stalls early -- the 100x100 run of Table I is limited by the *search*, not by capacity, because a single long net dominates the bottleneck and no axis-aligned move shortens it. Multilevel (clustering) placement, which coarsens the netlist before optimizing and refines afterwards [@alpert1997multilevel; @nam2006fast], and randomized restarts or a joint two-axis step are natural remedies. Second, exact parametric flow and matching are heavier per node than the gradient kernels of analytical placers; an efficient implementation must exploit sparsity, warm-start the flow from the previous round, and parallelize negative-cycle detection. The C++ port is a first step, but a rigorous scaling study -- ideally with a GPU implementation in the spirit of DREAMPlace [@lin2021dreamplace] -- is needed before the approach can be positioned against production-grade engines.
+
 ### Accurate and Efficient Congestion Estimation
 
 The effectiveness of any congestion-driven (or fairness-centric) placement approach heavily relies on the accuracy and efficiency of the congestion estimation model used during the placement process. As noted, simpler models like bounding box routing provide a quick estimate but might lack accuracy, while more sophisticated global routing-based estimation can be more accurate but also more computationally expensive. Finding a good balance between accuracy and efficiency in congestion estimation during global placement remains an ongoing challenge.
 
 ### Integration with Mixed-Size Placement
 
-Modern VLSI designs often include a mix of standard cells and larger blocks (macros, IP cores). Integrating fairness-centric principles into mixed-size placement adds another layer of complexity. The placement of large, fixed-size macros significantly influences the available area for standard cell placement and the overall routing landscape. Developing fairness-aware placement algorithms that effectively handle both the placement of macros and the surrounding standard cells is an important area for future research.
+Modern VLSI designs often include a mix of standard cells and larger blocks (macros, IP cores). Integrating fairness-centric principles into mixed-size placement adds another layer of complexity. The placement of large, fixed-size macros significantly influences the available area for standard cell placement and the overall routing landscape. Developing fairness-aware placement algorithms that effectively handle both the placement of macros and the surrounding standard cells is an important area for future research [@adya2002].
 
 ### Handling Multi-Layer Routing Resources
 
@@ -362,6 +403,18 @@ Future research in fairness-centric global placement can explore several promisi
 * Creation of new benchmark suites specifically designed to challenge and evaluate the effectiveness of congestion-driven and fairness-centric placement algorithms.
 * Research into extending fairness principles to other stages of physical design, such as detailed placement and routing.
 
+## Limitations and Threats to Validity
+
+The study is a proof of concept, and several limitations bound how far its conclusions generalize.
+
+*   **Benchmark scale.** The evaluation uses a single synthetic benchmark, `p1` (833 modules), on grids up to 100x100 -- two to three orders of magnitude smaller than the multi-million-cell designs that industrial placers target. A single instance cannot characterize a method's average behavior. The results are evidence that the min-max objective is *realizable and affordable*, not that it is competitive at production scale.
+*   **No head-to-head comparison.** NNS is not compared against leading analytical or GPU placers (ePlace, RePlAce, DREAMPlace, NTUplace3) on a shared benchmark suite, and the flow is not closed with a sign-off router. The literature review cites these placers, but no controlled experiment links the fairness objective to a measurable routability gain. Adopting the public ISPD/DAC placement and routability contests [@nam2005ispd; @ispd2011contest] and reporting routed wirelength after a detailed router such as TritonRoute [@kahng2021tritonroute] would make the comparison reproducible and would test whether a lower peak congestion survives detailed routing.
+*   **Narrow metrics.** Only worst wirelength and cut-crossing congestion maps are reported; total and routed wirelength, timing, and power are not. Because minimizing the peak can raise the total, a complete evaluation must report both, together with peak and mean routing overflow.
+*   **Physical abstraction.** The model places cells on a uniform two-dimensional grid and legalizes row by row. It does not represent multi-layer metal stacks, via costs, or non-uniform track directions, and it assumes a single cell size with no fixed macros, so macro-dominated and mixed-size placement [@adya2002] is not exercised.
+*   **Scalability.** Howard's parametric flow and bipartite-matching legalization are exact but heavier than the fast transform and sparse-linear-system kernels of analytical placers, and the reported 4.57x speedup was measured on `p1` only. The growth of the flow graph with design size is not characterized.
+
+These limitations do not undercut the paper's central claim -- that the worst connection, not the total, is the right quantity to bound -- but they mark the distance between a realizable prototype and a production-ready placer.
+
 ## Conclusion
 
 The increasing complexity and density of modern VLSI circuits have elevated routing congestion to a critical concern in physical design. Traditional global placement objectives, primarily focused on minimizing total wirelength, often fail to adequately address the issue of localized congestion, leading to routability problems and performance degradation. This paper has argued for a shift towards **fairness-centric global placement**, where the goal is to achieve a more balanced distribution of routing demand across the chip by prioritizing the minimization of peak congestion levels.
@@ -371,13 +424,3 @@ The principle of **max-min fairness**, borrowed from network resource allocation
 Beyond the principles, this paper reported a concrete realization: the open-source NNS placer, which reduces the worst-wire-length objective to a parametric minimum-cost-flow problem solved by Howard's algorithm and legalizes with minimum-weight bipartite matching. Its placements yield congestion maps in which the fairness/routability trade-off is directly visible, and behavior-preserving optimizations keep the exact min-max objective affordable. We hope that the open implementation lowers the barrier to experimenting with fairness-centric objectives on real designs.
 
 ## References {.unnumbered}
-
-1. N. Sherwani, *Algorithms for VLSI Physical Design Automation*, 3rd ed. Springer, 1999.
-2. A. B. Kahng, J. Lienig, I. L. Markov, and J. Hu, *VLSI Physical Design: From Graph Partitioning to Timing Closure*. Springer, 2011.
-3. A. B. Kahng, S. Mantik, and I. L. Markov, "Min-max placement for large-scale timing optimization," in *Proc. Int. Symp. Physical Design (ISPD)*, 2003.
-4. R. A. Howard, *Dynamic Programming and Markov Processes*. MIT Press, 1960.
-5. C. M. Fiduccia and R. M. Mattheyses, "A linear-time heuristic for improving network partitions," in *Proc. Design Automation Conf. (DAC)*, 1982.
-6. A. Dasdan, "Experimental analysis of the fastest optimum cycle ratio algorithms," *ACM Trans. Design Automation of Electronic Systems*, vol. 9, no. 4, 2004.
-7. J. Cong, A. B. Kahng, G. Robins, M. Sarrafzadeh, and C. K. Wong, "Provably good performance-driven global routing," *IEEE Trans. Computer-Aided Design*, vol. 11, no. 6, 1992.
-8. W.-S. Luk, *digraphx*, *netlistx*, and *physdes* software libraries. [Online]. Available: https://github.com/luk036
-9. W.-S. Luk, *nnsplace: an affordable fairness-centric placement library*. [Online]. Available: https://github.com/luk036/nnsplace

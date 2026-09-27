@@ -1,0 +1,659 @@
+% BibTeX bibliography for fairness-paper.md.
+%
+% Consumed by pandoc's `--citeproc` (see paper/Makefile), together with the
+% vendored `ieee.csl` (numeric IEEE style).  Keys follow the reference list of
+% the paper; the three sibling software libraries that the paper cites as one
+% entry are given separate keys so each can be cited individually.
+
+@book{sherwani1999,
+  author    = {Sherwani, Naveed A.},
+  title     = {Algorithms for {VLSI} Physical Design Automation},
+  edition   = {3rd},
+  publisher = {Kluwer Academic Publishers},
+  address   = {Boston, MA, USA},
+  year      = {1999},
+  isbn      = {978-0-7923-8393-2}
+}
+
+@book{kahng2011vlsi,
+  author    = {Kahng, Andrew B. and Lienig, Jens and Markov, Igor L. and Hu, Jin},
+  title     = {{VLSI} Physical Design: From Graph Partitioning to Timing Closure},
+  publisher = {Springer},
+  address   = {Dordrecht, The Netherlands},
+  year      = {2011},
+  doi       = {10.1007/978-90-481-9591-6},
+  isbn      = {978-90-481-9590-9}
+}
+
+@inproceedings{kahng2002minmax,
+  author    = {Kahng, Andrew B. and Mantik, Stefanus and Markov, Igor L.},
+  title     = {Min-Max Placement for Large-Scale Timing Optimization},
+  booktitle = {Proc. Int. Symp. Physical Design (ISPD)},
+  pages     = {143--148},
+  year      = {2002},
+  doi       = {10.1145/505388.505423}
+}
+
+@book{howard1960,
+  author    = {Howard, Ronald A.},
+  title     = {Dynamic Programming and Markov Processes},
+  publisher = {MIT Press},
+  address   = {Cambridge, MA, USA},
+  year      = {1960}
+}
+
+@inproceedings{fiduccia1982,
+  author    = {Fiduccia, Charles M. and Mattheyses, Robert M.},
+  title     = {A Linear-Time Heuristic for Improving Network Partitions},
+  booktitle = {Proc. Design Automation Conf. (DAC)},
+  pages     = {175--181},
+  year      = {1982},
+  doi       = {10.1145/62882.62910}
+}
+
+@article{dasdan2004,
+  author  = {Dasdan, Ali},
+  title   = {Experimental Analysis of the Fastest Optimum Cycle Ratio and Mean Algorithms},
+  journal = {ACM Trans. Design Automation of Electronic Systems},
+  volume  = {9},
+  number  = {4},
+  pages   = {385--418},
+  year    = {2004},
+  doi     = {10.1145/1027084.1027085}
+}
+
+@article{cong1992,
+  author  = {Cong, Jason and Kahng, Andrew B. and Robins, Gabriel and Sarrafzadeh, Majid and Wong, C. K.},
+  title   = {Provably Good Performance-Driven Global Routing},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {11},
+  number  = {6},
+  pages   = {739--752},
+  year    = {1992},
+  doi     = {10.1109/43.137519}
+}
+
+@misc{digraphx,
+  author = {Luk, Wai-Shing},
+  title  = {{digraphx}: Graph, Negative-Cycle and Parametric Minimum-Cost-Flow Algorithms},
+  year   = {2024},
+  url    = {https://github.com/luk036/digraphx}
+}
+
+@misc{netlistx,
+  author = {Luk, Wai-Shing},
+  title  = {{netlistx}: Netlist I/O and Graph-Algorithm Utilities},
+  year   = {2024},
+  url    = {https://github.com/luk036/netlistx}
+}
+
+@misc{physdes,
+  author = {Luk, Wai-Shing},
+  title  = {{physdes}: Rectilinear Geometry and Global-Routing Primitives},
+  year   = {2024},
+  url    = {https://github.com/luk036/physdes-py}
+}
+
+@misc{nnsplace,
+  author = {Luk, Wai-Shing},
+  title  = {{nnsplace}: An Affordable Fairness-Centric Placement Library},
+  year   = {2024},
+  url    = {https://github.com/luk036/nnsplace}
+}
+
+% ---------------------------------------------------------------------------
+% Previous work: the four-decade history of global placement.
+% ---------------------------------------------------------------------------
+
+@inproceedings{breuer1977,
+  author    = {Breuer, Melvin A.},
+  title     = {A Class of Min-Cut Placement Algorithms},
+  booktitle = {Proc. 14th Design Automation Conf. (DAC)},
+  pages     = {284--290},
+  year      = {1977}
+}
+
+@article{kernighan1970,
+  author  = {Kernighan, B. W. and Lin, S.},
+  title   = {An Efficient Heuristic Procedure for Partitioning Graphs},
+  journal = {Bell System Technical Journal},
+  volume  = {49},
+  number  = {2},
+  pages   = {291--307},
+  year    = {1970},
+  doi     = {10.1002/j.1538-7305.1970.tb01770.x}
+}
+
+@article{dunlop1985,
+  author  = {Dunlop, A. E. and Kernighan, B. W.},
+  title   = {A Procedure for Placement of Standard-Cell {VLSI} Circuits},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {4},
+  number  = {1},
+  pages   = {92--98},
+  year    = {1985},
+  doi     = {10.1109/tcad.1985.1270101}
+}
+
+@article{quinn1979,
+  author  = {Quinn, N. R. and Breuer, M. A.},
+  title   = {A Forced Directed Component Placement Procedure for Printed Circuit Boards},
+  journal = {IEEE Trans. Circuits and Systems},
+  volume  = {26},
+  number  = {6},
+  pages   = {377--388},
+  year    = {1979},
+  doi     = {10.1109/tcs.1979.1084652}
+}
+
+@article{kirkpatrick1983,
+  author  = {Kirkpatrick, S. and Gelatt, C. D. and Vecchi, M. P.},
+  title   = {Optimization by Simulated Annealing},
+  journal = {Science},
+  volume  = {220},
+  number  = {4598},
+  pages   = {671--680},
+  year    = {1983},
+  doi     = {10.1126/science.220.4598.671}
+}
+
+@article{sechen1985,
+  author  = {Sechen, C. and Sangiovanni-Vincentelli, A.},
+  title   = {The {TimberWolf} Placement and Routing Package},
+  journal = {IEEE J. Solid-State Circuits},
+  volume  = {20},
+  number  = {2},
+  pages   = {510--522},
+  year    = {1985},
+  doi     = {10.1109/jssc.1985.1052337}
+}
+
+@article{hall1970,
+  author  = {Hall, Kenneth M.},
+  title   = {An $r$-Dimensional Quadratic Placement Algorithm},
+  journal = {Management Science},
+  volume  = {17},
+  number  = {3},
+  pages   = {219--229},
+  year    = {1970},
+  doi     = {10.1287/mnsc.17.3.219}
+}
+
+@article{goto1981,
+  author  = {Goto, S.},
+  title   = {An Efficient Algorithm for the Two-Dimensional Placement Problem in Electrical Circuit Layout},
+  journal = {IEEE Trans. Circuits and Systems},
+  volume  = {28},
+  number  = {1},
+  pages   = {12--18},
+  year    = {1981},
+  doi     = {10.1109/tcs.1981.1084903}
+}
+
+@article{kleinhans1991,
+  author  = {Kleinhans, J. M. and Sigl, G. and Johannes, F. M. and Antreich, K. J.},
+  title   = {{GORDIAN}: {VLSI} Placement by Quadratic Programming and Slicing Optimization},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {10},
+  number  = {3},
+  pages   = {356--365},
+  year    = {1991},
+  doi     = {10.1109/43.67789}
+}
+
+@inproceedings{eisenmann1998,
+  author    = {Eisenmann, Hans and Johannes, Frank M.},
+  title     = {Generic Global Placement and Floorplanning},
+  booktitle = {Proc. 35th Design Automation Conf. (DAC)},
+  pages     = {269--274},
+  year      = {1998},
+  doi       = {10.1145/277044.277119}
+}
+
+@article{alpert1995,
+  author  = {Alpert, Charles J. and Kahng, Andrew B.},
+  title   = {Recent Directions in Netlist Partitioning: A Survey},
+  journal = {Integration, the VLSI Journal},
+  volume  = {19},
+  number  = {1--2},
+  pages   = {1--81},
+  year    = {1995},
+  doi     = {10.1016/0167-9260(95)00008-4}
+}
+
+@inproceedings{donath1990,
+  author    = {Donath, Wilm E. and Norman, Reini J. and Agrawal, Bhuwan K. and Bello, Stephen E. and Han, Sang Yong and Kurtzberg, Jerome M. and Lowy, Paul and McMillan, Roger I.},
+  title     = {Timing Driven Placement Using Complete Path Delays},
+  booktitle = {Proc. 27th ACM/IEEE Design Automation Conf. (DAC)},
+  pages     = {84--89},
+  year      = {1990},
+  doi       = {10.1145/123186.123232}
+}
+
+@inproceedings{caldwell2000,
+  author    = {Caldwell, Andrew E. and Kahng, Andrew B. and Markov, Igor L.},
+  title     = {Can Recursive Bisection Alone Produce Routable Placements?},
+  booktitle = {Proc. 37th Design Automation Conf. (DAC)},
+  pages     = {477--482},
+  year      = {2000},
+  doi       = {10.1145/337292.337549}
+}
+
+@article{alpert1998wirelength,
+  author  = {Alpert, C. J. and Chan, T. F. and Kahng, A. B. and Markov, I. L. and Mulet, P.},
+  title   = {Faster Minimization of Linear Wirelength for Global Placement},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {17},
+  number  = {1},
+  pages   = {3--13},
+  year    = {1998},
+  doi     = {10.1109/43.673628}
+}
+
+@article{viswanathan2005,
+  author  = {Viswanathan, N. and Chu, C. C.-N.},
+  title   = {{FastPlace}: Efficient Analytical Placement Using Cell Shifting, Iterative Local Refinement, and a Hybrid Net Model},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {24},
+  number  = {5},
+  pages   = {722--733},
+  year    = {2005},
+  doi     = {10.1109/tcad.2005.846365}
+}
+
+@article{kahng2005aplacer,
+  author  = {Kahng, Andrew B. and Wang, Qinke},
+  title   = {Implementation and Extensibility of an Analytic Placer},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {24},
+  number  = {5},
+  pages   = {734--747},
+  year    = {2005},
+  doi     = {10.1109/tcad.2005.846366}
+}
+
+@article{chen2008ntuplace3,
+  author  = {Chen, Tung-Chieh and Jiang, Zhe-Wei and Hsu, Tien-Chang and Chen, Hsin-Chen and Chang, Yao-Wen},
+  title   = {{NTUplace3}: An Analytical Placer for Large-Scale Mixed-Size Designs With Preplaced Blocks and Density Constraints},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {27},
+  number  = {7},
+  pages   = {1228--1240},
+  year    = {2008},
+  doi     = {10.1109/tcad.2008.923063}
+}
+
+@article{kim2012simpl,
+  author  = {Kim, Myung-Chul and Lee, Dong-Jin and Markov, Igor L.},
+  title   = {{SimPL}: An Effective Placement Algorithm},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {31},
+  number  = {1},
+  pages   = {50--60},
+  year    = {2012},
+  doi     = {10.1109/tcad.2011.2170567}
+}
+
+@article{lu2015eplace,
+  author  = {Lu, Jingwei and Chen, Pengwen and Chang, Chin-Chih and Sha, Lu and Huang, Dennis Jen-Hsin and Teng, Chin-Chi and Cheng, Chung-Kuan},
+  title   = {{ePlace}: Electrostatics-Based Placement Using Fast {Fourier} Transform and {Nesterov}'s Method},
+  journal = {ACM Trans. Design Automation of Electronic Systems},
+  volume  = {20},
+  number  = {2},
+  pages   = {1--34},
+  year    = {2015},
+  doi     = {10.1145/2699873}
+}
+
+@article{cheng2019replace,
+  author  = {Cheng, Chung-Kuan and Kahng, Andrew B. and Kang, Ilgweon and Wang, Lutong},
+  title   = {{RePlAce}: Advancing Solution Quality and Routability Validation in Global Placement},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {38},
+  number  = {9},
+  pages   = {1717--1730},
+  year    = {2019},
+  doi     = {10.1109/tcad.2018.2859220}
+}
+
+@article{lin2021dreamplace,
+  author  = {Lin, Yibo and Jiang, Zixuan and Gu, Jiaqi and Li, Wuxi and Dhar, Shounak and Ren, Haoxing and Khailany, Brucek and Pan, David Z.},
+  title   = {{DREAMPlace}: Deep Learning Toolkit-Enabled {GPU} Acceleration for Modern {VLSI} Placement},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {40},
+  number  = {4},
+  pages   = {748--761},
+  year    = {2021},
+  doi     = {10.1109/tcad.2020.3003843}
+}
+
+@article{lin2020abcdplace,
+  author  = {Lin, Yibo and Li, Wuxi and Gu, Jiaqi and Ren, Haoxing and Khailany, Brucek and Pan, David Z.},
+  title   = {{ABCDPlace}: Accelerated Batch-Based Concurrent Detailed Placement on Multithreaded {CPUs} and {GPUs}},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {39},
+  number  = {12},
+  pages   = {5083--5096},
+  year    = {2020},
+  doi     = {10.1109/tcad.2020.2971531}
+}
+
+% ---------------------------------------------------------------------------
+% Congestion- and routability-driven placement, and max-min fairness.
+% ---------------------------------------------------------------------------
+
+@inproceedings{brenner2002,
+  author    = {Brenner, Ulrich and Rohe, Andr{\'e}},
+  title     = {An Effective Congestion Driven Placement Framework},
+  booktitle = {Proc. Int. Symp. Physical Design (ISPD)},
+  pages     = {6--11},
+  year      = {2002},
+  doi       = {10.1145/505388.505391}
+}
+
+@article{li2007whitespace,
+  author  = {Li, Chen and Xie, Min and Koh, Cheng-Kok and Cong, Jason and Madden, Patrick H.},
+  title   = {Routability-Driven Placement and White Space Allocation},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {26},
+  number  = {5},
+  pages   = {858--871},
+  year    = {2007},
+  doi     = {10.1109/tcad.2006.884575}
+}
+
+@article{he2013ripple,
+  author  = {He, Xu and Huang, Tao and Xiao, Linfu and Tian, Haitong and Young, Evangeline F. Y.},
+  title   = {{Ripple}: A Robust and Effective Routability-Driven Placer},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {32},
+  number  = {10},
+  pages   = {1546--1556},
+  year    = {2013},
+  doi     = {10.1109/tcad.2013.2265371}
+}
+
+@inproceedings{ispd2011contest,
+  author    = {Viswanathan, Natarajan and Alpert, Charles J. and Sze, Cliff and Li, Zhuo and Nam, Gi-Joon and Roy, Jarrod A.},
+  title     = {The {ISPD}-2011 Routability-Driven Placement Contest and Benchmark Suite},
+  booktitle = {Proc. Int. Symp. Physical Design (ISPD)},
+  pages     = {141--146},
+  year      = {2011},
+  doi       = {10.1145/1960397.1960429}
+}
+
+@article{hahne1991,
+  author  = {Hahne, E. L.},
+  title   = {Round-Robin Scheduling for Max-Min Fairness in Data Networks},
+  journal = {IEEE J. Selected Areas in Communications},
+  volume  = {9},
+  number  = {7},
+  pages   = {1024--1039},
+  year    = {1991},
+  doi     = {10.1109/49.103550}
+}
+
+@book{bertsekas1992,
+  author    = {Bertsekas, Dimitri P. and Gallager, Robert G.},
+  title     = {Data Networks},
+  edition   = {2nd},
+  publisher = {Prentice Hall},
+  address   = {Englewood Cliffs, NJ, USA},
+  year      = {1992},
+  isbn      = {978-0-13-200916-4}
+}
+
+% ---------------------------------------------------------------------------
+% FPGA placement.
+% ---------------------------------------------------------------------------
+
+@inproceedings{betz1997vpr,
+  author    = {Betz, Vaughn and Rose, Jonathan},
+  title     = {{VPR}: A New Packing, Placement and Routing Tool for {FPGA} Research},
+  booktitle = {Field-Programmable Logic and Applications (FPL)},
+  pages     = {213--222},
+  year      = {1997},
+  doi       = {10.1007/3-540-63465-7_226}
+}
+
+@inproceedings{marquardt2000,
+  author    = {Marquardt, Alexander and Betz, Vaughn and Rose, Jonathan},
+  title     = {Timing-Driven Placement for {FPGAs}},
+  booktitle = {Proc. ACM/SIGDA Int. Symp. Field Programmable Gate Arrays (FPGA)},
+  pages     = {203--213},
+  year      = {2000},
+  doi       = {10.1145/329166.329208}
+}
+
+@inproceedings{gort2012,
+  author    = {Gort, Marcel and Anderson, Jason H.},
+  title     = {Analytical Placement for Heterogeneous {FPGAs}},
+  booktitle = {Proc. Int. Conf. Field Programmable Logic and Applications (FPL)},
+  pages     = {143--150},
+  year      = {2012},
+  doi       = {10.1109/fpl.2012.6339278}
+}
+
+@article{abuowaimer2018gplace3,
+  author  = {Abuowaimer, Ziad and Maarouf, Dani and Martin, Timothy and Foxcroft, Jeremy and Grewal, Gary and Areibi, Shawki and Vannelli, Anthony},
+  title   = {{GPlace3.0}: Routability-Driven Analytic Placer for {UltraScale} {FPGA} Architectures},
+  journal = {ACM Trans. Design Automation of Electronic Systems},
+  volume  = {23},
+  number  = {5},
+  pages   = {1--33},
+  year    = {2018},
+  doi     = {10.1145/3233244}
+}
+
+@article{li2018utplacef,
+  author  = {Li, Wuxi and Dhar, Shounak and Pan, David Z.},
+  title   = {{UTPlaceF}: A Routability-Driven {FPGA} Placer With Physical and Congestion Aware Packing},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {37},
+  number  = {4},
+  pages   = {869--882},
+  year    = {2018},
+  doi     = {10.1109/tcad.2017.2729349}
+}
+
+@article{murray2020vtr8,
+  author  = {Murray, Kevin E. and Petelin, Oleg and Zhong, Sheng and Wang, Jia Min and Eldafrawy, Mohamed and Legault, Jean-Philippe and Sha, Eugene and Graham, Aaron G. and Wu, Jean and Walker, Matthew J. P. and Zeng, Hanqing and Patros, Panagiotis and Luu, Jason and Kent, Kenneth B. and Betz, Vaughn},
+  title   = {{VTR} 8: High-Performance {CAD} and Customizable {FPGA} Architecture Modelling},
+  journal = {ACM Trans. Reconfigurable Technology and Systems},
+  volume  = {13},
+  number  = {2},
+  pages   = {1--55},
+  year    = {2020},
+  doi     = {10.1145/3388617}
+}
+
+@article{elgammal2022rlplace,
+  author  = {Elgammal, Mohamed A. and Murray, Kevin E. and Betz, Vaughn},
+  title   = {{RLPlace}: Using Reinforcement Learning and Smart Perturbations to Optimize {FPGA} Placement},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {41},
+  number  = {8},
+  pages   = {2532--2545},
+  year    = {2022},
+  doi     = {10.1109/tcad.2021.3109863}
+}
+
+% ---------------------------------------------------------------------------
+% Recent development: machine learning for placement and EDA.
+% ---------------------------------------------------------------------------
+
+@article{mirhoseini2021,
+  author  = {Mirhoseini, Azalia and Goldie, Anna and Yazgan, Mustafa and Jiang, Joe Wenjie and Songhori, Ebrahim and Wang, Shen and Lee, Young-Joon and Johnson, Eric and Pathak, Omkar and Nova, Azade and Pak, Jiwoo and Tong, Andy and Srinivasa, Kavya and Hang, William and Tuncer, Emre and Le, Quoc V. and Laudon, James and Ho, Richard and Carpenter, Roger and Dean, Jeff},
+  title   = {A Graph Placement Methodology for Fast Chip Design},
+  journal = {Nature},
+  volume  = {594},
+  number  = {7862},
+  pages   = {207--212},
+  year    = {2021},
+  doi     = {10.1038/s41586-021-03544-w}
+}
+
+@article{kahng2023ml,
+  author  = {Kahng, Andrew B.},
+  title   = {Machine Learning for {CAD}/{EDA}: The Road Ahead},
+  journal = {IEEE Design \& Test},
+  volume  = {40},
+  number  = {1},
+  pages   = {8--16},
+  year    = {2023},
+  doi     = {10.1109/mdat.2022.3161593}
+}
+
+@article{kahng2024hierrtlmp,
+  author  = {Kahng, Andrew B. and Varadarajan, Ravi and Wang, Zhiang},
+  title   = {{Hier-RTLMP}: A Hierarchical Automatic Macro Placer for Large-Scale Complex {IP} Blocks},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {43},
+  number  = {5},
+  pages   = {1552--1565},
+  year    = {2024},
+  doi     = {10.1109/tcad.2023.3346284}
+}
+
+@article{huang2021ml4eda,
+  author  = {Huang, Guyue and Hu, Jingbo and He, Yifan and Liu, Jialong and Ma, Mingyuan and Shen, Zhaoyang and Wu, Juejian and Xu, Yuanfan and Zhang, Hengrui and Zhong, Kai and Ning, Xuefei and Ma, Yuzhe and Yang, Haoyu and Yu, Bei and Yang, Huazhong and Wang, Yu},
+  title   = {Machine Learning for Electronic Design Automation: A Survey},
+  journal = {ACM Trans. Design Automation of Electronic Systems},
+  volume  = {26},
+  number  = {5},
+  pages   = {1--46},
+  year    = {2021},
+  doi     = {10.1145/3451179}
+}
+
+% ---------------------------------------------------------------------------
+% Cycle-ratio / cycle-mean algorithms underlying the min-max objective.
+% ---------------------------------------------------------------------------
+
+@inproceedings{dasdan1999,
+  author    = {Dasdan, Ali and Irani, Sandy S. and Gupta, Rajesh K.},
+  title     = {Efficient Algorithms for Optimum Cycle Mean and Optimum Cost to Time Ratio Problems},
+  booktitle = {Proc. 36th ACM/IEEE Design Automation Conf. (DAC)},
+  pages     = {37--42},
+  year      = {1999},
+  doi       = {10.1145/309847.309862}
+}
+
+@article{karp1978,
+  author  = {Karp, Richard M.},
+  title   = {A Characterization of the Minimum Cycle Mean in a Digraph},
+  journal = {Discrete Mathematics},
+  volume  = {23},
+  number  = {3},
+  pages   = {309--311},
+  year    = {1978},
+  doi     = {10.1016/0012-365X(78)90011-0}
+}
+
+% ---------------------------------------------------------------------------
+% Wirelength models (quadratic, HPWL, log-sum-exp) and legalization.
+% ---------------------------------------------------------------------------
+
+@article{brooks1987,
+  author  = {Brooks, Frederick P.},
+  title   = {No Silver Bullet---Essence and Accidents of Software Engineering},
+  journal = {Computer},
+  volume  = {20},
+  number  = {4},
+  pages   = {10--19},
+  year    = {1987},
+  doi     = {10.1109/mc.1987.1663532}
+}
+
+@misc{naylor2001,
+  author       = {Naylor, William C. and Donelly, Ross and Sha, Lu},
+  title        = {Non-Linear Optimization System and Method for Wire Length and Delay Optimization for an Automatic Electric Circuit Placer},
+  howpublished = {U.S. Patent 6,301,693 B1},
+  year         = {2001},
+  note         = {Assignee: Synopsys, Inc.},
+  url          = {https://patents.google.com/patent/US6301693B1/en}
+}
+
+@inproceedings{chan2006mpl6,
+  author    = {Chan, Tony F. and Cong, Jason and Shinnerl, Joseph R. and Sze, Kenton and Xie, Min},
+  title     = {{mPL6}: Enhanced Multilevel Mixed-Size Placement},
+  booktitle = {Proc. Int. Symp. Physical Design (ISPD)},
+  pages     = {212--214},
+  year      = {2006},
+  doi       = {10.1145/1123008.1123055}
+}
+
+@article{brenner2004legal,
+  author  = {Brenner, Ulrich and Vygen, Jens},
+  title   = {Legalizing a Placement with Minimum Total Movement},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {23},
+  number  = {12},
+  pages   = {1597--1613},
+  year    = {2004},
+  doi     = {10.1109/tcad.2004.836733}
+}
+
+% ---------------------------------------------------------------------------
+% Fairness generalization, scaling, benchmarks and sign-off.
+% ---------------------------------------------------------------------------
+
+@article{parekh1993,
+  author  = {Parekh, Abhay K. and Gallager, Robert G.},
+  title   = {A Generalized Processor Sharing Approach to Flow Control in Integrated Services Networks: The Single-Node Case},
+  journal = {IEEE/ACM Trans. Networking},
+  volume  = {1},
+  number  = {3},
+  pages   = {344--357},
+  year    = {1993},
+  doi     = {10.1109/90.234856}
+}
+
+@inproceedings{alpert1997multilevel,
+  author    = {Alpert, Charles J. and Huang, Jen-Hsin and Kahng, Andrew B.},
+  title     = {Multilevel Circuit Partitioning},
+  booktitle = {Proc. 34th Design Automation Conf. (DAC)},
+  pages     = {530--533},
+  year      = {1997},
+  doi       = {10.1145/266021.266275}
+}
+
+@article{nam2006fast,
+  author  = {Nam, Gi-Joon and Reda, Sherief and Alpert, Charles J. and Villarrubia, Paul and Kahng, Andrew B.},
+  title   = {A Fast Hierarchical Quadratic Placement Algorithm},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {25},
+  number  = {4},
+  pages   = {678--691},
+  year    = {2006},
+  doi     = {10.1109/tcad.2006.870079}
+}
+
+@inproceedings{nam2005ispd,
+  author    = {Nam, Gi-Joon and Alpert, Charles J. and Villarrubia, Paul and Winter, Ben and Yildiz, Mehmet},
+  title     = {The {ISPD2005} Placement Contest and Benchmark Suite},
+  booktitle = {Proc. Int. Symp. Physical Design (ISPD)},
+  pages     = {216--220},
+  year      = {2005},
+  doi       = {10.1145/1055137.1055182}
+}
+
+@inproceedings{adya2002,
+  author    = {Adya, Saurabh N. and Markov, Igor L.},
+  title     = {Consistent Placement of Macro-Blocks Using Floorplanning and Standard-Cell Placement},
+  booktitle = {Proc. Int. Symp. Physical Design (ISPD)},
+  pages     = {12--17},
+  year      = {2002},
+  doi       = {10.1145/505388.505392}
+}
+
+@article{kahng2021tritonroute,
+  author  = {Kahng, Andrew B. and Wang, Lutong and Xu, Bangqi},
+  title   = {{TritonRoute}: The Open-Source Detailed Router},
+  journal = {IEEE Trans. Computer-Aided Design of Integrated Circuits and Systems},
+  volume  = {40},
+  number  = {3},
+  pages   = {547--559},
+  year    = {2021},
+  doi     = {10.1109/tcad.2020.3003234}
+}
