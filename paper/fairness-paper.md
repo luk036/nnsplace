@@ -332,6 +332,31 @@ Whole seed-grid matrix & 4.57x total CPU \\
 \end{table}
 ```
 
+### Preliminary Comparison with an Aggregate Baseline
+
+To check whether the min-max objective trades aggregate quality for peak congestion, the repository ships a small comparison harness [@nnsplace] that runs both placers on the same netlist and reports identical metrics: worst wirelength, total HPWL, the busiest routed grid cut, routed wirelength, legality, and runtime. The baseline minimizes squared wirelength on the same net-clique model, pins the pads evenly on the border ring, and legalizes row by row; it is a foil for the aggregate objective, not a state-of-the-art placer.
+
+On `p1` (32x32) the min-max placer dominates on every metric. On `ibm01` (12,506 cells, 120x120, eight rounds) the picture is mixed and instructive: the min-max placer again produces the lower peak cut, but its worst wirelength and HPWL are higher and it is about four times slower. That is the coordinate-descent stall anticipated above -- with a fixed iteration budget the alternating scheme has not yet spread the long nets that set the bottleneck. These results are preliminary (one seed, one simple baseline, proxy rather than sign-off routing), but they show both that the fairness objective lowers peak congestion and that closing the gap on large designs needs the multilevel and convergence work discussed next. Table III lists the numbers.
+
+```{=latex}
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Preliminary comparison of the min-max placer against a quadratic aggregate baseline. ``Worst'' and ``Peak'' are in grid units; HPWL is in millions of grid units. One seed; routed wirelength is a proxy, not detailed-router sign-off.}
+\label{tbl:compare}
+\begin{tabular}{@{}llrrr@{}}
+\hline
+Benchmark & Placer & Worst & HPWL & Peak \\
+\hline
+p1 (32x32)      & NNS       & 1600 & 0.57 & 26 \\
+p1 (32x32)      & quadratic & 2120 & 0.58 & 33 \\
+ibm01 (120x120) & NNS       & 8320 & 50.4 & 117 \\
+ibm01 (120x120) & quadratic & 7920 & 42.1 & 143 \\
+\hline
+\end{tabular}
+\end{table}
+```
+
 ## From Placement to Global Routing
 
 Placement optimizes a proxy; routing decides the actual wires. To close the loop, each net of the final placement is passed to a rectilinear global router [@physdes] that builds one tree per net, rooted at the net's driver pin, and connects each sink within an allowed wire-length budget, inserting Steiner points to share trunks and save wire. @fig:routed shows the routed version of the 50x50 placement: the straight proxy lines of @fig:placement are replaced by orthogonal routing trees, and the cut crossings of those trees are precisely what the congestion maps of the previous section count.
@@ -407,8 +432,8 @@ Future research in fairness-centric global placement can explore several promisi
 
 The study is a proof of concept, and several limitations bound how far its conclusions generalize.
 
-*   **Benchmark scale.** The evaluation uses a single synthetic benchmark, `p1` (833 modules), on grids up to 100x100 -- two to three orders of magnitude smaller than the multi-million-cell designs that industrial placers target. A single instance cannot characterize a method's average behavior. The results are evidence that the min-max objective is *realizable and affordable*, not that it is competitive at production scale.
-*   **No head-to-head comparison.** NNS is not compared against leading analytical or GPU placers (ePlace, RePlAce, DREAMPlace, NTUplace3) on a shared benchmark suite, and the flow is not closed with a sign-off router. The literature review cites these placers, but no controlled experiment links the fairness objective to a measurable routability gain. Adopting the public ISPD/DAC placement and routability contests [@nam2005ispd; @ispd2011contest] and reporting routed wirelength after a detailed router such as TritonRoute [@kahng2021tritonroute] would make the comparison reproducible and would test whether a lower peak congestion survives detailed routing.
+*   **Benchmark scale.** The controlled study uses a single synthetic benchmark, `p1` (833 modules), on grids up to 100x100 -- two to three orders of magnitude smaller than the multi-million-cell designs that industrial placers target. A preliminary comparison harness also runs the larger `ibm01` benchmark (12,506 cells), but a single instance at each size cannot characterize a method's average behavior; the results are evidence that the min-max objective is *realizable and affordable*, not that it is competitive at production scale.
+*   **No head-to-head comparison.** The paper reports a preliminary comparison only against a simple quadratic aggregate baseline (the preliminary subsection of the evaluation), on one seed and with proxy routed wirelength; the flow is not closed with a sign-off router, and NNS is not benchmarked against leading analytical or GPU placers (ePlace, RePlAce, DREAMPlace, NTUplace3) on a shared suite. Adopting the public ISPD/DAC placement and routability contests [@nam2005ispd; @ispd2011contest] and reporting routed wirelength after a detailed router such as TritonRoute [@kahng2021tritonroute] would make the comparison reproducible and would test whether a lower peak congestion survives detailed routing.
 *   **Narrow metrics.** Only worst wirelength and cut-crossing congestion maps are reported; total and routed wirelength, timing, and power are not. Because minimizing the peak can raise the total, a complete evaluation must report both, together with peak and mean routing overflow.
 *   **Physical abstraction.** The model places cells on a uniform two-dimensional grid and legalizes row by row. It does not represent multi-layer metal stacks, via costs, or non-uniform track directions, and it assumes a single cell size with no fixed macros, so macro-dominated and mixed-size placement [@adya2002] is not exercised.
 *   **Scalability.** Howard's parametric flow and bipartite-matching legalization are exact but heavier than the fast transform and sparse-linear-system kernels of analytical placers, and the reported 4.57x speedup was measured on `p1` only. The growth of the flow graph with design size is not characterized.
