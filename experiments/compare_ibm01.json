@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "placer": "nns",
+      "iters": 2,
+      "worst_reported": 8320,
+      "time": 110.72,
+      "grid": "120x120",
+      "worst": 8320,
+      "hpwl": 50410360,
+      "peak": 117,
+      "routed": 1401805,
+      "cuts": 27975,
+      "mean": 50.109,
+      "legal": true,
+      "netlist": "ibm01.net"
+    },
+    {
+      "placer": "quadratic",
+      "iters": 1,
+      "worst_reported": null,
+      "time": 30.098,
+      "grid": "120x120",
+      "worst": 7920,
+      "hpwl": 42110400,
+      "peak": 143,
+      "routed": 1148311,
+      "cuts": 26916,
+      "mean": 42.663,
+      "legal": true,
+      "netlist": "ibm01.net"
+    }
+  ],
+  "signoff": {
+    "router": "none",
+    "status": "skipped"
+  }
+}

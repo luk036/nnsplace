@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "placer": "nns",
+      "iters": 1,
+      "worst_reported": 1600,
+      "time": 1.575,
+      "grid": "32x32",
+      "worst": 1600,
+      "hpwl": 567840,
+      "peak": 26,
+      "routed": 15068,
+      "cuts": 1943,
+      "mean": 7.755,
+      "legal": true,
+      "netlist": "p1.json"
+    },
+    {
+      "placer": "quadratic",
+      "iters": 1,
+      "worst_reported": null,
+      "time": 0.218,
+      "grid": "32x32",
+      "worst": 2120,
+      "hpwl": 576760,
+      "peak": 33,
+      "routed": 14614,
+      "cuts": 1871,
+      "mean": 7.811,
+      "legal": true,
+      "netlist": "p1.json"
+    }
+  ],
+  "signoff": {
+    "router": "none",
+    "status": "skipped"
+  }
+}
