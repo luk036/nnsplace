@@ -190,3 +190,6 @@ paper/*.snm
 paper/*.toc
 paper/*.vrb
 paper/fairness-talk.tex
+
+# Downloaded third-party reference material (copyrighted; kept local only)
+refs/
