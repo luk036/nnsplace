@@ -75,7 +75,7 @@ def header(gx: int, gy: int) -> list[str]:
     ]
 
 
-def gen(gx: int, gy: int, seed: int = 831, max_iters: int = 200) -> None:
+def gen(gx: int, gy: int, seed: int = 831, max_rounds: int = 200) -> None:
     """Run the placer and write outputs/ioloop{gx}x{gy}.svg with connections."""
     H = read_json(r"D:\github\py\nnsplace\testcases\p1.json")
     random.seed(seed)
@@ -87,7 +87,7 @@ def gen(gx: int, gy: int, seed: int = 831, max_iters: int = 200) -> None:
     place[1] = {i: 0 for i in range(n)}
     placer.init_placement(place)
     placer.io_assign(place)
-    niter, worst = placer.run(place, max_iters)
+    niter, worst = placer.run(place, max_rounds)
     print(f"iters={niter} worst={worst}")
 
     body: list[str] = []

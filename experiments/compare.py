@@ -162,14 +162,16 @@ def is_legal(hyprgraph: Netlist, place: Place, gx: int, gy: int, reserved: int) 
     return True
 
 
-def place_nns(hyprgraph: Netlist, cfg: NnsConfig, max_iters: int) -> Tuple[Place, dict]:
+def place_nns(
+    hyprgraph: Netlist, cfg: NnsConfig, max_rounds: int
+) -> Tuple[Place, dict]:
     n = hyprgraph.number_of_modules()
     placer = NnsPlacer(hyprgraph, cfg)
     place: Place = [{i: 0 for i in range(n)}, {i: 0 for i in range(n)}]
     placer.init_placement(place)
     placer.io_assign(place)
     t0 = time.perf_counter()
-    niter, worst = placer.run(place, max_iters)
+    niter, worst = placer.run(place, max_rounds)
     return place, {
         "placer": "nns",
         "iters": niter,
@@ -347,7 +349,7 @@ def main(argv: List[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="compare NNS vs an aggregate placer")
     ap.add_argument("netlists", nargs="+", help="path(s) to .json or IBM .net")
     ap.add_argument("--grids", default="32x32", help="comma-separated gxXgy list")
-    ap.add_argument("--max-iters", type=int, default=2000)
+    ap.add_argument("--max-rounds", type=int, default=10, help="outer rounds")
     ap.add_argument("--delta", type=int, default=40, help="per-axis cost weight")
     ap.add_argument("--router", default="tritonroute", help="tritonroute|none")
     ap.add_argument("--out", default="experiments/compare_results.json")
@@ -366,7 +368,7 @@ def main(argv: List[str] | None = None) -> int:
             cfg = NnsConfig(gx, gy, args.delta, args.delta)
             for placer_fn in (place_nns, place_quadratic):
                 if placer_fn is place_nns:
-                    place, meta = placer_fn(hyprgraph, cfg, args.max_iters)
+                    place, meta = placer_fn(hyprgraph, cfg, args.max_rounds)
                 else:
                     place, meta = placer_fn(hyprgraph, cfg)
                 row = evaluate(hyprgraph, place, cfg, meta)
