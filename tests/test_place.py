@@ -57,6 +57,30 @@ def test_legalize_global_fallback() -> None:
 #     # assert place[1]["a1"] == 0
 
 
+def test_narrow_grid_without_reserved_column() -> None:
+    """A grid narrower than the default DSP column must not crash.
+
+    Regression: ``reserved_col`` defaulted to 27 even when ``x < 27``, which
+    made ``init_placement`` index past the end of ``count[0]``.
+    """
+    placer = NnsPlacer(TinyNetlist(), NnsConfig(10, 10, 40, 40))
+    assert placer.reserved_col is None
+    assert placer.grid_limit == [10, 10]
+    place: list[dict[int, int]] = [
+        {i: 0 for i in range(70)},
+        {i: 0 for i in range(70)},
+    ]
+    placer.init_placement(place)
+    assert all(1 <= place[0][i] <= 10 for i in range(70))
+
+
+def test_neighborhood_tunable_reaches_legalizer() -> None:
+    cfg = NnsConfig(100, 100, 40, 40, neighborhood=4, max_neighborhood=9)
+    placer = NnsPlacer(TinyNetlist(), cfg)
+    assert placer._local_legalizer.neighborhood == 4
+    assert placer._local_legalizer.MAX_NEIGHBORHOOD == 9
+
+
 def test_placement() -> None:
     seed(831)
     H = read_json("testcases/p1.json")

@@ -308,8 +308,18 @@ class LocalWindowLegalizer(Legalizer):
     This is the cheap, quality-preserving path.
     """
 
-    neighborhood = 11  # magic number for defining the neigborhood
-    MAX_NEIGHBORHOOD = 50  # Safety limit to prevent infinite loops
+    neighborhood = 11  # default local window radius (override via NnsConfig)
+    MAX_NEIGHBORHOOD = 50  # default safety limit (override via NnsConfig)
+
+    def __init__(self, placer: "NnsPlacer") -> None:
+        super().__init__(placer)
+        cfg = placer.cfg
+        nb = getattr(cfg, "neighborhood", None)
+        mx = getattr(cfg, "max_neighborhood", None)
+        if isinstance(nb, int) and not isinstance(nb, bool) and nb >= 1:
+            self.neighborhood = nb
+        if isinstance(mx, int) and not isinstance(mx, bool) and mx >= 1:
+            self.MAX_NEIGHBORHOOD = mx
 
     def solve(
         self,
@@ -455,8 +465,9 @@ class NnsPlacer:
             [0 for _ in range(cfg.grid[0] + 2)],  # plus 2 I/O
             [0 for _ in range(cfg.grid[1] + 2)],
         ]  # two lists
-        # physical per-line capacity of the core grid (col 27 is reserved)
-        self.grid_limit = [cfg.grid[1], cfg.grid[0] - 1]
+        # physical per-line capacity of the core grid (minus a reserved column)
+        reserved_slots = 1 if cfg.reserved_col is not None else 0
+        self.grid_limit = [cfg.grid[1], cfg.grid[0] - reserved_slots]
         ratio = getattr(cfg, "line_cap_ratio", None)
         if isinstance(ratio, (int, float)) and not isinstance(ratio, bool):
             num_cells = hyprgraph.number_of_modules() - hyprgraph.num_pads
@@ -529,7 +540,8 @@ class NnsPlacer:
                 col += 1
             if col == self.reserved_col:  # assume col 27 is preserved for DSP or SRAM
                 col += 1
-        assert self.count[0][self.reserved_col] == 0
+        if self.reserved_col is not None:
+            assert self.count[0][self.reserved_col] == 0
         assert self.count[0][1] <= self.grid_limit[0]  # e.g. 50
         assert self.count[1][1] <= self.grid_limit[1]  # e.g. 49
 
@@ -1229,7 +1241,9 @@ class NnsPlacer:
         self.legalize_modules(place, axis ^ 1)
         self.choose_nearest_iopad(place)
 
-    def optimize(self, place: List[Dict[Any, int]], max_iters: int) -> Tuple[int, int]:
+    def optimize(
+        self, place: List[Dict[Any, int]], max_iters: int = 200
+    ) -> Tuple[int, int]:
         """
         The `optimize` function is used to iteratively improve the placement of modules in a circuit layout
         by applying various optimization techniques.
@@ -1237,9 +1251,9 @@ class NnsPlacer:
         :param place: The `place` parameter is a list of dictionaries representing the current placement of
             modules. place[0] maps module keys to x-coordinates, place[1] maps module keys to y-coordinates
         :type place: List[Dict[Any, int]]
-        :param max_iters: The `max_iters` parameter is the maximum number of iterations that the
-            optimization algorithm will run for. It determines how many times the algorithm will go through the
-            optimization steps before stopping
+        :param max_iters: The `max_iters` parameter caps the number of x+y refine
+            passes in this inner loop.  It defaults to 200 and, unlike before,
+            is independent of ``run``'s outer round cap.
         :type max_iters: int
         :return: the number of iterations performed and the worst wirelength achieved.
         """
@@ -1261,9 +1275,7 @@ class NnsPlacer:
             state = PlacerState(place, self.count)
         return max_iters, worst1
 
-    def run(
-        self, place: List[Dict[Any, int]], max_iters: int = 2000
-    ) -> Tuple[int, int]:
+    def run(self, place: List[Dict[Any, int]], max_rounds: int = 10) -> Tuple[int, int]:
         """
         The `run` function performs an optimization algorithm on a given placement and returns the number of
         iterations and the worst wirelength achieved.
@@ -1271,18 +1283,20 @@ class NnsPlacer:
         :param place: The `place` parameter is a list of dictionaries representing the current placement of
             components. place[0] maps module keys to x-coordinates, place[1] maps module keys to y-coordinates
         :type place: List[Dict[Any, int]]
-        :param max_iters: The `max_iters` parameter is an optional integer that specifies the maximum number
-            of iterations for the `run` method. It determines how many iterations the optimization algorithm
-            will run before stopping. The default value is 2000, but you can change it to a different integer
-            value if desired, defaults to 2000 (optional)
+        :param max_rounds: The `max_rounds` parameter caps the number of outer
+            rounds (each round is a full ``optimize`` pass followed by I/O
+            reassignment).  It defaults to 10 and stops early as soon as the
+            worst wirelength stops improving.  The inner ``optimize`` loop has
+            its own independent cap.
+        :type max_rounds: int
         :return: a tuple containing the number of iterations performed and the worst wirelength achieved
             during the optimization process.
         """
         worst0 = self.calc_worst_wirelength(place)
         state = PlacerState(place, self.count)
         logger.info("init: %d", worst0)
-        for niter in range(max_iters):
-            _, _ = self.optimize(place, max_iters)
+        for niter in range(max_rounds):
+            _, _ = self.optimize(place)
             self.io_assign(place)
             worst1 = self.calc_worst_wirelength(place)
             logger.info("run %d", worst1)
@@ -1292,4 +1306,4 @@ class NnsPlacer:
                 return niter, worst0
             worst0 = worst1
             state = PlacerState(place, self.count)
-        return max_iters, worst0
+        return max_rounds, worst0
