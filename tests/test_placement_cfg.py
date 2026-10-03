@@ -57,8 +57,40 @@ def test_config_properties() -> None:
 
 
 def test_config_default_reserved_col() -> None:
-    cfg = NnsConfig(x=10, y=8, delta_x=2, delta_y=3)
+    cfg = NnsConfig(x=32, y=8, delta_x=2, delta_y=3)
     assert cfg.reserved_col == 27
+
+
+def test_config_default_reserved_col_disabled_on_narrow_grid() -> None:
+    cfg = NnsConfig(x=10, y=8, delta_x=2, delta_y=3)
+    assert cfg.reserved_col is None
+
+
+def test_config_default_delta() -> None:
+    cfg = NnsConfig(x=10, y=8)
+    assert cfg.delta == (1, 1)
+
+
+def test_config_default_neighborhood() -> None:
+    cfg = NnsConfig(x=10, y=8, delta_x=2, delta_y=3)
+    assert cfg.neighborhood is None
+    assert cfg.max_neighborhood is None
+
+
+def test_config_neighborhood_properties() -> None:
+    cfg = NnsConfig(x=10, y=8, delta_x=2, delta_y=3, neighborhood=4, max_neighborhood=9)
+    assert cfg.neighborhood == 4
+    assert cfg.max_neighborhood == 9
+
+
+def test_config_neighborhood_non_positive() -> None:
+    with pytest.raises(ValueError, match="neighborhood must be positive"):
+        NnsConfig(x=10, y=8, delta_x=2, delta_y=3, neighborhood=0)
+
+
+def test_config_max_neighborhood_non_positive() -> None:
+    with pytest.raises(ValueError, match="max_neighborhood must be positive"):
+        NnsConfig(x=10, y=8, delta_x=2, delta_y=3, max_neighborhood=0)
 
 
 def test_config_default_line_cap_ratio() -> None:
