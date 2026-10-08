@@ -62,7 +62,11 @@ def analyse(netlist, place, gx: int, gy: int):
         members = list(netlist.ugraph[net])
         driver = netlist.net_driver.get(net)
         if driver is None:
-            pads = [m for m in members if m >= netlist.number_of_modules() - netlist.num_pads]
+            pads = [
+                m
+                for m in members
+                if m >= netlist.number_of_modules() - netlist.num_pads
+            ]
             driver = pads[0] if pads else members[0]
         if len(members) < 2 or driver not in members:
             continue
@@ -74,8 +78,10 @@ def analyse(netlist, place, gx: int, gy: int):
             node = stack.pop()
             for child in node.children:
                 x1, y1, x2, y2 = (
-                    node.pt.xcoord, node.pt.ycoord,
-                    child.pt.xcoord, child.pt.ycoord,
+                    node.pt.xcoord,
+                    node.pt.ycoord,
+                    child.pt.xcoord,
+                    child.pt.ycoord,
                 )
                 if x1 == x2:
                     for r in range(min(y1, y2), max(y1, y2)):
@@ -156,17 +162,25 @@ def congestion_svg(title, grid, peak) -> str:
     lx = pad + gx * cell + 30
     ly = th + pad
     bar = gy * cell
-    svg.append(f'<text x="{lx}" y="{ly - 10}" font-size="16" font-family="Arial">Congestion %</text>')
-    svg.append('<defs><linearGradient id="grad" x1="0%" y1="100%" x2="0%" y2="0%">'
-               '<stop offset="0%" style="stop-color:#00ff00"/>'
-               '<stop offset="50%" style="stop-color:#ffff00"/>'
-               '<stop offset="100%" style="stop-color:#ff0000"/>'
-               '</linearGradient></defs>')
+    svg.append(
+        f'<text x="{lx}" y="{ly - 10}" font-size="16" font-family="Arial">Congestion %</text>'
+    )
+    svg.append(
+        '<defs><linearGradient id="grad" x1="0%" y1="100%" x2="0%" y2="0%">'
+        '<stop offset="0%" style="stop-color:#00ff00"/>'
+        '<stop offset="50%" style="stop-color:#ffff00"/>'
+        '<stop offset="100%" style="stop-color:#ff0000"/>'
+        "</linearGradient></defs>"
+    )
     svg.append(f'<rect x="{lx}" y="{ly}" width="30" height="{bar}" fill="url(#grad)"/>')
     for label in range(0, 101, 25):
         yy = ly + bar - int(label / 100 * bar)
-        svg.append(f'<text x="{lx + 38}" y="{yy + 5}" font-size="12" font-family="Arial">{label}</text>')
-        svg.append(f'<line x1="{lx - 5}" y1="{yy}" x2="{lx}" y2="{yy}" stroke="black" stroke-width="1"/>')
+        svg.append(
+            f'<text x="{lx + 38}" y="{yy + 5}" font-size="12" font-family="Arial">{label}</text>'
+        )
+        svg.append(
+            f'<line x1="{lx - 5}" y1="{yy}" x2="{lx}" y2="{yy}" stroke="black" stroke-width="1"/>'
+        )
     svg.append("</svg>")
     return "\n".join(svg)
 
@@ -195,7 +209,7 @@ def routed_svg(netlist, place, gx, gy, hseg, vseg) -> str:
         f'  <rect x="{P}" y="{oy}" width="{iw}" height="{P}" fill="url(#pattern-io)"/>',
         f'  <rect x="0" y="{P}" width="{P}" height="{ih}" fill="url(#pattern-io)"/>',
         f'  <rect x="{ox}" y="{P}" width="{P}" height="{ih}" fill="url(#pattern-io)"/>',
-        '  <defs>',
+        "  <defs>",
         '    <rect id="r1" width="35" height="35" fill="#FF00A7" opacity="0.2" stroke="black" stroke-width="3"/>',
         '    <rect id="io" width="35" height="35" fill="#00E7FF" opacity="0.2" stroke="black" stroke-width="3"/>',
         "  </defs>",
@@ -203,7 +217,9 @@ def routed_svg(netlist, place, gx, gy, hseg, vseg) -> str:
     for i in range(n):
         px = int(place[0][i]) * P
         py = int(place[1][i]) * P
-        svg.append(f'  <use x="{px}" y="{py}" href="#{"r1" if i < num_cells else "io"}"/>')
+        svg.append(
+            f'  <use x="{px}" y="{py}" href="#{"r1" if i < num_cells else "io"}"/>'
+        )
     for x1, y1, x2, y2 in hseg + vseg:
         svg.append(
             f'  <line x1="{x1 * P + P // 2}" y1="{y1 * P + P // 2}" x2="{x2 * P + P // 2}" y2="{y2 * P + P // 2}"/>'
@@ -218,7 +234,11 @@ def main() -> None:
     import nnsplace.placement_cfg as cfg_module
     from nnsplace.placement import NnsPlacer
 
-    filename = sys.argv[1] if len(sys.argv) > 1 else r"yosys_testcases/sphere3hopf_netlist_simple.json"
+    filename = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else r"yosys_testcases/sphere3hopf_netlist_simple.json"
+    )
     module = sys.argv[2] if len(sys.argv) > 2 else "cordic_trig_16bit_simple_fixed"
 
     with open(filename, encoding="utf-8") as file:

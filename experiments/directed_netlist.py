@@ -122,11 +122,12 @@ def read_directed_json(filename: Any) -> Any:
     ``filename`` may be a path or an already loaded node-link dict.
     """
     import networkx as nx
-
     from netlistx.netlist import Netlist
 
-    data = filename if isinstance(filename, dict) else json.load(
-        open(filename, encoding="utf-8")
+    data = (
+        filename
+        if isinstance(filename, dict)
+        else json.load(open(filename, encoding="utf-8"))
     )
     num_modules = data["graph"]["num_modules"]
     num_nets = data["graph"]["num_nets"]
